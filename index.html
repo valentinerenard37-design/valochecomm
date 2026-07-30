@@ -222,9 +222,12 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .idea-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
 .idea-card{border-radius:22px;padding:18px;box-shadow:var(--clay-soft);cursor:pointer;transition:transform .15s;position:relative;background:var(--surface-2)}
 .idea-card:hover{transform:translateY(-3px) rotate(-.5deg)}
-.idea-card .t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px}
+.idea-card .t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;margin-bottom:8px;padding-right:30px}
 .idea-card .d{font-size:13px;font-weight:600;color:var(--muted);line-height:1.5;margin-bottom:12px}
-.idea-card .foot{display:flex;gap:6px;flex-wrap:wrap}
+.idea-card .status-corner{position:absolute;top:14px;right:14px;font-size:17px}
+.idea-card .foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill.mini{font-size:10px;padding:3px 8px}
+.plan-btn{width:100%;margin-top:14px;text-align:center}
 .idea-card.st-validee{background:linear-gradient(160deg,#FFF6DE,var(--surface-2))}
 .idea-card.st-tournee{background:linear-gradient(160deg,#E6F8EE,var(--surface-2))}
 
@@ -450,6 +453,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <p class="section-hint">Calculé automatiquement depuis le planning et le journal de bord 🪄</p>
       <div class="stat-grid" id="autoStats"></div>
       <div id="tagRepart"></div>
+      <div id="topPost"></div>
     </div>
 
     <div class="card">
@@ -530,10 +534,22 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         </select>
       </div>
     </div>
+    <label>Réalisé par</label>
+    <select id="p-author">
+      <option value="">— À définir —</option>
+      <option value="valentine">🌸 Valentine</option>
+      <option value="jade">🌿 Jade</option>
+      <option value="luna">🪄 Luna (freelance)</option>
+    </select>
     <label>Notes / caption</label>
     <textarea id="p-notes" placeholder="Brief, hashtags, idées de visuel…"></textarea>
     <label>Lien de la publi (optionnel)</label>
     <input type="url" id="p-link" placeholder="https://…">
+    <label>📈 Performances (à remplir une fois publié)</label>
+    <div class="grid-2">
+      <div><input type="number" id="p-views" placeholder="👀 Vues" min="0"></div>
+      <div><input type="number" id="p-likes" placeholder="❤️ J'aime" min="0"></div>
+    </div>
     <div class="modal-actions">
       <button class="btn danger" id="deletePostBtn" style="display:none" onclick="deletePost()">🗑️ Corbeille</button>
       <button class="btn" onclick="closeOverlays()">Annuler</button>
@@ -598,6 +614,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     <input type="text" id="i-title" placeholder="ex: Micro-trottoir 'c'est quoi un courtier ?'">
     <label>Description</label>
     <textarea id="i-desc" placeholder="Concept, format, références, musique…"></textarea>
+    <label>📜 Script (optionnel)</label>
+    <textarea id="i-script" placeholder="Accroche, texte voix-off, dialogues, plan par plan…" style="min-height:110px"></textarea>
     <div class="grid-2">
       <div><label>Proposée par</label>
         <select id="i-by">
@@ -657,11 +675,12 @@ const STATUS_LABEL = {idee:'💡 Idée', afaire:'📝 À faire', programme:'⏰ 
 const TSTATUS_LABEL = {afaire:'📝 À faire', encours:'🔄 En cours', fait:'✅ Fait'};
 const PRIO_LABEL = {haute:'🔥 Haute', moyenne:'🌤️ Moyenne', basse:'🍃 Basse'};
 const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', both:'✨ Les deux'};
-const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade'};
+const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade', luna:'🪄 Luna'};
 const ISTATUS_LABEL = {idee:'💭 En vrac', validee:'⭐ Validée', tournee:'🎬 Tournée'};
 const PEOPLE = [
   {id:'valentine', name:'Valentine', emo:'🌸'},
   {id:'jade', name:'Jade', emo:'🌿'},
+  {id:'luna', name:'Luna', emo:'🪄'},
   {id:'adrien', name:'Adrien', emo:'🎯'},
   {id:'dimitri', name:'Dimitri', emo:'🧭'},
   {id:'matteo', name:'Matteo', emo:'🚀'},
@@ -815,10 +834,14 @@ function openPostModal(id=null, dateStr=null, prefill=null){
     document.getElementById('p-status').value = p.status;
     document.getElementById('p-notes').value = p.notes || '';
     document.getElementById('p-link').value = p.link || '';
+    document.getElementById('p-author').value = p.author || '';
+    document.getElementById('p-views').value = p.views || '';
+    document.getElementById('p-likes').value = p.likes || '';
     del.style.display = 'inline-block';
   } else {
     document.getElementById('modalTitle').textContent = prefill ? 'Planifier l\'idée 📅' : 'Nouvelle publication';
-    ['p-title','p-notes','p-link'].forEach(i=>document.getElementById(i).value='');
+    ['p-title','p-notes','p-link','p-views','p-likes'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('p-author').value = '';
     document.getElementById('p-date').value = dateStr || new Date().toISOString().slice(0,10);
     document.getElementById('p-platform').value = 'instagram';
     document.getElementById('p-status').value = prefill ? 'afaire' : 'idee';
@@ -843,7 +866,10 @@ function savePost(){
     tagId: document.getElementById('p-tag').value,
     status: document.getElementById('p-status').value,
     notes: document.getElementById('p-notes').value,
-    link: document.getElementById('p-link').value
+    link: document.getElementById('p-link').value,
+    author: document.getElementById('p-author').value,
+    views: document.getElementById('p-views').value,
+    likes: document.getElementById('p-likes').value
   };
   if(editingId) data.posts = data.posts.map(p=>p.id===editingId?post:p);
   else data.posts.push(post);
@@ -864,6 +890,7 @@ function planIdea(ideaId){
   closeOverlays();
   schedulingIdeaId = ideaId;
   let notes = idea.desc || '';
+  if(idea.script) notes += (notes ? '\n\n' : '') + '📜 SCRIPT :\n' + idea.script;
   if(idea.cast && idea.cast.length){
     const names = idea.cast.map(id=>{ const p = personById(id); return p ? p.name : id; }).join(', ');
     notes += (notes ? '\n' : '') + '🎥 Au tournage : ' + names;
@@ -1163,6 +1190,54 @@ function typewrite(id, text){
   tick();
 }
 
+/* ================== CONFETTIS 🎉 ================== */
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for(let i=0;i<26;i++){
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    const size = 7 + Math.random()*8;
+    p.style.cssText = `left:${Math.random()*100}vw;width:${size}px;height:${size*(Math.random()>.5?1:.45)}px;background:${PALETTE[Math.floor(Math.random()*PALETTE.length)]};border-radius:${Math.random()>.5?'50%':'3px'}`;
+    document.body.appendChild(p);
+    p.animate([
+      {transform:'translateY(0) rotate(0deg)', opacity:1},
+      {transform:`translateY(${innerHeight+60}px) translateX(${(Math.random()-.5)*220}px) rotate(${(Math.random()-.5)*720}deg)`, opacity:.7}
+    ], {duration:1300+Math.random()*1100, easing:'cubic-bezier(.2,.6,.4,1)'}).onfinish = ()=>p.remove();
+  }
+}
+
+/* ================== EXPORT PDF DES TÂCHES ================== */
+function exportTasksPDF(who=null){
+  const ts = who ? data.tasks.filter(t=>t.who===who) : filteredTasks();
+  if(!ts.length){ toast('Aucune tâche à exporter ici 🌱'); return; }
+  const sorted = [...ts].sort((a,b)=>(b.done||b.createdAt||'').localeCompare(a.done||a.createdAt||''));
+  const done = sorted.filter(t=>t.status==='fait');
+  const totalMin = sorted.reduce((s,t)=>s+parseTime(t.time),0);
+  const title = who ? 'Tâches de ' + WHO_LABEL[who].replace(/🌸 |🌿 /,'') : 'Journal de bord (sélection en cours)';
+  const rows = sorted.map(t=>{
+    const ty = typeById(t.typeId);
+    return `<tr>
+      <td><strong>${esc(t.name)}</strong>${t.note?`<br><span style="color:#888;font-size:11px">${esc(t.note)}</span>`:''}</td>
+      <td>${t.priority?PRIO_LABEL[t.priority].replace(/🔥 |🌤️ |🍃 /,''):'—'}</td>
+      <td>${ty?esc(ty.name):'—'}</td>
+      <td>${TSTATUS_LABEL[t.status].replace(/📝 |🔄 |✅ /,'')}</td>
+      <td>${t.done?fmtDate(t.done):'—'}</td>
+      <td>${esc(t.time)||'—'}</td>
+      <td>${esc(t.deliv)||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h1>${title}</h1>
+    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}</p>
+    <div class="pstats">
+      <div><b>${sorted.length}</b>tâches</div>
+      <div><b>${done.length}</b>terminées</div>
+      <div><b>${fmtMin(totalMin)}</b>temps total</div>
+    </div>
+    <table><tr><th>Tâche</th><th>Priorité</th><th>Type</th><th>Statut</th><th>Terminé le</th><th>Temps</th><th>Livrable</th></tr>${rows}</table>`;
+  window.print();
+}
+
 /* ================== IDÉES ================== */
 function setIdeaFilter(f){
   ideaFilter = f;
@@ -1176,14 +1251,15 @@ function renderIdeas(){
   if(!ideas.length){ grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">La boîte est vide… première idée ? 💭</p>'; return; }
   grid.innerHTML = ideas.map(i=>`
     <div class="idea-card st-${i.status}" onclick="openIdeaModal('${i.id}')">
+      <span class="status-corner" title="${ISTATUS_LABEL[i.status]}">${ISTATUS_LABEL[i.status].slice(0,2).trim()}</span>
       <div class="t">${esc(i.title)}</div>
       ${i.desc?`<div class="d">${esc(i.desc)}</div>`:''}
-      ${i.cast && i.cast.length ? `<div class="foot" style="margin-bottom:8px">🎥 ${castMinis(i.cast)}</div>` : ''}
       <div class="foot">
-        <span class="pill who-${i.by}">${WHO_LABEL[i.by]}</span>
-        <span class="pill" style="background:#EFEAF9">${ISTATUS_LABEL[i.status]}</span>
-        ${i.status!=='tournee'?`<button class="btn small sky" style="margin-left:auto" onclick="event.stopPropagation();planIdea('${i.id}')">📅 Planifier</button>`:''}
+        <span class="pill mini who-${i.by}">${WHO_LABEL[i.by]}</span>
+        ${i.script?`<span class="pill mini" style="background:linear-gradient(135deg,var(--butter),#FFF3CE)">📜 Script</span>`:''}
+        ${i.cast && i.cast.length?`<span class="pill mini" style="background:#EFEAF9" title="${i.cast.map(id=>{const p=personById(id);return p?p.name:id}).join(', ')}">🎥 ${i.cast.length}</span>`:''}
       </div>
+      ${i.status!=='tournee'?`<button class="btn sky small plan-btn" onclick="event.stopPropagation();planIdea('${i.id}')">📅 Planifier</button>`:''}
     </div>`).join('');
 }
 function renderCastPicks(){
@@ -1208,6 +1284,7 @@ function openIdeaModal(id=null){
     document.getElementById('ideaModalTitle').textContent = 'Modifier l\'idée';
     document.getElementById('i-title').value = i.title;
     document.getElementById('i-desc').value = i.desc || '';
+    document.getElementById('i-script').value = i.script || '';
     document.getElementById('i-by').value = i.by;
     document.getElementById('i-status').value = i.status;
     del.style.display = 'inline-block';
@@ -1217,6 +1294,7 @@ function openIdeaModal(id=null){
     document.getElementById('ideaModalTitle').textContent = 'Nouvelle idée vidéo';
     document.getElementById('i-title').value = '';
     document.getElementById('i-desc').value = '';
+    document.getElementById('i-script').value = '';
     document.getElementById('i-by').value = 'valentine';
     document.getElementById('i-status').value = 'idee';
     del.style.display = 'none';
@@ -1230,6 +1308,7 @@ function saveIdea(){
   const idea = {
     id: editingIdeaId || uid(), title,
     desc: document.getElementById('i-desc').value,
+    script: document.getElementById('i-script').value,
     by: document.getElementById('i-by').value,
     status: document.getElementById('i-status').value,
     cast: [...castSel]
@@ -1283,6 +1362,21 @@ function renderBilan(){
       return `<span><span class="dot" style="background:${t?t.color:'#ddd'}"></span>${t?esc(t.name):'?'} (${c})</span>`;
     }).join('');
     repart.innerHTML = `<label>Répartition par tag</label><div class="tag-bar">${bar}</div><div class="legend">${leg}</div>`;
+  }
+
+  /* 🏆 Top publi du mois (par vues) */
+  const ranked = posts.filter(p=>+p.views > 0 || +p.likes > 0).sort((a,b)=>(+b.views||0)-(+a.views||0) || (+b.likes||0)-(+a.likes||0));
+  const topEl = document.getElementById('topPost');
+  if(topEl){
+    topEl.innerHTML = ranked.length ? `
+      <label>🏆 Top du mois</label>
+      <div class="post-row" style="background:linear-gradient(135deg,#FFF6DE,var(--surface-2))" onclick="openPostModal('${ranked[0].id}')">
+        <span style="font-size:22px">🥇</span>
+        <span class="post-title">${esc(ranked[0].title)}</span>
+        ${+ranked[0].views?`<span class="pill" style="background:var(--sky)">👀 ${(+ranked[0].views).toLocaleString('fr-FR')}</span>`:''}
+        ${+ranked[0].likes?`<span class="pill" style="background:var(--rose)">❤️ ${(+ranked[0].likes).toLocaleString('fr-FR')}</span>`:''}
+        ${ranked[0].author?`<span class="pill who-${ranked[0].author}">${WHO_LABEL[ranked[0].author]||ranked[0].author}</span>`:''}
+      </div>` : '';
   }
 
   const r = data.reports[k] || {};
@@ -1463,61 +1557,6 @@ function restoreBackup(i){
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
   persist(); closeOverlays(); renderAll(); toast('Version restaurée 🕰️');
-}
-
-/* ================== CONFETTIS 🎉 ================== */
-function confetti(){
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const colors = PALETTE;
-  for(let i=0;i<26;i++){
-    const c = document.createElement('div');
-    c.className = 'confetti';
-    c.style.left = Math.random()*100 + 'vw';
-    c.style.background = colors[Math.floor(Math.random()*colors.length)];
-    c.style.animationDuration = (1.6 + Math.random()*1.4) + 's';
-    c.style.animationDelay = (Math.random()*.3) + 's';
-    if(Math.random()>.5) c.style.borderRadius = '50%';
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(), 3600);
-  }
-}
-
-/* ================== EXPORT PDF DES TÂCHES ================== */
-function exportTasksPDF(who){
-  let ts = [...data.tasks];
-  let title = 'Journal de bord — toute l\'équipe';
-  if(who){ ts = ts.filter(t=>t.who===who); const p = personById(who); title = 'Journal de bord — ' + (p ? p.name : who); }
-  else if(whoFilter !== 'all'){ ts = ts.filter(t=>t.who===whoFilter); const p = personById(whoFilter); title = 'Journal de bord — ' + (p ? p.name : whoFilter); }
-  if(!ts.length){ toast('Aucune tâche à exporter ici 🌱'); return; }
-  ts.sort((a,b)=>(b.done||b.createdAt||'').localeCompare(a.done||a.createdAt||''));
-  const done = ts.filter(t=>t.status==='fait');
-  const totalMin = done.reduce((s,t)=>s+parseTime(t.time),0);
-  const rows = ts.map(t=>{
-    const ty = typeById(t.typeId);
-    return `<tr>
-      <td><strong>${esc(t.name)}</strong>${t.note?`<br><span style="color:#888">${esc(t.note)}</span>`:''}</td>
-      <td>${ty?esc(ty.name):'—'}</td>
-      <td>${t.priority?PRIO_LABEL[t.priority].replace(/🔥 |🌤️ |🍃 /,''):'—'}</td>
-      <td>${TSTATUS_LABEL[t.status].replace(/📝 |🔄 |✅ /,'')}</td>
-      <td>${t.done?fmtDate(t.done):'—'}</td>
-      <td>${esc(t.time)||'—'}</td>
-      <td>${esc(t.deliv)||'—'}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('printArea').innerHTML = `
-    <h1>${title}</h1>
-    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}</p>
-    <div class="pstats">
-      <div><b>${ts.length}</b>tâches</div>
-      <div><b>${done.length}</b>terminées</div>
-      <div><b>${fmtMin(totalMin)}</b>temps de travail</div>
-      <div><b>${ts.filter(t=>t.deliv).length}</b>livrables</div>
-    </div>
-    <table>
-      <tr><th>Tâche</th><th>Type</th><th>Priorité</th><th>Statut</th><th>Terminé le</th><th>Temps</th><th>Livrable</th></tr>
-      ${rows}
-    </table>`;
-  window.print();
 }
 
 /* ================== EXPORT / IMPORT ================== */
