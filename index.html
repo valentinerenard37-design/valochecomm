@@ -253,6 +253,41 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .trash-item .d{font-size:11px;color:var(--muted)}
 .safe-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#E6F8EE,var(--surface-2));border-radius:18px;padding:12px 16px;font-size:13px;font-weight:800;color:var(--muted);box-shadow:var(--clay-in);margin-bottom:16px}
 
+/* ---------- Fun & animations ---------- */
+.bg-blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.45;pointer-events:none;z-index:-1;animation:floaty 20s ease-in-out infinite}
+.bg-blob.b1{width:340px;height:340px;top:-80px;right:-60px;background:var(--rose)}
+.bg-blob.b2{width:300px;height:300px;bottom:-70px;left:-80px;background:var(--sky);animation-delay:-7s}
+.bg-blob.b3{width:240px;height:240px;top:45%;left:60%;background:var(--butter);animation-delay:-13s}
+@keyframes floaty{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(35px,-45px) scale(1.18)}}
+.post-row,.idea-card,.kcard{animation:fadein .35s ease backwards}
+.post-row:nth-child(1),.idea-card:nth-child(1){animation-delay:.03s}
+.post-row:nth-child(2),.idea-card:nth-child(2){animation-delay:.07s}
+.post-row:nth-child(3),.idea-card:nth-child(3){animation-delay:.11s}
+.post-row:nth-child(4),.idea-card:nth-child(4){animation-delay:.15s}
+.post-row:nth-child(5),.idea-card:nth-child(5){animation-delay:.19s}
+.post-row:nth-child(6),.idea-card:nth-child(6){animation-delay:.23s}
+.stat{transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+.stat:hover{transform:translateY(-4px) rotate(-1deg)}
+.avatar{animation:squish 7s ease-in-out infinite}
+
+/* ---------- Casting (qui filme) ---------- */
+.cast-picks{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.cast-picks button{
+  font-family:'Fredoka',sans-serif;font-size:13px;font-weight:500;border:none;cursor:pointer;
+  padding:8px 14px;border-radius:14px;background:var(--surface-2);color:var(--muted);
+  box-shadow:var(--clay-soft);transition:all .15s cubic-bezier(.34,1.56,.64,1);
+}
+.cast-picks button:hover{transform:translateY(-2px) rotate(-1deg)}
+.cast-picks button.sel{color:var(--ink);box-shadow:var(--clay-in);transform:scale(1.03)}
+.cast-mini{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:10px;background:var(--surface);box-shadow:var(--clay-in);color:var(--muted)}
+
+/* ---------- Confettis ---------- */
+.confetti{position:fixed;top:-14px;width:11px;height:11px;border-radius:4px;pointer-events:none;z-index:200;animation:confall linear forwards}
+@keyframes confall{
+  0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}
+  100%{transform:translateY(105vh) rotate(720deg) scale(.7);opacity:0}
+}
+
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;font-weight:800;font-size:14px;padding:13px 22px;border-radius:18px;box-shadow:0 10px 24px rgba(69,60,92,.35);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:99}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -287,6 +322,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 </style>
 </head>
 <body>
+<div class="bg-blob b1"></div><div class="bg-blob b2"></div><div class="bg-blob b3"></div>
 <div class="wrap">
 
   <header>
@@ -358,7 +394,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
 
     <div class="card">
-      <h2>📒 Journal de bord <button class="btn primary small" style="margin-left:auto" onclick="openTaskModal()">+ Nouvelle tâche</button></h2>
+      <h2>📒 Journal de bord
+        <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sky small" onclick="exportTasksPDF()">🖨️ Export PDF</button>
+          <button class="btn primary small" onclick="openTaskModal()">+ Nouvelle tâche</button>
+        </span>
+      </h2>
+      <p class="section-hint">L'export PDF reprend les filtres actifs — sélectionne 🌿 Jade puis exporte pour avoir sa liste à elle.</p>
 
       <div class="view-switch" role="tablist">
         <button class="active" data-tview="liste" onclick="setTView('liste')">📋 Liste</button>
@@ -571,8 +613,11 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         </select>
       </div>
     </div>
+    <label>🎥 Qui apparaît / filme dans la vidéo ?</label>
+    <div class="cast-picks" id="castPicks"></div>
     <div class="modal-actions">
       <button class="btn danger" id="deleteIdeaBtn" style="display:none" onclick="deleteIdea()">🗑️ Corbeille</button>
+      <button class="btn sky" id="planIdeaBtn" style="display:none" onclick="planIdea(editingIdeaId)">📅 Planifier au calendrier</button>
       <button class="btn" onclick="closeOverlays()">Annuler</button>
       <button class="btn primary" onclick="saveIdea()">💾 Enregistrer</button>
     </div>
@@ -614,6 +659,18 @@ const PRIO_LABEL = {haute:'🔥 Haute', moyenne:'🌤️ Moyenne', basse:'🍃 B
 const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', both:'✨ Les deux'};
 const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade'};
 const ISTATUS_LABEL = {idee:'💭 En vrac', validee:'⭐ Validée', tournee:'🎬 Tournée'};
+const PEOPLE = [
+  {id:'valentine', name:'Valentine', emo:'🌸'},
+  {id:'jade', name:'Jade', emo:'🌿'},
+  {id:'adrien', name:'Adrien', emo:'🎯'},
+  {id:'dimitri', name:'Dimitri', emo:'🧭'},
+  {id:'matteo', name:'Matteo', emo:'🚀'},
+  {id:'raphael', name:'Raphaël', emo:'⚡'},
+  {id:'gabriel', name:'Gabriel', emo:'🎩'},
+  {id:'romain', name:'Romain', emo:'🔥'}
+];
+const personById = id => PEOPLE.find(p=>p.id===id);
+let castSel = [];
 
 const DEFAULTS = {
   posts: [], tasks: [], ideas: [],
@@ -742,11 +799,12 @@ function renderPostList(){
 }
 
 /* ================== MODAL POST ================== */
-function openPostModal(id=null, dateStr=null){
+function openPostModal(id=null, dateStr=null, prefill=null){
   editingId = id;
   const sel = document.getElementById('p-tag');
   sel.innerHTML = data.tags.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
   const del = document.getElementById('deletePostBtn');
+  if(!prefill) schedulingIdeaId = null;
   if(id){
     const p = data.posts.find(x=>x.id===id); if(!p) return;
     document.getElementById('modalTitle').textContent = 'Modifier la publication';
@@ -759,11 +817,17 @@ function openPostModal(id=null, dateStr=null){
     document.getElementById('p-link').value = p.link || '';
     del.style.display = 'inline-block';
   } else {
-    document.getElementById('modalTitle').textContent = 'Nouvelle publication';
+    document.getElementById('modalTitle').textContent = prefill ? 'Planifier l\'idée 📅' : 'Nouvelle publication';
     ['p-title','p-notes','p-link'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('p-date').value = dateStr || new Date().toISOString().slice(0,10);
     document.getElementById('p-platform').value = 'instagram';
-    document.getElementById('p-status').value = 'idee';
+    document.getElementById('p-status').value = prefill ? 'afaire' : 'idee';
+    if(prefill){
+      document.getElementById('p-title').value = prefill.title || '';
+      document.getElementById('p-notes').value = prefill.notes || '';
+      const reel = data.tags.find(t=>/reel|vid[ée]o/i.test(t.name));
+      if(reel) sel.value = reel.id;
+    }
     del.style.display = 'none';
   }
   document.getElementById('postOverlay').classList.add('open');
@@ -783,7 +847,28 @@ function savePost(){
   };
   if(editingId) data.posts = data.posts.map(p=>p.id===editingId?post:p);
   else data.posts.push(post);
+  if(schedulingIdeaId && !editingId){
+    const idea = data.ideas.find(i=>i.id===schedulingIdeaId);
+    if(idea && idea.status==='idee') idea.status = 'validee';
+    schedulingIdeaId = null;
+    confetti();
+    persist(); closeOverlays(); renderAll(); toast('Idée planifiée au calendrier 📅✨');
+    return;
+  }
   persist(); closeOverlays(); renderAll(); toast('Publication enregistrée ✨');
+}
+let schedulingIdeaId = null;
+function planIdea(ideaId){
+  const idea = data.ideas.find(i=>i.id===ideaId);
+  if(!idea) return;
+  closeOverlays();
+  schedulingIdeaId = ideaId;
+  let notes = idea.desc || '';
+  if(idea.cast && idea.cast.length){
+    const names = idea.cast.map(id=>{ const p = personById(id); return p ? p.name : id; }).join(', ');
+    notes += (notes ? '\n' : '') + '🎥 Au tournage : ' + names;
+  }
+  openPostModal(null, null, {title: idea.title, notes});
 }
 function deletePost(){
   const p = data.posts.find(x=>x.id===editingId);
@@ -880,7 +965,10 @@ function renderTasks(){
         <div class="person-head">
           <div class="avatar ${cls}">${emo}</div>
           <div><h3>${name}</h3><p>${role}</p></div>
-          <button class="btn small primary" style="margin-left:auto" onclick="openTaskModal(null,'${who}')">+ Tâche</button>
+          <span style="margin-left:auto;display:flex;gap:6px">
+            <button class="btn small" onclick="exportTasksPDF('${who}')" title="Exporter les tâches de ${name} en PDF">🖨️</button>
+            <button class="btn small primary" onclick="openTaskModal(null,'${who}')">+ Tâche</button>
+          </span>
         </div>
         <div class="mini-stats">
           <span class="mini-stat"><b>${mine.length}</b> tâches</span>
@@ -910,9 +998,10 @@ function moveTask(id, dir){
   persist(); renderTasks();
 }
 function setTaskStatus(t, st){
+  const wasDone = t.status==='fait';
   t.status = st;
   if(st==='fait' && !t.done) t.done = new Date().toISOString().slice(0,10);
-  if(st!=='fait') t.done = t.done; /* on garde la date si elle existait */
+  if(st==='fait' && !wasDone) confetti();
 }
 function openTaskModal(id=null, presetWho=null){
   editingTaskId = id;
@@ -963,6 +1052,7 @@ function saveTask(){
   };
   if(editingTaskId) data.tasks = data.tasks.map(t=>t.id===editingTaskId?task:t);
   else data.tasks.push(task);
+  if(status==='fait' && (!old || old.status!=='fait')) confetti();
   persist(); closeOverlays(); renderAll(); toast('Tâche enregistrée ✅');
 }
 function deleteTask(){
@@ -1088,15 +1178,31 @@ function renderIdeas(){
     <div class="idea-card st-${i.status}" onclick="openIdeaModal('${i.id}')">
       <div class="t">${esc(i.title)}</div>
       ${i.desc?`<div class="d">${esc(i.desc)}</div>`:''}
+      ${i.cast && i.cast.length ? `<div class="foot" style="margin-bottom:8px">🎥 ${castMinis(i.cast)}</div>` : ''}
       <div class="foot">
         <span class="pill who-${i.by}">${WHO_LABEL[i.by]}</span>
         <span class="pill" style="background:#EFEAF9">${ISTATUS_LABEL[i.status]}</span>
+        ${i.status!=='tournee'?`<button class="btn small sky" style="margin-left:auto" onclick="event.stopPropagation();planIdea('${i.id}')">📅 Planifier</button>`:''}
       </div>
     </div>`).join('');
+}
+function renderCastPicks(){
+  document.getElementById('castPicks').innerHTML = PEOPLE.map(p=>
+    `<button type="button" class="${castSel.includes(p.id)?'sel':''}" onclick="toggleCast('${p.id}')">${p.emo} ${p.name}</button>`).join('');
+}
+function toggleCast(id){
+  castSel = castSel.includes(id) ? castSel.filter(x=>x!==id) : [...castSel, id];
+  renderCastPicks();
+}
+function castMinis(cast){
+  if(!cast || !cast.length) return '';
+  return cast.map(id=>{ const p = personById(id); return p ? `<span class="cast-mini">${p.emo} ${p.name}</span>` : ''; }).join('');
 }
 function openIdeaModal(id=null){
   editingIdeaId = id;
   const del = document.getElementById('deleteIdeaBtn');
+  castSel = id ? [...((data.ideas.find(x=>x.id===id)||{}).cast || [])] : [];
+  renderCastPicks();
   if(id){
     const i = data.ideas.find(x=>x.id===id); if(!i) return;
     document.getElementById('ideaModalTitle').textContent = 'Modifier l\'idée';
@@ -1105,7 +1211,9 @@ function openIdeaModal(id=null){
     document.getElementById('i-by').value = i.by;
     document.getElementById('i-status').value = i.status;
     del.style.display = 'inline-block';
+    document.getElementById('planIdeaBtn').style.display = i.status!=='tournee' ? 'inline-block' : 'none';
   } else {
+    document.getElementById('planIdeaBtn').style.display = 'none';
     document.getElementById('ideaModalTitle').textContent = 'Nouvelle idée vidéo';
     document.getElementById('i-title').value = '';
     document.getElementById('i-desc').value = '';
@@ -1123,7 +1231,8 @@ function saveIdea(){
     id: editingIdeaId || uid(), title,
     desc: document.getElementById('i-desc').value,
     by: document.getElementById('i-by').value,
-    status: document.getElementById('i-status').value
+    status: document.getElementById('i-status').value,
+    cast: [...castSel]
   };
   if(editingIdeaId) data.ideas = data.ideas.map(i=>i.id===editingIdeaId?idea:i);
   else data.ideas.unshift(idea);
@@ -1354,6 +1463,61 @@ function restoreBackup(i){
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
   persist(); closeOverlays(); renderAll(); toast('Version restaurée 🕰️');
+}
+
+/* ================== CONFETTIS 🎉 ================== */
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = PALETTE;
+  for(let i=0;i<26;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random()*100 + 'vw';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration = (1.6 + Math.random()*1.4) + 's';
+    c.style.animationDelay = (Math.random()*.3) + 's';
+    if(Math.random()>.5) c.style.borderRadius = '50%';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 3600);
+  }
+}
+
+/* ================== EXPORT PDF DES TÂCHES ================== */
+function exportTasksPDF(who){
+  let ts = [...data.tasks];
+  let title = 'Journal de bord — toute l\'équipe';
+  if(who){ ts = ts.filter(t=>t.who===who); const p = personById(who); title = 'Journal de bord — ' + (p ? p.name : who); }
+  else if(whoFilter !== 'all'){ ts = ts.filter(t=>t.who===whoFilter); const p = personById(whoFilter); title = 'Journal de bord — ' + (p ? p.name : whoFilter); }
+  if(!ts.length){ toast('Aucune tâche à exporter ici 🌱'); return; }
+  ts.sort((a,b)=>(b.done||b.createdAt||'').localeCompare(a.done||a.createdAt||''));
+  const done = ts.filter(t=>t.status==='fait');
+  const totalMin = done.reduce((s,t)=>s+parseTime(t.time),0);
+  const rows = ts.map(t=>{
+    const ty = typeById(t.typeId);
+    return `<tr>
+      <td><strong>${esc(t.name)}</strong>${t.note?`<br><span style="color:#888">${esc(t.note)}</span>`:''}</td>
+      <td>${ty?esc(ty.name):'—'}</td>
+      <td>${t.priority?PRIO_LABEL[t.priority].replace(/🔥 |🌤️ |🍃 /,''):'—'}</td>
+      <td>${TSTATUS_LABEL[t.status].replace(/📝 |🔄 |✅ /,'')}</td>
+      <td>${t.done?fmtDate(t.done):'—'}</td>
+      <td>${esc(t.time)||'—'}</td>
+      <td>${esc(t.deliv)||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h1>${title}</h1>
+    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}</p>
+    <div class="pstats">
+      <div><b>${ts.length}</b>tâches</div>
+      <div><b>${done.length}</b>terminées</div>
+      <div><b>${fmtMin(totalMin)}</b>temps de travail</div>
+      <div><b>${ts.filter(t=>t.deliv).length}</b>livrables</div>
+    </div>
+    <table>
+      <tr><th>Tâche</th><th>Type</th><th>Priorité</th><th>Statut</th><th>Terminé le</th><th>Temps</th><th>Livrable</th></tr>
+      ${rows}
+    </table>`;
+  window.print();
 }
 
 /* ================== EXPORT / IMPORT ================== */
