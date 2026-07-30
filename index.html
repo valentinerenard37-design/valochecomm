@@ -115,6 +115,23 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .day .num{font-size:12px;font-weight:800;color:var(--muted)}
 .day.today .num{color:#fff;background:var(--lilac);width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
 .chip{display:block;max-width:100%;min-width:0;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:9px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:1px 2px 4px rgba(93,77,120,.15),inset 1px 1px 2px rgba(255,255,255,.55)}
+.chip.cs-idee{opacity:.5;border:1.6px dashed rgba(93,77,120,.5);box-shadow:none}
+.chip.cs-afaire{border:1.6px dashed rgba(93,77,120,.45);box-shadow:none}
+.pdot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(93,77,120,.25);vertical-align:0;margin-right:2px;flex:none}
+.pdot.ig{background:#FF9EC6}
+.pdot.li{background:#7FB8FF}
+.pdot.both{background:linear-gradient(135deg,#FF9EC6,#7FB8FF)}
+.pill.who-luna{background:linear-gradient(135deg,var(--butter),var(--peach))}
+
+/* ---------- Panneau latéral calendrier ---------- */
+.cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:20px;align-items:start}
+.cal-side{display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+.legend-box{background:var(--surface-2);border-radius:20px;padding:14px 16px;box-shadow:var(--clay-in)}
+.legend-box h4{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px;font-family:'Fredoka',sans-serif}
+.lg-row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted);margin-bottom:7px}
+.lg-row:last-child{margin-bottom:0}
+.lg-row .chip{flex:none;cursor:default}
+.lg-row b{color:var(--ink);font-family:'Fredoka',sans-serif;font-size:15px;min-width:20px;text-align:center}
 
 /* ---------- Rows / pills ---------- */
 .post-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface-2);border-radius:20px;padding:14px 18px;margin-bottom:12px;box-shadow:var(--clay-soft);transition:transform .12s;cursor:pointer}
@@ -321,6 +338,9 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   .kanban{grid-template-columns:1fr}
   .people{grid-template-columns:1fr}
   .day{min-height:64px}
+  .cal-layout{grid-template-columns:1fr}
+  .cal-side{position:static;flex-direction:row;flex-wrap:wrap}
+  .cal-side>*{flex:1 1 150px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -371,13 +391,33 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       </div>
       <div style="display:flex;justify-content:center;margin-bottom:18px">
         <div class="view-switch" role="tablist" aria-label="Filtrer le calendrier">
-          <button class="active" data-calf="all" onclick="setCalFilter('all')">🗓️ Tout</button>
-          <button data-calf="publie" onclick="setCalFilter('publie')">✅ Déjà publié</button>
-          <button data-calf="acreer" onclick="setCalFilter('acreer')">🎨 À créer</button>
+          <button class="active" data-calf="all" onclick="setCalFilter('all')">Tout</button>
+          <button data-calf="publie" onclick="setCalFilter('publie')">Posté</button>
+          <button data-calf="acreer" onclick="setCalFilter('acreer')">À créer</button>
         </div>
       </div>
-      <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
-      <div class="cal" id="calGrid"></div>
+      <div class="cal-layout">
+        <div class="cal-main" style="min-width:0">
+          <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+          <div class="cal" id="calGrid"></div>
+        </div>
+        <aside class="cal-side">
+          <button class="btn primary" style="width:100%" onclick="openPostModal()">+ Nouveau post</button>
+          <div class="legend-box" id="calCounts"></div>
+          <div class="legend-box">
+            <h4>Statuts</h4>
+            <div class="lg-row"><span class="chip cs-idee" style="background:var(--lilac)">Aa</span> Idée</div>
+            <div class="lg-row"><span class="chip cs-afaire" style="background:var(--lilac)">Aa</span> À créer</div>
+            <div class="lg-row"><span class="chip" style="background:var(--lilac)">✓ Aa</span> Posté / programmé</div>
+          </div>
+          <div class="legend-box">
+            <h4>Plateformes</h4>
+            <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
+            <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
+            <div class="lg-row"><span class="pdot both"></span> Les deux</div>
+          </div>
+        </aside>
+      </div>
     </div>
     <div class="card">
       <h2>✍️ Publications du mois <button class="btn primary small" style="margin-left:auto" onclick="openPostModal()">+ Nouvelle publi</button></h2>
@@ -794,8 +834,8 @@ function setCalFilter(f){
   renderCalendar(); renderPostList();
 }
 function matchCalFilter(p){
-  if(calFilter==='publie') return p.status==='publie';
-  if(calFilter==='acreer') return p.status!=='publie';
+  if(calFilter==='publie') return p.status==='publie' || p.status==='programme';
+  if(calFilter==='acreer') return p.status==='idee' || p.status==='afaire';
   return true;
 }
 function renderCalendar(){
@@ -812,19 +852,26 @@ function renderCalendar(){
     const dayPosts = data.posts.filter(p=>p.date===dateStr && matchCalFilter(p));
     const chips = dayPosts.slice(0,3).map(p=>{
       const t = tagById(p.tagId);
-      const check = p.status==='publie' ? '✓ ' : '';
-      return `<span class="chip" style="background:${t?t.color:'#ddd'}" onclick="event.stopPropagation();openPostModal('${p.id}')">${check}${esc(p.title)}</span>`;
+      const check = (p.status==='publie' || p.status==='programme') ? '✓ ' : '';
+      const pd = p.platform==='instagram' ? 'ig' : p.platform==='linkedin' ? 'li' : 'both';
+      return `<span class="chip cs-${p.status}" style="background:${t?t.color:'#ddd'}" title="${STATUS_LABEL[p.status]} · ${PLAT_LABEL[p.platform]}" onclick="event.stopPropagation();openPostModal('${p.id}')"><span class="pdot ${pd}"></span> ${check}${esc(p.title)}</span>`;
     }).join('') + (dayPosts.length>3 ? `<span class="chip" style="background:#EFEAF9">+${dayPosts.length-3}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
       `<div class="day ${dateStr===todayStr?'today':''}" onclick="openPostModal(null,'${dateStr}')" title="Ajouter une publi"><span class="num">${d}</span>${chips}</div>`);
   }
+  const mp = postsOfMonth();
+  const c = s => mp.filter(p=>p.status===s).length;
+  document.getElementById('calCounts').innerHTML = `<h4>Ce mois-ci</h4>
+    <div class="lg-row"><b>${c('publie')+c('programme')}</b> postés / programmés</div>
+    <div class="lg-row"><b>${c('afaire')}</b> à créer</div>
+    <div class="lg-row"><b>${c('idee')}</b> idées</div>`;
 }
 function renderPostList(){
   const list = document.getElementById('postList');
   const posts = postsOfMonth().filter(matchCalFilter);
   if(!posts.length){
-    const msg = calFilter==='publie' ? 'Rien n\'a encore été publié ce mois-ci 📭'
-      : calFilter==='acreer' ? 'Tout est publié, rien à créer — quelle machine ! 🎉'
+    const msg = calFilter==='publie' ? 'Rien n\'a encore été posté ce mois-ci 📭'
+      : calFilter==='acreer' ? 'Tout est posté, rien à créer — quelle machine ! 🎉'
       : 'Rien de prévu ce mois-ci… clique sur un jour du calendrier pour ajouter ta première publi 🌱';
     list.innerHTML = `<p class="empty-msg">${msg}</p>`; return;
   }
@@ -834,6 +881,7 @@ function renderPostList(){
     return `<div class="post-row" onclick="openPostModal('${p.id}')">
       <div class="post-date">${p.date.slice(8,10)}<br><span style="font-size:10px;color:var(--muted)">${MONTHS[current.getMonth()].slice(0,3)}</span></div>
       <span class="post-title">${esc(p.title)}</span>
+      ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
       ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
       <span class="pill ${platClass}">${PLAT_LABEL[p.platform]}</span>
       <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
