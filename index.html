@@ -220,8 +220,24 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .mini-stat b{font-family:'Fredoka',sans-serif;font-size:16px;color:var(--ink);margin-right:4px}
 
 /* ---------- Assistant ---------- */
-.assistant{background:linear-gradient(150deg,#F3EDFF,var(--surface));border-radius:28px;box-shadow:var(--clay);padding:24px;margin-bottom:26px;position:relative;overflow:hidden}
-.assistant::before{content:'';position:absolute;top:-50px;right:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(203,185,245,.4),transparent 70%)}
+.assistant{background:linear-gradient(150deg,#F3EDFF,var(--surface));border-radius:28px;box-shadow:var(--clay);padding:0;margin-bottom:26px;position:relative;overflow:hidden}
+.assistant::before{content:'';position:absolute;top:-50px;right:-50px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(203,185,245,.4),transparent 70%);pointer-events:none}
+.assistant-toggle{width:100%;display:flex;align-items:center;gap:14px;border:none;background:transparent;cursor:pointer;padding:18px 22px;text-align:left;color:var(--ink);border-radius:28px;transition:transform .12s}
+.assistant-toggle:hover .clem-blob{transform:rotate(-10deg) scale(1.08)}
+.assistant-toggle:focus-visible{outline:3px solid var(--lilac);outline-offset:-3px}
+.clem-blob{width:48px;height:48px;flex:none;border-radius:46% 54% 55% 45%/50% 42% 58% 50%;background:linear-gradient(135deg,var(--butter),var(--peach));box-shadow:var(--clay-soft);display:grid;place-items:center;font-size:22px;transition:transform .2s;animation:squish 7s ease-in-out infinite}
+.at-text{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.at-title{font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px}
+.at-sub{font-size:12px;font-weight:800;color:var(--muted)}
+.chev{font-size:18px;color:var(--muted);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.assistant.open .chev{transform:rotate(180deg)}
+.assistant-body{display:none;padding:0 22px 22px}
+.assistant.open .assistant-body{display:block;animation:fadein .3s ease}
+.ndot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px;vertical-align:1px;box-shadow:inset 1px 1px 2px rgba(255,255,255,.65),0 1px 3px rgba(93,77,120,.2);flex:none}
+.vid-idea{background:var(--surface-2);border-radius:20px;padding:16px 18px;margin-bottom:12px;box-shadow:var(--clay-soft);animation:pop .3s cubic-bezier(.34,1.56,.64,1) backwards}
+.vid-idea .vt{font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;margin-bottom:5px}
+.vid-idea .vp{font-size:13px;font-weight:600;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.vid-idea .btn.added{background:var(--surface-2);box-shadow:var(--clay-in);color:var(--muted);pointer-events:none}
 .ask-row{display:flex;gap:10px;margin-top:6px}
 .ask-row input{flex:1}
 .ai-answer{margin-top:18px;display:none}
@@ -361,12 +377,12 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       </div>
     </button>
     <div class="flower-menu" id="flowerMenu">
-      <button onclick="switchView('planning')">📅 Planning édito</button>
-      <button onclick="switchView('taches')">✅ Journal de bord</button>
-      <button onclick="switchView('idees')">💡 Boîte à idées</button>
-      <button onclick="switchView('bilan')">📊 Bilans mensuels</button>
-      <button onclick="switchView('tags')">🏷️ Tags &amp; types</button>
-      <button onclick="openSafe()">🛡️ Coffre-fort des données</button>
+      <button onclick="switchView('planning')"><span class="ndot" style="background:var(--sky)"></span>Planning édito</button>
+      <button onclick="switchView('taches')"><span class="ndot" style="background:var(--mint)"></span>Journal de bord</button>
+      <button onclick="switchView('idees')"><span class="ndot" style="background:var(--butter)"></span>Boîte à idées</button>
+      <button onclick="switchView('bilan')"><span class="ndot" style="background:var(--rose)"></span>Bilans mensuels</button>
+      <button onclick="switchView('tags')"><span class="ndot" style="background:var(--lilac)"></span>Tags &amp; types</button>
+      <button onclick="openSafe()"><span class="ndot" style="background:var(--peach)"></span>Coffre-fort des données</button>
     </div>
     <div class="data-btns">
       <button class="btn small" onclick="openSafe()">🛡️ Coffre-fort</button>
@@ -377,11 +393,11 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   </header>
 
   <nav>
-    <button class="active" data-view="planning" onclick="switchView('planning')">📅 Planning</button>
-    <button data-view="taches" onclick="switchView('taches')">✅ Tâches</button>
-    <button data-view="idees" onclick="switchView('idees')">💡 Idées</button>
-    <button data-view="bilan" onclick="switchView('bilan')">📊 Bilans</button>
-    <button data-view="tags" onclick="switchView('tags')">🏷️ Tags</button>
+    <button class="active" data-view="planning" onclick="switchView('planning')"><span class="ndot" style="background:var(--sky)"></span>Planning</button>
+    <button data-view="taches" onclick="switchView('taches')"><span class="ndot" style="background:var(--mint)"></span>Tâches</button>
+    <button data-view="idees" onclick="switchView('idees')"><span class="ndot" style="background:var(--butter)"></span>Idées</button>
+    <button data-view="bilan" onclick="switchView('bilan')"><span class="ndot" style="background:var(--rose)"></span>Bilans</button>
+    <button data-view="tags" onclick="switchView('tags')"><span class="ndot" style="background:var(--lilac)"></span>Tags</button>
   </nav>
 
   <!-- ================= PLANNING ================= -->
@@ -431,20 +447,28 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <!-- ================= TÂCHES ================= -->
   <section id="view-taches" class="view">
 
-    <div class="assistant">
-      <h2>🍊 Clémentine, ton assistante</h2>
-      <p class="section-hint">Pose-lui une question sur le travail accompli — elle fouille le journal de bord et te présente tout bien rangé.</p>
-      <div class="ask-row">
-        <input type="text" id="aiInput" placeholder="ex : qu'est-ce que Valentine a fait sur les réseaux sociaux ce mois-ci ?" onkeydown="if(event.key==='Enter')askAI()">
-        <button class="btn sky" onclick="askAI()">Demander ✨</button>
+    <div class="assistant" id="assistantBox">
+      <button class="assistant-toggle" onclick="toggleAssistant()" aria-expanded="false">
+        <span class="clem-blob">🍊</span>
+        <span class="at-text">
+          <span class="at-title">Parler à Clémentine</span>
+          <span class="at-sub">idées de vidéos · bilan du travail · questions</span>
+        </span>
+        <span class="chev" id="assistChev">▾</span>
+      </button>
+      <div class="assistant-body" id="assistantBody">
+        <div class="ask-row">
+          <input type="text" id="aiInput" placeholder="ex : propose-moi des idées de vidéos, ou : qu'a fait Jade cette semaine ?" onkeydown="if(event.key==='Enter')askAI()">
+          <button class="btn sky" onclick="askAI()">Demander ✨</button>
+        </div>
+        <div class="suggest">
+          <button onclick="quickAsk('Propose-moi des idées de vidéos')">Idées de vidéos</button>
+          <button onclick="quickAsk('Qu\'a fait Valentine ce mois-ci ?')">Valentine ce mois-ci</button>
+          <button onclick="quickAsk('Tâches de Jade pas encore faites')">Jade — à faire</button>
+          <button onclick="quickAsk('Réseaux sociaux terminés')">Réseaux sociaux faits</button>
+        </div>
+        <div class="ai-answer" id="aiAnswer"></div>
       </div>
-      <div class="suggest">
-        <button onclick="quickAsk('Qu\'a fait Valentine ce mois-ci ?')">Valentine ce mois-ci</button>
-        <button onclick="quickAsk('Tâches de Jade cette semaine')">Jade cette semaine</button>
-        <button onclick="quickAsk('Réseaux sociaux terminés')">Réseaux sociaux ✅</button>
-        <button onclick="quickAsk('Tâches en priorité haute')">Priorité haute 🔥</button>
-      </div>
-      <div class="ai-answer" id="aiAnswer"></div>
     </div>
 
     <div class="card">
@@ -1176,11 +1200,71 @@ function deleteTask(){
 }
 
 /* ================== CLÉMENTINE (assistante locale) ================== */
+function toggleAssistant(){
+  const box = document.getElementById('assistantBox');
+  box.classList.toggle('open');
+  const open = box.classList.contains('open');
+  box.querySelector('.assistant-toggle').setAttribute('aria-expanded', open);
+  if(open) setTimeout(()=>document.getElementById('aiInput').focus(), 150);
+}
 function quickAsk(q){ document.getElementById('aiInput').value = q; askAI(); }
+
+/* Générateur d'idées de vidéos */
+const VID_FORMATS = [
+  {f:'Micro-trottoir', p:'On descend dans la rue poser la question aux passants — réponses spontanées, montage rythmé.'},
+  {f:'Mythe vs réalité', p:'Une idée reçue affichée à l\'écran, le courtier la démonte en 30 secondes chrono.'},
+  {f:'FAQ express', p:'3 questions que les clients posent tout le temps, 3 réponses cash face caméra.'},
+  {f:'3 erreurs à éviter', p:'Format liste qui performe : erreurs fréquentes + le bon réflexe à chaque fois.'},
+  {f:'Décryptage jargon', p:'Un mot compliqué du crédit expliqué avec un exemple de la vraie vie.'},
+  {f:'Une journée avec', p:'Vlog en coulisses : on suit un membre de l\'équipe, rendez-vous, café, victoires.'},
+  {f:'Duo face caméra', p:'Deux voix qui se répondent : un sceptique vs le courtier qui a réponse à tout.'},
+  {f:'Story time client', p:'Une vraie histoire de dossier (anonymisée) racontée comme un mini-feuilleton.'},
+  {f:'Le saviez-vous', p:'Un chiffre ou fait étonnant en accroche, l\'explication en 20 secondes.'},
+  {f:'Trend détournée', p:'On reprend un son ou un format tendance du moment, version courtage.'}
+];
+const VID_TOPICS = ['le taux immobilier','le premier achat','le PTZ','l\'assurance emprunteur','courtier vs banque','le rachat de crédit','l\'apport personnel','les frais de notaire','la renégociation de prêt','acheter en couple','l\'investissement locatif','les aides pour les jeunes acheteurs'];
+let aiSuggestions = [];
+function suggestVideos(){
+  const shuffled = a => [...a].sort(()=>Math.random()-.5);
+  const formats = shuffled(VID_FORMATS).slice(0,4);
+  const topics = shuffled(VID_TOPICS);
+  const existing = data.ideas.map(i=>i.title.toLowerCase());
+  aiSuggestions = formats.map((fo,i)=>({
+    title: fo.f + ' — ' + topics[i],
+    pitch: fo.p
+  })).filter(s=>!existing.some(e=>e.includes(s.title.toLowerCase().slice(0,18))));
+  const box = document.getElementById('aiAnswer');
+  box.classList.add('show');
+  box.innerHTML = `
+    <div class="ai-bubble">🍊 <span id="typeTarget"></span></div>
+    <div style="margin-top:14px">
+      ${aiSuggestions.map((s,i)=>`
+        <div class="vid-idea" style="animation-delay:${.25 + i*.12}s">
+          <div class="vt">${esc(s.title)}</div>
+          <div class="vp">${esc(s.pitch)}</div>
+          <button class="btn small primary" id="addSug${i}" onclick="addSuggestedIdea(${i})">+ Ajouter à la boîte à idées</button>
+        </div>`).join('')}
+    </div>
+    <div class="suggest"><button onclick="quickAsk('Propose-moi des idées de vidéos')">🔄 D'autres idées !</button></div>`;
+  typewrite('typeTarget', 'Voilà quelques pistes de vidéos toutes fraîches — clique sur celles qui te plaisent, elles filent direct dans la boîte à idées pour Jade et toi ✨');
+}
+function addSuggestedIdea(i){
+  const s = aiSuggestions[i];
+  if(!s) return;
+  data.ideas.unshift({id:uid(), title:s.title, desc:s.pitch, script:'', by:'valentine', status:'idee', cast:[]});
+  persist(); renderIdeas();
+  const b = document.getElementById('addSug'+i);
+  if(b){ b.textContent = '✓ Ajoutée'; b.classList.add('added'); }
+  toast('Idée ajoutée à la boîte 💡');
+}
 function askAI(){
   const q = document.getElementById('aiInput').value.trim();
   if(!q){ toast('Pose-moi une question 🍊'); return; }
   const lq = q.toLowerCase();
+  /* Intention : demande d'idées / sujets de vidéos */
+  if(/propose|sugg[èe]re|inspiration|id[ée]es? (de|pour)|sujets?( de| pour)? (vid|reel|post|contenu)|quoi (poster|filmer|tourner)|donne.moi des id/.test(lq)){
+    suggestVideos(); return;
+  }
   let ts = [...data.tasks];
   const crumbs = [];
 
@@ -1200,7 +1284,8 @@ function askAI(){
   }
 
   /* statut */
-  if(/(termin|\bfait|fini|accompli|réalis)/.test(lq)){ ts = ts.filter(t=>t.status==='fait'); crumbs.push('✅ terminées'); }
+  if(/pas (encore )?fait|pas fini|pas termin|reste [àa] faire/.test(lq)){ ts = ts.filter(t=>t.status!=='fait'); crumbs.push('⏳ pas encore faites'); }
+  else if(/(termin|\bfait|fini|accompli|réalis)/.test(lq)){ ts = ts.filter(t=>t.status==='fait'); crumbs.push('✅ terminées'); }
   else if(/en cours/.test(lq)){ ts = ts.filter(t=>t.status==='encours'); crumbs.push('🔄 en cours'); }
   else if(/à faire|a faire/.test(lq)){ ts = ts.filter(t=>t.status==='afaire'); crumbs.push('📝 à faire'); }
 
@@ -1232,8 +1317,13 @@ function askAI(){
   box.classList.add('show');
 
   if(!ts.length){
-    box.innerHTML = `<div class="ai-bubble">🍊 <span id="typeTarget"></span></div>`;
-    typewrite('typeTarget', `Hmm, je n'ai rien trouvé pour « ${q} ». Essaie avec un prénom (Valentine, Jade), un type de tâche ou une période — ou vérifie que les tâches sont bien dans le journal de bord !`);
+    box.innerHTML = `<div class="ai-bubble">🍊 <span id="typeTarget"></span></div>
+    <div class="suggest" style="margin-top:12px">
+      <button onclick="quickAsk('Propose-moi des idées de vidéos')">Idées de vidéos</button>
+      <button onclick="quickAsk('Qu\\'a fait Valentine ce mois-ci ?')">Le taf de Valentine</button>
+      <button onclick="quickAsk('Tâches pas encore faites')">Ce qui reste à faire</button>
+    </div>`;
+    typewrite('typeTarget', `Je n'ai rien trouvé pour « ${q} » dans le journal de bord. Je peux te dire qui a fait quoi (par personne, type, statut ou période), te sortir ce qui reste à faire, ou te proposer des idées de vidéos — essaie une des pastilles en dessous !`);
     return;
   }
 
