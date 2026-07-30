@@ -31,6 +31,7 @@
     inset -4px -4px 10px rgba(255,255,255,.85);
 }
 *{box-sizing:border-box;margin:0;padding:0}
+button,input,select,textarea{font-family:inherit}
 html{scroll-behavior:smooth}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;padding:28px 20px 80px}
 h1,h2,h3,h4,.fredoka{font-family:'Fredoka',sans-serif}
@@ -185,6 +186,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .fchip.v.active{background:linear-gradient(135deg,var(--lilac),#DCD0FA)}
 .fchip.j.active{background:linear-gradient(135deg,var(--mint),#C8F0DC)}
 .fchip.a.active{background:linear-gradient(135deg,var(--sky),#CFE6FF)}
+.fselect{width:auto;font-family:'Fredoka',sans-serif;font-weight:500;font-size:13px;color:var(--muted);padding:9px 14px;border-radius:14px;background:var(--surface-2);box-shadow:var(--clay-soft);cursor:pointer}
+.fselect:focus{outline:3px solid var(--lilac)}
 
 /* Kanban */
 .kanban{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -463,8 +466,15 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         <button class="fchip a active" data-who="all" onclick="setWho('all')">Toute l'équipe</button>
         <button class="fchip v" data-who="valentine" onclick="setWho('valentine')">🌸 Valentine</button>
         <button class="fchip j" data-who="jade" onclick="setWho('jade')">🌿 Jade</button>
-        <select id="typeFilter" style="width:auto;padding:9px 14px;font-size:13px" onchange="renderTasks()"></select>
-        <select id="periodFilter" style="width:auto;padding:9px 14px;font-size:13px" onchange="renderTasks()">
+        <select id="statusFilter" class="fselect" onchange="renderTasks()">
+          <option value="all">Tous les statuts</option>
+          <option value="pasfini">Pas encore fait</option>
+          <option value="afaire">À faire</option>
+          <option value="encours">En cours</option>
+          <option value="fait">Fait</option>
+        </select>
+        <select id="typeFilter" class="fselect" onchange="renderTasks()"></select>
+        <select id="periodFilter" class="fselect" onchange="renderTasks()">
           <option value="all">Toutes les dates</option>
           <option value="week">Cette semaine</option>
           <option value="month">Ce mois-ci</option>
@@ -993,6 +1003,9 @@ function filteredTasks(){
   if(whoFilter!=='all') ts = ts.filter(t=>t.who===whoFilter);
   const tf = document.getElementById('typeFilter').value;
   if(tf && tf!=='all') ts = ts.filter(t=>t.typeId===tf);
+  const sf = document.getElementById('statusFilter').value;
+  if(sf==='pasfini') ts = ts.filter(t=>t.status!=='fait');
+  else if(sf && sf!=='all') ts = ts.filter(t=>t.status===sf);
   const pf = document.getElementById('periodFilter').value;
   const now = new Date();
   if(pf==='week'){
