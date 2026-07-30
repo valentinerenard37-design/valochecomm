@@ -105,22 +105,23 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .round-btn:focus-visible{outline:3px solid var(--lilac)}
 
 /* ---------- Calendrier ---------- */
-.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
+.cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:8px}
 .cal-head span{text-align:center;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
-.day{min-height:92px;border-radius:18px;padding:8px;background:var(--surface-2);box-shadow:var(--clay-in);cursor:pointer;transition:transform .12s;display:flex;flex-direction:column;gap:4px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.day{min-height:92px;min-width:0;overflow:hidden;border-radius:18px;padding:8px;background:var(--surface-2);box-shadow:var(--clay-in);cursor:pointer;transition:transform .12s;display:flex;flex-direction:column;gap:4px}
 .day:hover{transform:translateY(-2px)}
 .day.empty{background:transparent;box-shadow:none;cursor:default}
 .day.empty:hover{transform:none}
 .day .num{font-size:12px;font-weight:800;color:var(--muted)}
 .day.today .num{color:#fff;background:var(--lilac);width:22px;height:22px;border-radius:50%;display:grid;place-items:center}
-.chip{font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:9px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:1px 2px 4px rgba(93,77,120,.15),inset 1px 1px 2px rgba(255,255,255,.55)}
+.chip{display:block;max-width:100%;min-width:0;font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:9px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-shadow:1px 2px 4px rgba(93,77,120,.15),inset 1px 1px 2px rgba(255,255,255,.55)}
 
 /* ---------- Rows / pills ---------- */
 .post-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface-2);border-radius:20px;padding:14px 18px;margin-bottom:12px;box-shadow:var(--clay-soft);transition:transform .12s;cursor:pointer}
 .post-row:hover{transform:translateY(-2px)}
 .post-date{font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;min-width:52px;text-align:center;background:var(--surface);border-radius:14px;padding:8px 6px;box-shadow:var(--clay-in)}
-.post-title{font-weight:800;flex:1;min-width:140px}
+.post-title{font-weight:800;flex:1;min-width:140px;overflow-wrap:anywhere}
+.kcard .t{font-weight:800;font-size:14px;margin-bottom:7px;overflow-wrap:anywhere}
 .pill{font-size:11px;font-weight:800;padding:5px 11px;border-radius:12px;box-shadow:inset 1px 1px 3px rgba(255,255,255,.6),1px 2px 4px rgba(93,77,120,.12);color:var(--ink)}
 .pill.ig{background:linear-gradient(135deg,#FFD3C2,var(--rose))}
 .pill.li{background:linear-gradient(135deg,var(--sky),#C9E4FF)}
@@ -169,8 +170,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .fchip.a.active{background:linear-gradient(135deg,var(--sky),#CFE6FF)}
 
 /* Kanban */
-.kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.kcol{background:var(--surface-2);border-radius:22px;padding:14px;box-shadow:var(--clay-in);min-height:180px}
+.kanban{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.kcol{background:var(--surface-2);border-radius:22px;padding:14px;box-shadow:var(--clay-in);min-height:180px;min-width:0}
 .kcol h4{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .kcol .count{font-size:11px;background:var(--surface);border-radius:10px;padding:2px 9px;box-shadow:var(--clay-soft)}
 .kcard{background:var(--surface);border-radius:18px;padding:13px 15px;margin-bottom:10px;box-shadow:var(--clay-soft);cursor:grab;transition:transform .12s}
@@ -184,8 +185,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .karrows button:active{box-shadow:var(--clay-in)}
 
 /* Vue personnes */
-.people{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.person-col{border-radius:24px;padding:18px;box-shadow:var(--clay-soft)}
+.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.person-col{border-radius:24px;padding:18px;box-shadow:var(--clay-soft);min-width:0}
 .person-col.valentine{background:linear-gradient(160deg,#F0E9FC,var(--surface-2))}
 .person-col.jade{background:linear-gradient(160deg,#E6F8EE,var(--surface-2))}
 .person-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
@@ -367,6 +368,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         <button class="round-btn" onclick="moveMonth(-1)" aria-label="Mois précédent">←</button>
         <h2 id="calTitle"></h2>
         <button class="round-btn" onclick="moveMonth(1)" aria-label="Mois suivant">→</button>
+      </div>
+      <div style="display:flex;justify-content:center;margin-bottom:18px">
+        <div class="view-switch" role="tablist" aria-label="Filtrer le calendrier">
+          <button class="active" data-calf="all" onclick="setCalFilter('all')">🗓️ Tout</button>
+          <button data-calf="publie" onclick="setCalFilter('publie')">✅ Déjà publié</button>
+          <button data-calf="acreer" onclick="setCalFilter('acreer')">🎨 À créer</button>
+        </div>
       </div>
       <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
       <div class="cal" id="calGrid"></div>
@@ -779,6 +787,17 @@ document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click', e=>
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeOverlays(); });
 
 /* ================== CALENDRIER ================== */
+let calFilter = 'all';
+function setCalFilter(f){
+  calFilter = f;
+  document.querySelectorAll('[data-calf]').forEach(b=>b.classList.toggle('active', b.dataset.calf===f));
+  renderCalendar(); renderPostList();
+}
+function matchCalFilter(p){
+  if(calFilter==='publie') return p.status==='publie';
+  if(calFilter==='acreer') return p.status!=='publie';
+  return true;
+}
 function renderCalendar(){
   document.getElementById('calTitle').textContent = fmtMonth(current);
   const grid = document.getElementById('calGrid');
@@ -790,10 +809,11 @@ function renderCalendar(){
   for(let i=0;i<offset;i++) grid.insertAdjacentHTML('beforeend','<div class="day empty"></div>');
   for(let d=1; d<=days; d++){
     const dateStr = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const dayPosts = data.posts.filter(p=>p.date===dateStr);
+    const dayPosts = data.posts.filter(p=>p.date===dateStr && matchCalFilter(p));
     const chips = dayPosts.slice(0,3).map(p=>{
       const t = tagById(p.tagId);
-      return `<span class="chip" style="background:${t?t.color:'#ddd'}" onclick="event.stopPropagation();openPostModal('${p.id}')">${esc(p.title)}</span>`;
+      const check = p.status==='publie' ? '✓ ' : '';
+      return `<span class="chip" style="background:${t?t.color:'#ddd'}" onclick="event.stopPropagation();openPostModal('${p.id}')">${check}${esc(p.title)}</span>`;
     }).join('') + (dayPosts.length>3 ? `<span class="chip" style="background:#EFEAF9">+${dayPosts.length-3}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
       `<div class="day ${dateStr===todayStr?'today':''}" onclick="openPostModal(null,'${dateStr}')" title="Ajouter une publi"><span class="num">${d}</span>${chips}</div>`);
@@ -801,8 +821,13 @@ function renderCalendar(){
 }
 function renderPostList(){
   const list = document.getElementById('postList');
-  const posts = postsOfMonth();
-  if(!posts.length){ list.innerHTML = '<p class="empty-msg">Rien de prévu ce mois-ci… clique sur un jour du calendrier pour ajouter ta première publi 🌱</p>'; return; }
+  const posts = postsOfMonth().filter(matchCalFilter);
+  if(!posts.length){
+    const msg = calFilter==='publie' ? 'Rien n\'a encore été publié ce mois-ci 📭'
+      : calFilter==='acreer' ? 'Tout est publié, rien à créer — quelle machine ! 🎉'
+      : 'Rien de prévu ce mois-ci… clique sur un jour du calendrier pour ajouter ta première publi 🌱';
+    list.innerHTML = `<p class="empty-msg">${msg}</p>`; return;
+  }
   list.innerHTML = posts.map(p=>{
     const t = tagById(p.tagId);
     const platClass = p.platform==='instagram'?'ig':p.platform==='linkedin'?'li':'both';
