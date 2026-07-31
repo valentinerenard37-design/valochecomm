@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Studio Édito ✿</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EDE8F6;
@@ -135,7 +135,60 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:8px}
 .cal-head span{text-align:center;font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-.day{min-height:92px;min-width:0;overflow:hidden;border-radius:18px;padding:8px;background:var(--surface-2);box-shadow:var(--clay-in);cursor:pointer;transition:transform .12s;display:flex;flex-direction:column;gap:4px}
+.day{min-height:92px;min-width:0;overflow:hidden;position:relative;border-radius:18px;padding:8px;background:var(--surface-2);box-shadow:var(--clay-in);cursor:pointer;transition:transform .12s;display:flex;flex-direction:column;gap:4px}
+.pbadges{position:absolute;top:9px;right:6px;display:flex;gap:3px;pointer-events:none}
+.pbadge{width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:800;font-family:'Nunito',sans-serif;display:grid;place-items:center;color:var(--ink);box-shadow:inset 1px 1px 2px rgba(255,255,255,.7),0 1px 3px rgba(93,77,120,.3);flex:none}
+.pbadge.tt{background:var(--mint)}
+.pbadge.office{background:var(--peach)}
+.pstrip{position:absolute;top:0;left:0;right:0;height:6px;display:flex;overflow:hidden;pointer-events:none}
+.pstrip i{flex:1;display:block}
+.day{padding-top:14px}
+.remote-badge.office{background:linear-gradient(135deg,var(--peach),#FFD9C9)}
+.fchip.office-on{background:linear-gradient(135deg,var(--peach),#FFD9C9);color:var(--ink);box-shadow:var(--clay-in)}
+
+/* ---------- Vue semaine ---------- */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.wday{position:relative;background:var(--surface-2);border-radius:16px;box-shadow:var(--clay-in);padding:14px 7px 7px;min-height:150px;min-width:0;overflow:hidden}
+.wday.today{outline:3px solid var(--lilac);outline-offset:-3px}
+.wday-head{width:100%;border:none;background:transparent;font-family:'Fredoka',sans-serif;font-weight:500;font-size:12.5px;color:var(--muted);cursor:pointer;padding:3px;border-radius:9px;margin-bottom:6px;transition:color .12s}
+.wday-head:hover{color:var(--ink)}
+.witem{display:block;width:100%;text-align:left;border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:11px;font-weight:800;color:var(--ink);background:var(--surface);border-radius:9px;padding:4px 7px;margin-bottom:4px;box-shadow:var(--clay-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.witem.done{text-decoration:line-through;color:var(--muted)}
+
+/* ---------- Tableau de post-it ---------- */
+.board{
+  position:relative;min-height:620px;border-radius:24px;overflow:hidden;
+  background:var(--surface-2);
+  background-image:radial-gradient(rgba(93,77,120,.14) 1.3px, transparent 1.4px);
+  background-size:24px 24px;
+  box-shadow:var(--clay-in);
+}
+.board .empty-msg{position:absolute;top:45%;left:0;right:0}
+.postit{
+  position:absolute;width:205px;min-height:180px;padding:24px 14px 12px;
+  border-radius:3px 3px 12px 3px;cursor:grab;touch-action:none;
+  box-shadow:0 14px 22px rgba(93,77,120,.28), inset 0 -34px 30px rgba(93,77,120,.06), inset 0 2px 4px rgba(255,255,255,.5);
+  transition:box-shadow .15s;
+}
+.postit.dragging{cursor:grabbing;box-shadow:0 26px 34px rgba(93,77,120,.36), inset 0 -34px 30px rgba(93,77,120,.06)}
+.postit textarea{
+  width:100%;height:130px;background:transparent;border:none;box-shadow:none;resize:none;padding:0;border-radius:0;
+  font-family:'Caveat',cursive;font-size:21px;line-height:1.2;font-weight:600;color:#463A5E;cursor:text;
+}
+.postit textarea:focus{outline:none}
+.postit .pin{
+  position:absolute;top:-9px;left:50%;transform:translateX(-50%);width:19px;height:19px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%, rgba(255,255,255,.85), transparent 46%), var(--pin, #E9707F);
+  box-shadow:0 6px 7px rgba(60,40,80,.35), inset -2px -3px 4px rgba(0,0,0,.18);
+  pointer-events:none;
+}
+.postit .tiny-del{position:absolute;top:3px;right:5px;opacity:0;transition:opacity .15s}
+.postit:hover .tiny-del{opacity:1}
+@media (max-width:760px){
+  .week{grid-template-columns:1fr}
+  .wday{min-height:auto}
+  .postit{width:170px}
+}
 .day:hover{transform:translateY(-2px)}
 .day.empty{background:transparent;box-shadow:none;cursor:default}
 .day.empty:hover{transform:none}
@@ -515,6 +568,12 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
             <div class="lg-row"><span class="chip" style="background:var(--lilac)">✓ Aa</span> Posté / programmé</div>
           </div>
           <div class="legend-box">
+            <h4>Présence</h4>
+            <div class="lg-row"><span class="pbadge tt">V</span> Télétravail</div>
+            <div class="lg-row"><span class="pbadge office">J</span> Présentiel</div>
+            <div class="lg-row" style="font-size:11px">V = Valentine · J = Jade<br>(à régler dans l'Agenda)</div>
+          </div>
+          <div class="legend-box">
             <h4>Plateformes</h4>
             <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
             <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
@@ -675,40 +734,47 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <section id="view-agenda" class="view">
     <div class="card">
       <div class="month-nav" style="margin-bottom:6px">
-        <button class="round-btn" onclick="moveDay(-1)" aria-label="Jour précédent">←</button>
+        <button class="round-btn" onclick="navAgenda(-1)" aria-label="Précédent">←</button>
         <h2 id="dayTitle" style="min-width:290px"></h2>
-        <button class="round-btn" onclick="moveDay(1)" aria-label="Jour suivant">→</button>
+        <button class="round-btn" onclick="navAgenda(1)" aria-label="Suivant">→</button>
+      </div>
+      <div style="display:flex;justify-content:center;margin-bottom:12px">
+        <div class="view-switch" role="tablist" aria-label="Vue de l'agenda">
+          <button class="active" data-aview="jour" onclick="setAgendaView('jour')">Jour</button>
+          <button data-aview="semaine" onclick="setAgendaView('semaine')">Semaine</button>
+          <button data-aview="mois" onclick="setAgendaView('mois')">Mois</button>
+        </div>
       </div>
       <div class="filters" style="justify-content:center;margin-bottom:16px">
         <button class="btn small" onclick="goToday()">Aujourd'hui</button>
         <button class="fchip v active" data-awho="valentine" onclick="setAgendaWho('valentine')">🌸 Valentine</button>
         <button class="fchip j" data-awho="jade" onclick="setAgendaWho('jade')">🌿 Jade</button>
-        <button class="fchip" id="remoteBtn" onclick="toggleRemote()">🏠 Télétravail</button>
+        <button class="fchip" id="remoteBtn" onclick="toggleRemote()">📍 Présence</button>
+        <button class="btn primary small" onclick="openEvtModal()">+ Événement</button>
       </div>
-      <div class="composer">
-        <input type="time" id="dp-time" aria-label="Heure">
-        <input type="text" id="dp-text" placeholder="Qu'est-ce qui est prévu ? ex : montage reel, point avec Dimitri…" onkeydown="if(event.key==='Enter')addDayItem()">
-        <button class="btn primary" onclick="addDayItem()">+ Ajouter</button>
+      <div id="agendaJour">
+        <div class="composer">
+          <input type="time" id="dp-time" aria-label="Heure">
+          <input type="text" id="dp-text" placeholder="Qu'est-ce qui est prévu ? ex : montage reel, point avec Dimitri…" onkeydown="if(event.key==='Enter')addDayItem()">
+          <button class="btn primary" onclick="addDayItem()">+ Ajouter</button>
+        </div>
+        <div id="dayTimeline" style="margin-top:18px"></div>
       </div>
-      <div id="dayTimeline" style="margin-top:18px"></div>
-    </div>
-
-    <div class="card">
-      <h2>Réunions &amp; tournages <button class="btn primary small" style="margin-left:auto" onclick="openEvtModal()">+ Nouvel événement</button></h2>
-      <p class="section-hint">Les rendez-vous avec les courtiers — communs aux deux agendas. Clique sur un jour pour en ajouter un.</p>
-      <div class="month-nav">
-        <button class="round-btn" onclick="moveMonth(-1)" aria-label="Mois précédent">←</button>
-        <h2 id="evtTitle"></h2>
-        <button class="round-btn" onclick="moveMonth(1)" aria-label="Mois suivant">→</button>
+      <div id="agendaSemaine" style="display:none">
+        <div class="week" id="weekGrid"></div>
       </div>
-      <div class="filters" style="justify-content:center">
-        <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--sky)"></span>Réunion</span>
-        <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--rose)"></span>Tournage</span>
-        <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--butter)"></span>Autre</span>
+      <div id="agendaMois" style="display:none">
+        <div class="filters" style="justify-content:center">
+          <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--sky)"></span>Réunion</span>
+          <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--rose)"></span>Tournage</span>
+          <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--butter)"></span>Autre</span>
+          <span class="lg-row" style="margin:0"><span class="pbadge tt">V</span> Télétravail</span>
+          <span class="lg-row" style="margin:0"><span class="pbadge office">J</span> Présentiel</span>
+        </div>
+        <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+        <div class="cal mini" id="evtGrid"></div>
+        <div id="evtList" style="margin-top:18px"></div>
       </div>
-      <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
-      <div class="cal mini" id="evtGrid"></div>
-      <div id="evtList" style="margin-top:18px"></div>
     </div>
   </section>
 
@@ -734,6 +800,15 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
   </section>
 
+  <!-- ================= NOTES ================= -->
+  <section id="view-notes" class="view">
+    <div class="card">
+      <h2>📌 Mes notes <button class="btn primary small" style="margin-left:auto" onclick="addNote()">+ Nouveau post-it</button></h2>
+      <p class="section-hint">Notes de réunion, rappels, idées volantes… Attrape un post-it pour le déplacer, écris directement dessus, la punaise tient toute seule ✨</p>
+      <div class="board" id="noteBoard"></div>
+    </div>
+  </section>
+
   <!-- ================= COFFRE-FORT ================= -->
   <section id="view-coffre" class="view">
     <div class="card">
@@ -745,8 +820,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
     <div class="card">
       <h2>🕰️ Copies de sécurité automatiques</h2>
-      <p class="section-hint">Les 12 dernières versions sont conservées (sans les visuels). Restaurer = revenir en arrière — une copie de l'état actuel est prise avant, aucun risque.</p>
+      <p class="section-hint">Les 12 dernières versions différentes (sans les visuels). Restaurer = revenir en arrière — une copie de l'état actuel est prise avant, aucun risque.</p>
       <div id="backupList"></div>
+    </div>
+    <div class="card">
+      <h2>📅 Points de repère quotidiens</h2>
+      <p class="section-hint">La version <b>la plus riche</b> de chaque journée, gardée 30 jours — ton filet de sécurité longue durée.</p>
+      <div id="dailyList"></div>
     </div>
   </section>
 </div>
@@ -989,21 +1069,36 @@ const DEFAULTS = {
   events: [],
   dayplans: {},
   remote: {},
+  office: {},
+  notes: [],
   trash: []
 };
 let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
-for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
 if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
 if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
+if(typeof data.office !== 'object' || !data.office) data.office = {};
 if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
 
 function snapshot(){
-  const backups = store.get('studioEditoBackups') || [];
   const light = JSON.parse(JSON.stringify(data));
   (light.posts||[]).forEach(p=>{ if(p.img) p.img=''; });
   (light.tasks||[]).forEach(t=>{ if(t.img) t.img=''; });
-  backups.unshift({at: new Date().toISOString(), data: light});
-  store.set('studioEditoBackups', backups.slice(0, 12));
+  const s = JSON.stringify(light);
+  const backups = store.get('studioEditoBackups') || [];
+  /* on n'empile pas deux fois le même état (les rechargements de page ne poussent plus les bonnes copies dehors) */
+  if(!(backups[0] && JSON.stringify(backups[0].data) === s)){
+    backups.unshift({at: new Date().toISOString(), data: light});
+    store.set('studioEditoBackups', backups.slice(0, 12));
+  }
+  /* point de repère quotidien : on garde la version LA PLUS RICHE de chaque jour, 30 jours */
+  const size = d => (d.posts||[]).length + (d.tasks||[]).length + (d.ideas||[]).length + (d.events||[]).length + (d.notes||[]).length;
+  const daily = store.get('studioEditoDaily') || {};
+  const key = new Date().toISOString().slice(0,10);
+  if(!daily[key] || size(light) >= size(daily[key].data)) daily[key] = {at: new Date().toISOString(), data: light};
+  const keep = {};
+  Object.keys(daily).sort().slice(-30).forEach(k=>keep[k]=daily[k]);
+  store.set('studioEditoDaily', keep);
 }
 let snapTimer = null;
 function persist(){
@@ -1053,12 +1148,12 @@ function postsOfMonth(){
 
 /* ================== NAVIGATION ================== */
 const PAGES = {
-  dashboard: {title:'Mon tableau de bord', subs:[['taches','Journal de bord'],['bilan','Bilan']]},
+  dashboard: {title:'Mon tableau de bord', subs:[['taches','Journal de bord'],['notes','Notes'],['bilan','Bilan']]},
   contenu:   {title:'Création de contenu', subs:[['planning','Planning'],['idees','Idées'],['bilanmois','Bilan']]},
   agenda:    {title:'Agenda', subs:[]},
   params:    {title:'Paramètres', subs:[['tags','Tags & types'],['coffre','Coffre-fort']]}
 };
-const SUB_SECTION = {taches:'view-taches', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre'};
+const SUB_SECTION = {taches:'view-taches', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre'};
 let currentPage = 'dashboard', currentSub = 'taches';
 function switchPage(page, sub=null){
   currentPage = page;
@@ -1179,7 +1274,7 @@ function renderCalendar(){
       return `<span class="chip cs-${p.status}" style="background:${t?t.color:'#ddd'}" title="${STATUS_LABEL[p.status]} · ${PLAT_LABEL[p.platform]}" onclick="event.stopPropagation();openPostModal('${p.id}')"><span class="pdot ${pd}"></span> ${check}${esc(p.title)}</span>`;
     }).join('') + (dayPosts.length>3 ? `<span class="chip" style="background:#EFEAF9">+${dayPosts.length-3}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
-      `<div class="day ${dateStr===todayStr?'today':''}" onclick="openPostModal(null,'${dateStr}')" title="Ajouter une publi"><span class="num">${d}</span>${chips}</div>`);
+      `<div class="day ${dateStr===todayStr?'today':''}" onclick="openPostModal(null,'${dateStr}')" title="Ajouter une publi">${presenceStrip(dateStr)}<span class="num">${d}</span><span class="pbadges">${presenceBadges(dateStr)}</span>${chips}</div>`);
   }
   const mp = postsOfMonth();
   const c = s => mp.filter(p=>p.status===s).length;
@@ -2109,7 +2204,7 @@ function removeType(id){
 }
 
 /* ================== COFFRE-FORT ================== */
-const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour'};
+const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note'};
 function renderSafe(){
   const tl = document.getElementById('trashList');
   tl.innerHTML = data.trash.length ? data.trash.map((x,i)=>
@@ -2117,46 +2212,29 @@ function renderSafe(){
       <span class="d">${new Date(x.deletedAt).toLocaleDateString('fr-FR')}</span>
       <button class="btn small primary" onclick="restoreTrash(${i})">↩️ Restaurer</button></div>`).join('')
     : '<p class="empty-msg" style="padding:10px;font-size:13px">Corbeille vide, tout va bien ✨</p>';
+  const row = (b, call) => `<div class="trash-item"><span>🕰️</span><span class="n">${new Date(b.at).toLocaleString('fr-FR')}</span>
+      <span class="d">${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches · ${(b.data.ideas||[]).length} idées</span>
+      <button class="btn small" onclick="${call}">↩️ Revenir ici</button></div>`;
   const backups = store.get('studioEditoBackups') || [];
-  document.getElementById('backupList').innerHTML = backups.length ? backups.map((b,i)=>
-    `<div class="trash-item"><span>🕰️</span><span class="n">${new Date(b.at).toLocaleString('fr-FR')}</span>
-      <span class="d">${b.data.posts.length} publis · ${b.data.tasks.length} tâches</span>
-      <button class="btn small" onclick="restoreBackup(${i})">↩️ Revenir ici</button></div>`).join('')
+  document.getElementById('backupList').innerHTML = backups.length
+    ? backups.map((b,i)=>row(b, `restoreBackup('recent',${i})`)).join('')
     : '<p class="empty-msg" style="padding:10px;font-size:13px">Les copies apparaîtront au fil de tes enregistrements 🕰️</p>';
+  const daily = store.get('studioEditoDaily') || {};
+  const dks = Object.keys(daily).sort().reverse();
+  const dl = document.getElementById('dailyList');
+  if(dl) dl.innerHTML = dks.length
+    ? dks.map(k=>row(daily[k], `restoreBackup('daily','${k}')`)).join('')
+    : '<p class="empty-msg" style="padding:10px;font-size:13px">Le meilleur état de chaque journée sera gardé ici pendant 30 jours 📅</p>';
 }
-function restoreTrash(i){
-  const x = data.trash[i];
-  if(!x) return;
-  if(x.kind==='post') data.posts.push(x.item);
-  else if(x.kind==='task') data.tasks.push(x.item);
-  else if(x.kind==='idea') data.ideas.unshift(x.item);
-  else if(x.kind==='tag') data.tags.push(x.item);
-  else if(x.kind==='type') data.taskTypes.push(x.item);
-  else if(x.kind==='evt') data.events.push(x.item);
-  else if(x.kind==='jour'){
-    const k = x.item.date;
-    if(!data.dayplans[k]) data.dayplans[k] = [];
-    data.dayplans[k].push(x.item.entry);
-  }
-  data.trash.splice(i,1);
-  persist(); renderSafe(); renderAll(); toast('Restauré ✨');
-}
-function emptyTrash(){
-  if(!data.trash.length){ toast('La corbeille est déjà vide 🌱'); return; }
-  const word = prompt('⚠️ Pour vider définitivement la corbeille, tape SUPPRIMER en majuscules :');
-  if(word !== 'SUPPRIMER'){ toast('Ok, on garde tout au chaud 🛡️'); return; }
-  snapshot(); /* filet de sécurité même là */
-  data.trash = [];
-  persist(); renderSafe(); toast('Corbeille vidée (une copie de sécurité a été prise avant)');
-}
-function restoreBackup(i){
-  const backups = store.get('studioEditoBackups') || [];
-  const b = backups[i];
+function restoreBackup(kind, i){
+  const b = kind==='daily' ? (store.get('studioEditoDaily')||{})[i] : (store.get('studioEditoBackups')||[])[i];
   if(!b) return;
-  if(!confirm(`Revenir à la version du ${new Date(b.at).toLocaleString('fr-FR')} ? Ton état actuel sera d'abord sauvegardé, aucun risque.`)) return;
+  if(!confirm(`Revenir à la version du ${new Date(b.at).toLocaleString('fr-FR')} (${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches) ? Ton état actuel sera d'abord sauvegardé, aucun risque.`)) return;
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
-  persist(); closeOverlays(); renderAll(); toast('Version restaurée 🕰️');
+  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes']) if(!Array.isArray(data[k])) data[k] = [];
+  for(const k of ['reports','dayplans','remote','office']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
+  persist(); renderAll(); toast('Version restaurée 🕰️');
 }
 
 /* ================== EXPORT / IMPORT ================== */
@@ -2180,7 +2258,7 @@ function mergeData(d){
     });
   }
   let added = 0;
-  for(const key of ['posts','tasks','ideas','events','trash']){
+  for(const key of ['posts','tasks','ideas','events','notes','trash']){
     (d[key]||[]).forEach(item=>{
       if(!data[key].some(x=>x.id===item.id)){
         if(item.tagId && idMap[item.tagId]) item.tagId = idMap[item.tagId];
@@ -2193,6 +2271,8 @@ function mergeData(d){
   for(const k in (d.dayplans||{})){
     if(!data.dayplans[k]) data.dayplans[k] = d.dayplans[k];
   }
+  for(const k in (d.remote||{})) if(!data.remote[k]) data.remote[k] = d.remote[k];
+  for(const k in (d.office||{})) if(!data.office[k]) data.office[k] = d.office[k];
   return added;
 }
 function importData(e){
@@ -2312,22 +2392,60 @@ const EVT_LABEL = {reunion:'Réunion', tournage:'Tournage', autre:'Autre'};
 let dayCursor = new Date();
 let editingEvtId = null;
 const dkey = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-function moveDay(dir){ dayCursor.setDate(dayCursor.getDate()+dir); renderDayPlan(); }
-function goToday(){ dayCursor = new Date(); renderDayPlan(); }
+let agendaView = 'jour';
+function setAgendaView(v){
+  agendaView = v;
+  document.querySelectorAll('[data-aview]').forEach(b=>b.classList.toggle('active', b.dataset.aview===v));
+  document.getElementById('agendaJour').style.display = v==='jour' ? 'block' : 'none';
+  document.getElementById('agendaSemaine').style.display = v==='semaine' ? 'block' : 'none';
+  document.getElementById('agendaMois').style.display = v==='mois' ? 'block' : 'none';
+  document.getElementById('remoteBtn').style.display = v==='jour' ? '' : 'none';
+  renderAgenda();
+}
+function navAgenda(dir){
+  if(agendaView==='jour') dayCursor.setDate(dayCursor.getDate()+dir);
+  else if(agendaView==='semaine') dayCursor.setDate(dayCursor.getDate()+7*dir);
+  else dayCursor.setMonth(dayCursor.getMonth()+dir);
+  renderAgenda();
+}
+function goToday(){ dayCursor = new Date(); renderAgenda(); }
+function gotoAgendaDay(k){
+  const [y,m,d] = k.split('-');
+  dayCursor = new Date(+y, +m-1, +d);
+  setAgendaView('jour');
+}
 let agendaWho = 'valentine';
 function setAgendaWho(w){
   agendaWho = w;
   document.querySelectorAll('[data-awho]').forEach(b=>b.classList.toggle('active', b.dataset.awho===w));
-  renderDayPlan();
+  renderAgenda();
 }
 function isRemote(k, who){ return !!(data.remote[k] && data.remote[k].includes(who)); }
+function isOffice(k, who){ return !!(data.office[k] && data.office[k].includes(who)); }
+function presenceOf(k, who){ return isRemote(k, who) ? 'tt' : isOffice(k, who) ? 'office' : null; }
+function presenceBadges(k){
+  return ['valentine','jade'].map(w=>{
+    const p = presenceOf(k, w);
+    if(!p) return '';
+    const name = w==='valentine' ? 'Valentine' : 'Jade';
+    return `<span class="pbadge ${p}" title="${name} — ${p==='tt'?'télétravail':'présentiel'}">${w==='valentine'?'V':'J'}</span>`;
+  }).join('');
+}
+function presenceStrip(k){
+  const v = presenceOf(k,'valentine'), j = presenceOf(k,'jade');
+  if(!v && !j) return '';
+  const col = p => p==='tt' ? 'var(--mint)' : p==='office' ? 'var(--peach)' : 'transparent';
+  return `<span class="pstrip"><i style="background:${col(v)}"></i><i style="background:${col(j)}"></i></span>`;
+}
 function toggleRemote(){
-  const k = dkey(dayCursor);
-  if(!data.remote[k]) data.remote[k] = [];
-  if(data.remote[k].includes(agendaWho)) data.remote[k] = data.remote[k].filter(w=>w!==agendaWho);
-  else data.remote[k].push(agendaWho);
-  persist(); renderDayPlan();
-  toast(isRemote(k, agendaWho) ? 'Journée en télétravail 🏠' : 'Retour au bureau 🏢');
+  const k = dkey(dayCursor), who = agendaWho;
+  const cur = presenceOf(k, who);
+  if(data.remote[k]) data.remote[k] = data.remote[k].filter(w=>w!==who);
+  if(data.office[k]) data.office[k] = data.office[k].filter(w=>w!==who);
+  if(cur===null){ (data.remote[k] = data.remote[k] || []).push(who); toast('Journée en télétravail 🏠'); }
+  else if(cur==='tt'){ (data.office[k] = data.office[k] || []).push(who); toast('Journée en présentiel 🏢'); }
+  else { toast('Présence effacée pour ce jour'); }
+  persist(); renderAgenda(); renderCalendar();
 }
 function hourOf(t){
   if(!t) return null;
@@ -2340,12 +2458,15 @@ function renderDayPlan(){
   const k = dkey(dayCursor);
   const todayK = dkey(new Date());
   const who = agendaWho;
-  const remote = isRemote(k, who);
+  const pres = presenceOf(k, who);
   const label = (k===todayK ? "Aujourd'hui — " : '') + WEEKDAYS[dayCursor.getDay()] + ' ' + dayCursor.getDate() + ' ' + MONTHS[dayCursor.getMonth()];
-  document.getElementById('dayTitle').innerHTML = esc(label) + (remote ? '<span class="remote-badge">🏠 Télétravail</span>' : '');
+  document.getElementById('dayTitle').innerHTML = esc(label)
+    + (pres==='tt' ? '<span class="remote-badge">🏠 Télétravail</span>' : pres==='office' ? '<span class="remote-badge office">🏢 Présentiel</span>' : '');
   const rb = document.getElementById('remoteBtn');
-  rb.classList.toggle('remote-on', remote);
-  rb.textContent = remote ? '🏠 Télétravail ✓' : '🏠 Télétravail';
+  rb.classList.toggle('remote-on', pres==='tt');
+  rb.classList.toggle('office-on', pres==='office');
+  rb.textContent = pres==='tt' ? '🏠 Télétravail ✓' : pres==='office' ? '🏢 Présentiel ✓' : '📍 Présence';
+  rb.title = 'Clique pour alterner : télétravail → présentiel → rien';
 
   const items = (data.dayplans[k] || []).filter(it=>(it.who||'valentine')===who);
   const evts = data.events.filter(e=>e.date===k);
@@ -2388,27 +2509,28 @@ function addDayItem(){
   if(!data.dayplans[k]) data.dayplans[k] = [];
   data.dayplans[k].push({id:uid(), time:document.getElementById('dp-time').value, text, done:false, who:agendaWho});
   document.getElementById('dp-text').value = '';
-  persist(); renderDayPlan(); toast('Ajouté au planning du jour 🗓️');
+  persist(); renderAgenda(); toast('Ajouté au planning du jour 🗓️');
 }
 function toggleDayItem(k, id){
   const it = (data.dayplans[k]||[]).find(x=>x.id===id);
   if(!it) return;
   it.done = !it.done;
   if(it.done) confetti();
-  persist(); renderDayPlan();
+  persist(); renderAgenda();
 }
 function delDayItem(k, id){
   const it = (data.dayplans[k]||[]).find(x=>x.id===id);
   if(!it) return;
   data.trash.unshift({kind:'jour', label:it.text, deletedAt:new Date().toISOString(), item:{date:k, entry:it}});
   data.dayplans[k] = data.dayplans[k].filter(x=>x.id!==id);
-  persist(); renderDayPlan(); toast('Retiré (restaurable dans le coffre-fort) 🛡️');
+  persist(); renderAgenda(); toast('Retiré (restaurable dans le coffre-fort) 🛡️');
 }
 function renderEvts(){
-  document.getElementById('evtTitle').textContent = fmtMonth(current);
+  const base = dayCursor;
+  const y = base.getFullYear(), m = base.getMonth();
+  document.getElementById('dayTitle').textContent = MONTHS[m] + ' ' + y;
   const grid = document.getElementById('evtGrid');
   grid.innerHTML = '';
-  const y = current.getFullYear(), m = current.getMonth();
   const offset = (new Date(y, m, 1).getDay() + 6) % 7;
   const days = new Date(y, m+1, 0).getDate();
   const todayStr = new Date().toISOString().slice(0,10);
@@ -2416,11 +2538,13 @@ function renderEvts(){
   for(let d=1; d<=days; d++){
     const dateStr = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     const evts = data.events.filter(e=>e.date===dateStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const nItems = (data.dayplans[dateStr]||[]).filter(it=>(it.who||'valentine')===agendaWho).length;
     const chips = evts.slice(0,2).map(e=>
       `<span class="chip" style="background:${EVT_COLOR[e.type]||'var(--butter)'}" title="${EVT_LABEL[e.type]}${e.with?' avec '+esc(e.with):''}" onclick="event.stopPropagation();openEvtModal('${e.id}')">${e.time?esc(e.time)+' · ':''}${esc(e.title)}</span>`
-    ).join('') + (evts.length>2 ? `<span class="chip" style="background:#EFEAF9">+${evts.length-2}</span>` : '');
+    ).join('') + (evts.length>2 ? `<span class="chip" style="background:#EFEAF9">+${evts.length-2}</span>` : '')
+      + (nItems ? `<span class="chip" style="background:#EFEAF9">☀️ ${nItems} étape${nItems>1?'s':''}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
-      `<div class="day ${dateStr===todayStr?'today':''}" onclick="openEvtModal(null,'${dateStr}')" title="Ajouter un événement"><span class="num">${d}</span>${chips}</div>`);
+      `<div class="day ${dateStr===todayStr?'today':''}" onclick="gotoAgendaDay('${dateStr}')" title="Ouvrir cette journée">${presenceStrip(dateStr)}<span class="num">${d}</span><span class="pbadges">${presenceBadges(dateStr)}</span>${chips}</div>`);
   }
   const upcoming = data.events.filter(e=>e.date >= todayStr).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))).slice(0,6);
   document.getElementById('evtList').innerHTML = upcoming.length ? '<label>Prochains rendez-vous</label>' + upcoming.map(e=>`
@@ -2430,6 +2554,28 @@ function renderEvts(){
       ${e.time?`<span class="pill" style="background:#EFEAF9">${esc(e.time)}</span>`:''}
       <span class="pill" style="background:${EVT_COLOR[e.type]}">${EVT_LABEL[e.type]}</span>
     </div>`).join('') : '<p class="empty-msg">Aucun rendez-vous à venir pour l\'instant 🌱</p>';
+}
+function renderWeek(){
+  const monday = new Date(dayCursor);
+  monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  document.getElementById('dayTitle').textContent = 'Semaine du ' + monday.getDate() + ' ' + MONTHS[monday.getMonth()].slice(0,4) + '. au ' + sunday.getDate() + ' ' + MONTHS[sunday.getMonth()].slice(0,4) + '.';
+  const labels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const todayK = dkey(new Date());
+  let html = '';
+  for(let i=0;i<7;i++){
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    const k = dkey(d);
+    const items = (data.dayplans[k]||[]).filter(it=>(it.who||'valentine')===agendaWho).sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+    const evts = data.events.filter(e=>e.date===k).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    html += `<div class="wday ${k===todayK?'today':''}">${presenceStrip(k)}
+      <button class="wday-head" onclick="gotoAgendaDay('${k}')">${labels[i]} ${d.getDate()} <span class="pbadges" style="position:static;display:inline-flex;vertical-align:-4px;margin-left:4px">${presenceBadges(k)}</span></button>
+      ${evts.map(e=>`<button class="witem" style="background:${EVT_COLOR[e.type]}" onclick="openEvtModal('${e.id}')" title="${EVT_LABEL[e.type]}">${e.time?esc(e.time)+' ':''}${esc(e.title)}</button>`).join('')}
+      ${items.map(it=>`<button class="witem ${it.done?'done':''}" onclick="toggleDayItem('${k}','${it.id}')" title="Clic = fait / pas fait">${it.time?esc(it.time)+' ':''}${esc(it.text)}</button>`).join('')}
+      ${(!evts.length && !items.length)?'<span style="font-size:11px;font-weight:700;color:var(--muted)">—</span>':''}
+    </div>`;
+  }
+  document.getElementById('weekGrid').innerHTML = html;
 }
 function openEvtModal(id=null, dateStr=null){
   editingEvtId = id;
@@ -2467,18 +2613,93 @@ function saveEvt(){
   };
   if(editingEvtId) data.events = data.events.map(e=>e.id===editingEvtId?evt:e);
   else data.events.push(evt);
-  persist(); closeOverlays(); renderEvts(); toast('Événement enregistré 🗓️');
+  persist(); closeOverlays(); renderAgenda(); renderPlanningDay(); toast('Événement enregistré 🗓️');
 }
 function deleteEvt(){
   const e = data.events.find(x=>x.id===editingEvtId);
   if(e) data.trash.unshift({kind:'evt', label:e.title, deletedAt:new Date().toISOString(), item:e});
   data.events = data.events.filter(x=>x.id!==editingEvtId);
-  persist(); closeOverlays(); renderEvts(); toast('Envoyé à la corbeille 🛡️');
+  persist(); closeOverlays(); renderAgenda(); renderPlanningDay(); toast('Envoyé à la corbeille 🛡️');
 }
-function renderAgenda(){ renderDayPlan(); renderEvts(); }
+function renderAgenda(){
+  if(agendaView==='jour') renderDayPlan();
+  else if(agendaView==='semaine') renderWeek();
+  else renderEvts();
+}
+
+/* ================== NOTES (post-it) ================== */
+const PIN_COLORS = ['#E9707F','#7BA8E0','#6FBF8F','#E0A857','#A98BD6','#E58BB4'];
+let noteZ = 20;
+let persistTimer = null;
+function persistSoon(){ clearTimeout(persistTimer); persistTimer = setTimeout(persist, 700); }
+function addNote(){
+  const i = data.notes.length;
+  data.notes.push({
+    id: uid(), text: '',
+    color: PALETTE[i % PALETTE.length],
+    pin: PIN_COLORS[i % PIN_COLORS.length],
+    x: 4 + (i*9) % 68, y: 5 + (i*11) % 58,
+    rot: +(Math.random()*6 - 3).toFixed(1),
+    z: ++noteZ
+  });
+  persist(); renderNotes();
+  const el = document.querySelector('.postit:last-child textarea');
+  if(el) el.focus();
+}
+function noteInput(id, val){
+  const n = data.notes.find(x=>x.id===id);
+  if(n){ n.text = val; persistSoon(); }
+}
+function delNote(id){
+  const n = data.notes.find(x=>x.id===id);
+  if(!n) return;
+  data.trash.unshift({kind:'note', label:(n.text||'Post-it vide').slice(0,40), deletedAt:new Date().toISOString(), item:n});
+  data.notes = data.notes.filter(x=>x.id!==id);
+  persist(); renderNotes(); toast('Post-it décroché (restaurable dans le coffre-fort) 🛡️');
+}
+function renderNotes(){
+  const b = document.getElementById('noteBoard');
+  if(!b) return;
+  if(!data.notes.length){
+    b.innerHTML = '<p class="empty-msg">Le tableau est tout nu… punaise ta première note avec le bouton vert 📌</p>';
+    return;
+  }
+  b.innerHTML = data.notes.map(n=>`
+    <div class="postit" data-id="${n.id}" style="left:${n.x}%;top:${n.y}%;background:${n.color};--pin:${n.pin||'#E9707F'};transform:rotate(${n.rot}deg);z-index:${n.z||1}">
+      <span class="pin"></span>
+      <button class="tiny-del" onclick="delNote('${n.id}')" aria-label="Décrocher">✕</button>
+      <textarea placeholder="Écris ici…" oninput="noteInput('${n.id}', this.value)">${esc(n.text)}</textarea>
+    </div>`).join('');
+  b.querySelectorAll('.postit').forEach(el=>{
+    el.addEventListener('pointerdown', e=>{
+      if(e.target.tagName==='TEXTAREA' || e.target.closest('.tiny-del')) return;
+      const n = data.notes.find(x=>x.id===el.dataset.id);
+      if(!n) return;
+      e.preventDefault();
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('dragging');
+      n.z = ++noteZ; el.style.zIndex = n.z;
+      const rect = document.getElementById('noteBoard').getBoundingClientRect();
+      const startX = e.clientX, startY = e.clientY, ox = n.x, oy = n.y;
+      const move = ev=>{
+        n.x = Math.min(88, Math.max(0, ox + (ev.clientX-startX)/rect.width*100));
+        n.y = Math.min(88, Math.max(0, oy + (ev.clientY-startY)/rect.height*100));
+        el.style.left = n.x + '%'; el.style.top = n.y + '%';
+      };
+      const up = ()=>{
+        el.classList.remove('dragging');
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        persistSoon();
+      };
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+    });
+  });
+}
 
 /* ================== RENDER GLOBAL ================== */
-function renderAll(){ renderCalendar(); renderPostList(); renderPlanningDay(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); renderSafe(); }
+function renderAll(){ renderCalendar(); renderPostList(); renderPlanningDay(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); renderSafe(); renderNotes(); }
 switchPage('dashboard');
 </script>
 </body>
