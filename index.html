@@ -313,6 +313,14 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .follow-row .m{font-family:'Fredoka',sans-serif;font-weight:600;min-width:110px;text-transform:capitalize}
 
 /* ---------- Fiche publi (lecture) ---------- */
+.pv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pv-field{background:var(--surface-2);border-radius:16px;padding:10px 14px;box-shadow:var(--clay-in);min-width:0}
+.pv-field.full{grid-column:1/-1}
+.pv-field .l{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.pv-field .v{font-weight:800;font-size:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.pv-field .v .cdot{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:inset 1px 1px 2px rgba(255,255,255,.6),0 1px 3px rgba(93,77,120,.2)}
+.pv-empty{color:var(--muted);font-weight:700}
+.pv-noimg{border:2px dashed rgba(93,77,120,.25);border-radius:16px;padding:18px;text-align:center;font-size:12.5px;font-weight:800;color:var(--muted);margin-bottom:12px}
 .pv-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
 .pv-date{font-family:'Fredoka',sans-serif;font-weight:600;text-align:center;background:var(--surface-2);border-radius:16px;padding:10px 14px;box-shadow:var(--clay-in);flex:none}
 .pv-date .d{font-size:22px;line-height:1}
@@ -1136,29 +1144,32 @@ function showPostView(id){
   const p = data.posts.find(x=>x.id===id); if(!p) return;
   const t = tagById(p.tagId);
   const pd = p.platform==='instagram' ? 'ig' : p.platform==='linkedin' ? 'li' : 'both';
-  const platClass = p.platform==='instagram'?'ig':p.platform==='linkedin'?'li':'both';
-  const validPill = p.valid==='valide' ? '<span class="pill" style="background:var(--mint)">✓ Validé par Dimitri</span>'
-    : p.valid==='arevoir' ? '<span class="pill" style="background:var(--rose)">✏️ À retravailler</span>'
-    : p.status!=='publie' ? '<span class="pill" style="background:var(--butter)">⏳ À valider par Dimitri</span>' : '';
+  const PLAT_TEXT = {instagram:'Instagram', linkedin:'LinkedIn', both:'Instagram + LinkedIn'};
+  const STATUS_TEXT = {idee:'Idée', afaire:'À créer', programme:'Programmé', publie:'Publié'};
+  const STATUS_BG = {idee:'#EFEAF9', afaire:'var(--butter)', programme:'var(--sky)', publie:'var(--mint)'};
+  const AUTHOR_TEXT = {valentine:'Valentine', jade:'Jade', luna:'Luna (freelance)'};
+  const AUTHOR_BG = {valentine:'var(--lilac)', jade:'var(--mint)', luna:'var(--peach)'};
+  const validTxt = p.valid==='valide' ? '<span class="pill" style="background:var(--mint)">✓ Validé</span>'
+    : p.valid==='arevoir' ? '<span class="pill" style="background:var(--rose)">À retravailler</span>'
+    : '<span class="pill" style="background:var(--butter)">En attente</span>';
+  const vide = '<span class="pv-empty">—</span>';
   document.getElementById('postView').innerHTML = `
     <div class="pv-head">
       <div class="pv-date"><div class="d">${p.date.slice(8,10)}</div><div class="m">${MONTHS[+p.date.slice(5,7)-1].slice(0,4)}. ${p.date.slice(0,4)}</div></div>
       <div class="pv-title">${esc(p.title)}</div>
     </div>
-    <div class="pv-pills">
-      <span class="pill ${platClass}"><span class="pdot ${pd}"></span> ${PLAT_LABEL[p.platform]}</span>
-      ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
-      <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
-      ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
-      ${validPill}
+    <div class="pv-grid">
+      <div class="pv-field"><div class="l">Plateforme</div><div class="v"><span class="pdot ${pd}"></span>${PLAT_TEXT[p.platform]}</div></div>
+      <div class="pv-field"><div class="l">Tag</div><div class="v">${t?`<span class="cdot" style="background:${t.color}"></span>${esc(t.name)}`:vide}</div></div>
+      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${STATUS_BG[p.status]}">${(p.status==='publie'||p.status==='programme')?'✓ ':''}${STATUS_TEXT[p.status]}</span></div></div>
+      <div class="pv-field"><div class="l">Validation Dimitri</div><div class="v">${validTxt}</div></div>
+      <div class="pv-field"><div class="l">Réalisé par</div><div class="v">${p.author?`<span class="pill" style="background:${AUTHOR_BG[p.author]}">${AUTHOR_TEXT[p.author]}</span>`:vide}</div></div>
+      <div class="pv-field"><div class="l">Lien</div><div class="v">${p.link?`<a class="btn small sky" href="${esc(p.link)}" target="_blank" style="text-decoration:none">Voir la publi ↗</a>`:vide}</div></div>
+      <div class="pv-field full"><div class="l">Notes / caption</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:180px;overflow-y:auto">${p.notes?esc(p.notes):vide}</div></div>
+      <div class="pv-field"><div class="l">Vues</div><div class="v">${p.views?esc(p.views):vide}</div></div>
+      <div class="pv-field"><div class="l">J'aime</div><div class="v">${p.likes?esc(p.likes):vide}</div></div>
     </div>
-    ${p.img?`<img class="pv-img" src="${p.img}" alt="Visuel de la publication">`:''}
-    ${p.notes?`<div class="pv-notes">${esc(p.notes)}</div>`:''}
-    ${(p.views||p.likes)?`<div class="pv-perf">
-      <div class="stat" style="background:linear-gradient(135deg,var(--sky),var(--surface-2))"><div class="big">${esc(p.views)||'—'}</div><div class="lbl">vues</div></div>
-      <div class="stat" style="background:linear-gradient(135deg,var(--rose),var(--surface-2))"><div class="big">${esc(p.likes)||'—'}</div><div class="lbl">j'aime</div></div>
-    </div>`:''}
-    ${p.link?`<a class="btn sky small" href="${esc(p.link)}" target="_blank" style="display:inline-block;text-decoration:none;margin-bottom:6px">🔗 Voir la publication</a>`:''}
+    ${p.img?`<img class="pv-img" src="${p.img}" alt="Visuel de la publication">`:`<div class="pv-noimg">Aucun visuel pour l'instant — ajoute-le via Modifier 🖼️</div>`}
     <div class="modal-actions">
       <button class="btn danger" onclick="deletePost()">🗑️ Corbeille</button>
       <button class="btn" onclick="closeOverlays()">Fermer</button>
