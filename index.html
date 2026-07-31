@@ -144,10 +144,12 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pbadge{width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:800;font-family:'Nunito',sans-serif;display:grid;place-items:center;color:var(--ink);box-shadow:inset 1px 1px 2px rgba(255,255,255,.7),0 1px 3px rgba(93,77,120,.3);flex:none}
 .pbadge.tt{background:var(--mint)}
 .pbadge.office{background:var(--peach)}
-.pband{display:block;width:100%;height:15px;border-radius:8px;font-size:9.5px;font-weight:800;line-height:15px;padding:0 6px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;box-shadow:inset 1px 1px 2px rgba(255,255,255,.65),0 1px 3px rgba(93,77,120,.18);flex:none}
-.pband.tt{background:var(--mint)}
-.pband.office{background:var(--peach)}
-.pband.big{width:auto;display:inline-block;height:26px;line-height:26px;font-size:13px;border-radius:13px;padding:0 14px}
+.pchip{display:inline-flex;align-items:center;gap:6px;padding:7px 15px;border-radius:15px;font-weight:800;font-size:13px;color:var(--ink);box-shadow:var(--clay-soft)}
+.pchip.tt{background:linear-gradient(135deg,var(--mint),#D9F5E7)}
+.pchip.office{background:linear-gradient(135deg,var(--peach),#FFE3D5)}
+.pcell{display:inline-block;align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px;font-weight:800;color:var(--ink);padding:2px 7px;border-radius:8px;box-shadow:0 1px 2px rgba(93,77,120,.16)}
+.pcell.tt{background:var(--mint)}
+.pcell.office{background:var(--peach)}
 .remote-badge.office{background:linear-gradient(135deg,var(--peach),#FFD9C9)}
 .fchip.office-on{background:linear-gradient(135deg,var(--peach),#FFD9C9);color:var(--ink);box-shadow:var(--clay-in)}
 
@@ -579,8 +581,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
           </div>
           <div class="legend-box">
             <h4>Présence</h4>
-            <div class="lg-row"><span class="pband tt" style="width:auto;padding:0 9px">🏠 Télétravail</span></div>
-            <div class="lg-row"><span class="pband office" style="width:auto;padding:0 9px">🏢 Présentiel</span></div>
+            <div class="lg-row"><span class="pcell tt">🏠 Télétravail</span></div>
+            <div class="lg-row"><span class="pcell office">🏢 Présentiel</span></div>
             <div class="lg-row" style="font-size:11px">À régler dans l'Agenda</div>
           </div>
           <div class="legend-box">
@@ -768,6 +770,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         <button class="fchip" id="remoteBtn" onclick="toggleRemote()">📍 Présence</button>
         <button class="btn primary small" onclick="openEvtModal()">+ Événement</button>
       </div>
+      <div id="agPresence" style="display:none;justify-content:center;gap:10px;flex-wrap:wrap;margin:-4px 0 16px"></div>
       <div id="agendaJour">
         <div class="composer">
           <input type="time" id="dp-time" aria-label="Heure">
@@ -792,8 +795,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
           <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--sky)"></span>Réunion</span>
           <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--rose)"></span>Tournage</span>
           <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--butter)"></span>Autre</span>
-          <span class="lg-row" style="margin:0"><span class="pband tt" style="width:auto;padding:0 9px">🏠 Télétravail</span></span>
-          <span class="lg-row" style="margin:0"><span class="pband office" style="width:auto;padding:0 9px">🏢 Présentiel</span></span>
+          <span class="lg-row" style="margin:0"><span class="pcell tt">🏠 Télétravail</span></span>
+          <span class="lg-row" style="margin:0"><span class="pcell office">🏢 Présentiel</span></span>
         </div>
         <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
         <div class="cal mini" id="evtGrid"></div>
@@ -2454,8 +2457,8 @@ function presenceBands(k, big=false){
     const p = presenceOf(k, w);
     if(!p) return '';
     const name = w==='valentine' ? 'Valentine' : 'Jade';
-    const lbl = p==='tt' ? '🏠 ' + name : '🏢 ' + name;
-    return `<span class="pband ${p}${big?' big':''}" title="${name} — ${p==='tt'?'télétravail':'présentiel'}">${lbl}</span>`;
+    const lbl = (p==='tt' ? '🏠 ' : '🏢 ') + name;
+    return `<span class="${big?'pchip':'pcell'} ${p}" title="${name} — ${p==='tt'?'télétravail':'présentiel'}">${lbl}</span>`;
   }).join('');
 }
 function toggleRemote(){
@@ -2499,13 +2502,10 @@ function renderDayPlan(){
   const who = agendaWho;
   const pres = presenceOf(k, who);
   const label = (k===todayK ? "Aujourd'hui — " : '') + WEEKDAYS[dayCursor.getDay()] + ' ' + dayCursor.getDate() + ' ' + MONTHS[dayCursor.getMonth()];
-  const bothBadges = ['valentine','jade'].map(w=>{
-    const p = presenceOf(k, w);
-    if(!p) return '';
-    const nm = w==='valentine' ? '🌸 Valentine' : '🌿 Jade';
-    return `<span class="remote-badge${p==='office'?' office':''}">${p==='tt'?'🏠':'🏢'} ${nm}</span>`;
-  }).join('');
-  document.getElementById('dayTitle').innerHTML = esc(label) + bothBadges;
+  document.getElementById('dayTitle').textContent = label;
+  const ap = document.getElementById('agPresence');
+  ap.innerHTML = presenceBands(k, true);
+  ap.style.display = ap.innerHTML ? 'flex' : 'none';
   const rb = document.getElementById('remoteBtn');
   rb.classList.toggle('remote-on', pres==='tt');
   rb.classList.toggle('office-on', pres==='office');
@@ -2640,6 +2640,8 @@ function delDayItem(k, id){
   persist(); renderAgenda(); toast('Retiré (restaurable dans le coffre-fort) 🛡️');
 }
 function renderEvts(){
+  const ap = document.getElementById('agPresence');
+  ap.innerHTML = ''; ap.style.display = 'none';
   const base = dayCursor;
   const y = base.getFullYear(), m = base.getMonth();
   document.getElementById('dayTitle').textContent = MONTHS[m] + ' ' + y;
@@ -2670,6 +2672,8 @@ function renderEvts(){
     </div>`).join('') : '<p class="empty-msg">Aucun rendez-vous à venir pour l\'instant 🌱</p>';
 }
 function renderWeek(){
+  const ap = document.getElementById('agPresence');
+  ap.innerHTML = ''; ap.style.display = 'none';
   const monday = new Date(dayCursor);
   monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
   const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
