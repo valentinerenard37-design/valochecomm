@@ -293,7 +293,29 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .trash-item .d{font-size:11px;color:var(--muted)}
 .safe-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#E6F8EE,var(--surface-2));border-radius:18px;padding:12px 16px;font-size:13px;font-weight:800;color:var(--muted);box-shadow:var(--clay-in);margin-bottom:16px}
 
-/* ---------- Fun & animations ---------- */
+/* ---------- Fiche publi (lecture) ---------- */
+.pv-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+.pv-date{font-family:'Fredoka',sans-serif;font-weight:600;text-align:center;background:var(--surface-2);border-radius:16px;padding:10px 14px;box-shadow:var(--clay-in);flex:none}
+.pv-date .d{font-size:22px;line-height:1}
+.pv-date .m{font-size:11px;color:var(--muted);text-transform:capitalize}
+.pv-title{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;line-height:1.3;padding-top:4px}
+.pv-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.pv-notes{background:var(--surface-2);border-radius:18px;padding:15px 17px;box-shadow:var(--clay-in);font-size:14px;font-weight:600;line-height:1.6;white-space:pre-wrap;margin-bottom:14px;max-height:260px;overflow-y:auto}
+.pv-perf{display:flex;gap:12px;margin-bottom:6px}
+.pv-perf .stat{flex:1;padding:12px}
+.pv-perf .stat .big{font-size:22px}
+
+/* ---------- Agenda ---------- */
+.cal.mini .day{min-height:62px}
+.day-item{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:18px;padding:12px 16px;margin-bottom:10px;box-shadow:var(--clay-soft);transition:transform .12s}
+.day-item:hover{transform:translateY(-2px)}
+.day-item .h{font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;background:var(--surface);border-radius:12px;padding:6px 10px;box-shadow:var(--clay-in);flex:none}
+.day-item .txt{flex:1;font-weight:700;font-size:14px}
+.day-item.done .txt{text-decoration:line-through;color:var(--muted)}
+.day-check{width:26px;height:26px;flex:none;border-radius:9px;border:none;cursor:pointer;background:var(--surface);box-shadow:var(--clay-soft);font-size:13px;color:var(--ink);transition:all .15s}
+.day-check.on{background:linear-gradient(135deg,var(--mint),#CFF5E2);box-shadow:var(--clay-in)}
+.tiny-del{border:none;background:transparent;cursor:pointer;font-size:14px;color:var(--muted);padding:4px;border-radius:8px}
+.tiny-del:hover{color:var(--ink)}
 .bg-blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.45;pointer-events:none;z-index:-1;animation:floaty 20s ease-in-out infinite}
 .bg-blob.b1{width:340px;height:340px;top:-80px;right:-60px;background:var(--rose)}
 .bg-blob.b2{width:300px;height:300px;bottom:-70px;left:-80px;background:var(--sky);animation-delay:-7s}
@@ -379,6 +401,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     <div class="flower-menu" id="flowerMenu">
       <button onclick="switchView('planning')"><span class="ndot" style="background:var(--sky)"></span>Planning édito</button>
       <button onclick="switchView('taches')"><span class="ndot" style="background:var(--mint)"></span>Journal de bord</button>
+      <button onclick="switchView('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda du jour &amp; RDV</button>
       <button onclick="switchView('idees')"><span class="ndot" style="background:var(--butter)"></span>Boîte à idées</button>
       <button onclick="switchView('bilan')"><span class="ndot" style="background:var(--rose)"></span>Bilans mensuels</button>
       <button onclick="switchView('tags')"><span class="ndot" style="background:var(--lilac)"></span>Tags &amp; types</button>
@@ -395,6 +418,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <nav>
     <button class="active" data-view="planning" onclick="switchView('planning')"><span class="ndot" style="background:var(--sky)"></span>Planning</button>
     <button data-view="taches" onclick="switchView('taches')"><span class="ndot" style="background:var(--mint)"></span>Tâches</button>
+    <button data-view="agenda" onclick="switchView('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda</button>
     <button data-view="idees" onclick="switchView('idees')"><span class="ndot" style="background:var(--butter)"></span>Idées</button>
     <button data-view="bilan" onclick="switchView('bilan')"><span class="ndot" style="background:var(--rose)"></span>Bilans</button>
     <button data-view="tags" onclick="switchView('tags')"><span class="ndot" style="background:var(--lilac)"></span>Tags</button>
@@ -566,6 +590,42 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
   </section>
 
+  <!-- ================= AGENDA ================= -->
+  <section id="view-agenda" class="view">
+    <div class="card">
+      <div class="month-nav">
+        <button class="round-btn" onclick="moveDay(-1)" aria-label="Jour précédent">←</button>
+        <h2 id="dayTitle" style="min-width:280px"></h2>
+        <button class="round-btn" onclick="moveDay(1)" aria-label="Jour suivant">→</button>
+      </div>
+      <p class="section-hint" style="text-align:center">Mon planning du jour — coche au fil de la journée <button class="btn small" style="margin-left:8px" onclick="goToday()">Aujourd'hui</button></p>
+      <div class="ask-row">
+        <input type="time" id="dp-time" class="fselect" style="flex:none;width:110px">
+        <input type="text" id="dp-text" placeholder="ex : préparer le tournage de 14h, répondre aux commentaires…" onkeydown="if(event.key==='Enter')addDayItem()">
+        <button class="btn primary" onclick="addDayItem()">+ Ajouter</button>
+      </div>
+      <div id="dayList" style="margin-top:16px"></div>
+    </div>
+
+    <div class="card">
+      <h2>Réunions &amp; tournages <button class="btn primary small" style="margin-left:auto" onclick="openEvtModal()">+ Nouvel événement</button></h2>
+      <p class="section-hint">Les rendez-vous avec les courtiers — clique sur un jour pour en ajouter un.</p>
+      <div class="month-nav">
+        <button class="round-btn" onclick="moveMonth(-1)" aria-label="Mois précédent">←</button>
+        <h2 id="evtTitle"></h2>
+        <button class="round-btn" onclick="moveMonth(1)" aria-label="Mois suivant">→</button>
+      </div>
+      <div class="filters" style="justify-content:center">
+        <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--sky)"></span>Réunion</span>
+        <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--rose)"></span>Tournage</span>
+        <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--butter)"></span>Autre</span>
+      </div>
+      <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
+      <div class="cal mini" id="evtGrid"></div>
+      <div id="evtList" style="margin-top:18px"></div>
+    </div>
+  </section>
+
   <!-- ================= TAGS ================= -->
   <section id="view-tags" class="view">
     <div class="card">
@@ -592,50 +652,93 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 <!-- ========== MODAL POST ========== -->
 <div class="overlay" id="postOverlay">
   <div class="modal">
-    <h3 id="modalTitle">Nouvelle publication</h3>
+    <div id="postView" style="display:none"></div>
+    <div id="postEdit">
+      <h3 id="modalTitle">Nouvelle publication</h3>
+      <label>Titre</label>
+      <input type="text" id="p-title" placeholder="ex: Reel — 3 astuces taux immo">
+      <div class="grid-2">
+        <div><label>Date</label><input type="date" id="p-date"></div>
+        <div><label>Plateforme</label>
+          <select id="p-platform">
+            <option value="instagram">Instagram</option>
+            <option value="linkedin">LinkedIn</option>
+            <option value="both">Insta + LinkedIn</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div><label>Tag</label><select id="p-tag"></select></div>
+        <div><label>Statut</label>
+          <select id="p-status">
+            <option value="idee">💡 Idée</option>
+            <option value="afaire">📝 À faire</option>
+            <option value="programme">⏰ Programmé</option>
+            <option value="publie">✅ Publié</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div><label>Réalisé par</label>
+          <select id="p-author">
+            <option value="">— À définir —</option>
+            <option value="valentine">🌸 Valentine</option>
+            <option value="jade">🌿 Jade</option>
+            <option value="luna">🪄 Luna (freelance)</option>
+          </select>
+        </div>
+        <div><label>Validation Dimitri</label>
+          <select id="p-valid">
+            <option value="">⏳ En attente</option>
+            <option value="valide">✓ Validé</option>
+            <option value="arevoir">✏️ À retravailler</option>
+          </select>
+        </div>
+      </div>
+      <label>Notes / caption</label>
+      <textarea id="p-notes" placeholder="Brief, hashtags, idées de visuel…"></textarea>
+      <label>Lien de la publi (optionnel)</label>
+      <input type="url" id="p-link" placeholder="https://…">
+      <label>📈 Performances (à remplir une fois publié)</label>
+      <div class="grid-2">
+        <div><input type="number" id="p-views" placeholder="👀 Vues" min="0"></div>
+        <div><input type="number" id="p-likes" placeholder="❤️ J'aime" min="0"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn danger" id="deletePostBtn" style="display:none" onclick="deletePost()">🗑️ Corbeille</button>
+        <button class="btn" id="cancelEditBtn" onclick="cancelPostEdit()">Annuler</button>
+        <button class="btn primary" onclick="savePost()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL ÉVÉNEMENT ========== -->
+<div class="overlay" id="evtOverlay">
+  <div class="modal">
+    <h3 id="evtModalTitle">Nouvel événement</h3>
     <label>Titre</label>
-    <input type="text" id="p-title" placeholder="ex: Reel — 3 astuces taux immo">
+    <input type="text" id="e-title" placeholder="ex: Tournage reel avec Adrien">
     <div class="grid-2">
-      <div><label>Date</label><input type="date" id="p-date"></div>
-      <div><label>Plateforme</label>
-        <select id="p-platform">
-          <option value="instagram">Instagram</option>
-          <option value="linkedin">LinkedIn</option>
-          <option value="both">Insta + LinkedIn</option>
+      <div><label>Date</label><input type="date" id="e-date"></div>
+      <div><label>Heure</label><input type="text" id="e-time" placeholder="ex: 14h30"></div>
+    </div>
+    <div class="grid-2">
+      <div><label>Type</label>
+        <select id="e-type">
+          <option value="reunion">Réunion</option>
+          <option value="tournage">Tournage</option>
+          <option value="autre">Autre</option>
         </select>
       </div>
+      <div><label>Avec qui</label><input type="text" id="e-with" placeholder="ex: Adrien, Mattéo…"></div>
     </div>
-    <div class="grid-2">
-      <div><label>Tag</label><select id="p-tag"></select></div>
-      <div><label>Statut</label>
-        <select id="p-status">
-          <option value="idee">💡 Idée</option>
-          <option value="afaire">📝 À faire</option>
-          <option value="programme">⏰ Programmé</option>
-          <option value="publie">✅ Publié</option>
-        </select>
-      </div>
-    </div>
-    <label>Réalisé par</label>
-    <select id="p-author">
-      <option value="">— À définir —</option>
-      <option value="valentine">🌸 Valentine</option>
-      <option value="jade">🌿 Jade</option>
-      <option value="luna">🪄 Luna (freelance)</option>
-    </select>
-    <label>Notes / caption</label>
-    <textarea id="p-notes" placeholder="Brief, hashtags, idées de visuel…"></textarea>
-    <label>Lien de la publi (optionnel)</label>
-    <input type="url" id="p-link" placeholder="https://…">
-    <label>📈 Performances (à remplir une fois publié)</label>
-    <div class="grid-2">
-      <div><input type="number" id="p-views" placeholder="👀 Vues" min="0"></div>
-      <div><input type="number" id="p-likes" placeholder="❤️ J'aime" min="0"></div>
-    </div>
+    <label>Notes</label>
+    <textarea id="e-notes" placeholder="Lieu, matériel à prévoir, ordre du jour…"></textarea>
     <div class="modal-actions">
-      <button class="btn danger" id="deletePostBtn" style="display:none" onclick="deletePost()">🗑️ Corbeille</button>
+      <button class="btn danger" id="deleteEvtBtn" style="display:none" onclick="deleteEvt()">🗑️ Corbeille</button>
       <button class="btn" onclick="closeOverlays()">Annuler</button>
-      <button class="btn primary" onclick="savePost()">💾 Enregistrer</button>
+      <button class="btn primary" onclick="saveEvt()">💾 Enregistrer</button>
     </div>
   </div>
 </div>
@@ -786,10 +889,13 @@ const DEFAULTS = {
     {id:'y5', name:'Événement', color:'#FFB9A3'},{id:'y6', name:'Admin / veille', color:'#A8E6C9'}
   ],
   reports: {},
+  events: [],
+  dayplans: {},
   trash: []
 };
 let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
-for(const k of ['posts','tasks','ideas','tags','taskTypes','trash']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k];
+for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
 if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
 
 function snapshot(){
@@ -919,18 +1025,60 @@ function renderPostList(){
       ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
       <span class="pill ${platClass}">${PLAT_LABEL[p.platform]}</span>
       <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
+      ${p.valid==='valide'?'<span class="pill" style="background:var(--mint)">✓ Dimitri</span>':p.valid==='arevoir'?'<span class="pill" style="background:var(--rose)">✏️ À revoir</span>':p.status!=='publie'?'<span class="pill" style="background:var(--butter)">⏳ À valider</span>':''}
       ${p.link?`<a class="pill" style="background:#EFEAF9" href="${esc(p.link)}" target="_blank" onclick="event.stopPropagation()">🔗</a>`:''}
     </div>`;
   }).join('');
 }
 
 /* ================== MODAL POST ================== */
+const VALID_LABEL = {valide:'✓ Validé par Dimitri', arevoir:'✏️ À retravailler', '':'⏳ En attente de validation'};
 function openPostModal(id=null, dateStr=null, prefill=null){
+  editingId = id;
+  if(!prefill) schedulingIdeaId = null;
+  if(id){ showPostView(id); }
+  else{ showPostEdit(null, dateStr, prefill); }
+  document.getElementById('postOverlay').classList.add('open');
+}
+function showPostView(id){
+  const p = data.posts.find(x=>x.id===id); if(!p) return;
+  const t = tagById(p.tagId);
+  const pd = p.platform==='instagram' ? 'ig' : p.platform==='linkedin' ? 'li' : 'both';
+  const platClass = p.platform==='instagram'?'ig':p.platform==='linkedin'?'li':'both';
+  const validPill = p.valid==='valide' ? '<span class="pill" style="background:var(--mint)">✓ Validé par Dimitri</span>'
+    : p.valid==='arevoir' ? '<span class="pill" style="background:var(--rose)">✏️ À retravailler</span>'
+    : p.status!=='publie' ? '<span class="pill" style="background:var(--butter)">⏳ À valider par Dimitri</span>' : '';
+  document.getElementById('postView').innerHTML = `
+    <div class="pv-head">
+      <div class="pv-date"><div class="d">${p.date.slice(8,10)}</div><div class="m">${MONTHS[+p.date.slice(5,7)-1].slice(0,4)}. ${p.date.slice(0,4)}</div></div>
+      <div class="pv-title">${esc(p.title)}</div>
+    </div>
+    <div class="pv-pills">
+      <span class="pill ${platClass}"><span class="pdot ${pd}"></span> ${PLAT_LABEL[p.platform]}</span>
+      ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
+      <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
+      ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
+      ${validPill}
+    </div>
+    ${p.notes?`<div class="pv-notes">${esc(p.notes)}</div>`:''}
+    ${(p.views||p.likes)?`<div class="pv-perf">
+      <div class="stat" style="background:linear-gradient(135deg,var(--sky),var(--surface-2))"><div class="big">${esc(p.views)||'—'}</div><div class="lbl">vues</div></div>
+      <div class="stat" style="background:linear-gradient(135deg,var(--rose),var(--surface-2))"><div class="big">${esc(p.likes)||'—'}</div><div class="lbl">j'aime</div></div>
+    </div>`:''}
+    ${p.link?`<a class="btn sky small" href="${esc(p.link)}" target="_blank" style="display:inline-block;text-decoration:none;margin-bottom:6px">🔗 Voir la publication</a>`:''}
+    <div class="modal-actions">
+      <button class="btn danger" onclick="deletePost()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Fermer</button>
+      <button class="btn primary" onclick="showPostEdit('${p.id}')">✏️ Modifier</button>
+    </div>`;
+  document.getElementById('postView').style.display = 'block';
+  document.getElementById('postEdit').style.display = 'none';
+}
+function showPostEdit(id=null, dateStr=null, prefill=null){
   editingId = id;
   const sel = document.getElementById('p-tag');
   sel.innerHTML = data.tags.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
   const del = document.getElementById('deletePostBtn');
-  if(!prefill) schedulingIdeaId = null;
   if(id){
     const p = data.posts.find(x=>x.id===id); if(!p) return;
     document.getElementById('modalTitle').textContent = 'Modifier la publication';
@@ -942,6 +1090,7 @@ function openPostModal(id=null, dateStr=null, prefill=null){
     document.getElementById('p-notes').value = p.notes || '';
     document.getElementById('p-link').value = p.link || '';
     document.getElementById('p-author').value = p.author || '';
+    document.getElementById('p-valid').value = p.valid || '';
     document.getElementById('p-views').value = p.views || '';
     document.getElementById('p-likes').value = p.likes || '';
     del.style.display = 'inline-block';
@@ -949,6 +1098,7 @@ function openPostModal(id=null, dateStr=null, prefill=null){
     document.getElementById('modalTitle').textContent = prefill ? 'Planifier l\'idée 📅' : 'Nouvelle publication';
     ['p-title','p-notes','p-link','p-views','p-likes'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('p-author').value = '';
+    document.getElementById('p-valid').value = '';
     document.getElementById('p-date').value = dateStr || new Date().toISOString().slice(0,10);
     document.getElementById('p-platform').value = 'instagram';
     document.getElementById('p-status').value = prefill ? 'afaire' : 'idee';
@@ -960,8 +1110,13 @@ function openPostModal(id=null, dateStr=null, prefill=null){
     }
     del.style.display = 'none';
   }
-  document.getElementById('postOverlay').classList.add('open');
+  document.getElementById('postView').style.display = 'none';
+  document.getElementById('postEdit').style.display = 'block';
   document.getElementById('p-title').focus();
+}
+function cancelPostEdit(){
+  if(editingId){ showPostView(editingId); }
+  else closeOverlays();
 }
 function savePost(){
   const title = document.getElementById('p-title').value.trim();
@@ -975,6 +1130,7 @@ function savePost(){
     notes: document.getElementById('p-notes').value,
     link: document.getElementById('p-link').value,
     author: document.getElementById('p-author').value,
+    valid: document.getElementById('p-valid').value,
     views: document.getElementById('p-views').value,
     likes: document.getElementById('p-likes').value
   };
@@ -988,7 +1144,8 @@ function savePost(){
     persist(); closeOverlays(); renderAll(); toast('Idée planifiée au calendrier 📅✨');
     return;
   }
-  persist(); closeOverlays(); renderAll(); toast('Publication enregistrée ✨');
+  persist(); renderAll(); toast('Publication enregistrée ✨');
+  editingId = post.id; showPostView(post.id);
 }
 let schedulingIdeaId = null;
 function planIdea(ideaId){
@@ -1686,7 +1843,7 @@ function removeType(id){
 }
 
 /* ================== COFFRE-FORT ================== */
-const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type'};
+const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour'};
 function openSafe(){
   document.getElementById('flowerMenu').classList.remove('open');
   renderSafe();
@@ -1714,6 +1871,12 @@ function restoreTrash(i){
   else if(x.kind==='idea') data.ideas.unshift(x.item);
   else if(x.kind==='tag') data.tags.push(x.item);
   else if(x.kind==='type') data.taskTypes.push(x.item);
+  else if(x.kind==='evt') data.events.push(x.item);
+  else if(x.kind==='jour'){
+    const k = x.item.date;
+    if(!data.dayplans[k]) data.dayplans[k] = [];
+    data.dayplans[k].push(x.item.entry);
+  }
   data.trash.splice(i,1);
   persist(); renderSafe(); renderAll(); toast('Restauré ✨');
 }
@@ -1762,8 +1925,128 @@ function importData(e){
   e.target.value = '';
 }
 
+/* ================== AGENDA ================== */
+const WEEKDAYS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+const EVT_COLOR = {reunion:'var(--sky)', tournage:'var(--rose)', autre:'var(--butter)'};
+const EVT_LABEL = {reunion:'Réunion', tournage:'Tournage', autre:'Autre'};
+let dayCursor = new Date();
+let editingEvtId = null;
+const dkey = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+function moveDay(dir){ dayCursor.setDate(dayCursor.getDate()+dir); renderDayPlan(); }
+function goToday(){ dayCursor = new Date(); renderDayPlan(); }
+function renderDayPlan(){
+  const k = dkey(dayCursor);
+  const todayK = dkey(new Date());
+  const label = (k===todayK ? "Aujourd'hui — " : '') + WEEKDAYS[dayCursor.getDay()] + ' ' + dayCursor.getDate() + ' ' + MONTHS[dayCursor.getMonth()];
+  document.getElementById('dayTitle').textContent = label;
+  const items = (data.dayplans[k] || []).slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
+  document.getElementById('dayList').innerHTML = items.length ? items.map(it=>`
+    <div class="day-item ${it.done?'done':''}">
+      <button class="day-check ${it.done?'on':''}" onclick="toggleDayItem('${k}','${it.id}')" aria-label="Cocher">${it.done?'✓':''}</button>
+      ${it.time?`<span class="h">${esc(it.time)}</span>`:''}
+      <span class="txt">${esc(it.text)}</span>
+      <button class="tiny-del" onclick="delDayItem('${k}','${it.id}')" aria-label="Retirer">✕</button>
+    </div>`).join('')
+    : '<p class="empty-msg">Rien de prévu pour cette journée — ajoute ta première étape au-dessus 🌱</p>';
+}
+function addDayItem(){
+  const text = document.getElementById('dp-text').value.trim();
+  if(!text){ toast('Écris ce que tu prévois de faire ✍️'); return; }
+  const k = dkey(dayCursor);
+  if(!data.dayplans[k]) data.dayplans[k] = [];
+  data.dayplans[k].push({id:uid(), time:document.getElementById('dp-time').value, text, done:false});
+  document.getElementById('dp-text').value = '';
+  persist(); renderDayPlan(); toast('Ajouté au planning du jour 🗓️');
+}
+function toggleDayItem(k, id){
+  const it = (data.dayplans[k]||[]).find(x=>x.id===id);
+  if(!it) return;
+  it.done = !it.done;
+  if(it.done) confetti();
+  persist(); renderDayPlan();
+}
+function delDayItem(k, id){
+  const it = (data.dayplans[k]||[]).find(x=>x.id===id);
+  if(!it) return;
+  data.trash.unshift({kind:'jour', label:it.text, deletedAt:new Date().toISOString(), item:{date:k, entry:it}});
+  data.dayplans[k] = data.dayplans[k].filter(x=>x.id!==id);
+  persist(); renderDayPlan(); toast('Retiré (restaurable dans le coffre-fort) 🛡️');
+}
+function renderEvts(){
+  document.getElementById('evtTitle').textContent = fmtMonth(current);
+  const grid = document.getElementById('evtGrid');
+  grid.innerHTML = '';
+  const y = current.getFullYear(), m = current.getMonth();
+  const offset = (new Date(y, m, 1).getDay() + 6) % 7;
+  const days = new Date(y, m+1, 0).getDate();
+  const todayStr = new Date().toISOString().slice(0,10);
+  for(let i=0;i<offset;i++) grid.insertAdjacentHTML('beforeend','<div class="day empty"></div>');
+  for(let d=1; d<=days; d++){
+    const dateStr = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const evts = data.events.filter(e=>e.date===dateStr).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const chips = evts.slice(0,2).map(e=>
+      `<span class="chip" style="background:${EVT_COLOR[e.type]||'var(--butter)'}" title="${EVT_LABEL[e.type]}${e.with?' avec '+esc(e.with):''}" onclick="event.stopPropagation();openEvtModal('${e.id}')">${e.time?esc(e.time)+' · ':''}${esc(e.title)}</span>`
+    ).join('') + (evts.length>2 ? `<span class="chip" style="background:#EFEAF9">+${evts.length-2}</span>` : '');
+    grid.insertAdjacentHTML('beforeend',
+      `<div class="day ${dateStr===todayStr?'today':''}" onclick="openEvtModal(null,'${dateStr}')" title="Ajouter un événement"><span class="num">${d}</span>${chips}</div>`);
+  }
+  const upcoming = data.events.filter(e=>e.date >= todayStr).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))).slice(0,6);
+  document.getElementById('evtList').innerHTML = upcoming.length ? '<label>Prochains rendez-vous</label>' + upcoming.map(e=>`
+    <div class="post-row" onclick="openEvtModal('${e.id}')">
+      <div class="post-date">${e.date.slice(8,10)}<br><span style="font-size:10px;color:var(--muted)">${MONTHS[+e.date.slice(5,7)-1].slice(0,3)}</span></div>
+      <span class="post-title">${esc(e.title)}${e.with?`<br><span style="font-size:12px;font-weight:600;color:var(--muted)">avec ${esc(e.with)}</span>`:''}</span>
+      ${e.time?`<span class="pill" style="background:#EFEAF9">${esc(e.time)}</span>`:''}
+      <span class="pill" style="background:${EVT_COLOR[e.type]}">${EVT_LABEL[e.type]}</span>
+    </div>`).join('') : '<p class="empty-msg">Aucun rendez-vous à venir pour l\'instant 🌱</p>';
+}
+function openEvtModal(id=null, dateStr=null){
+  editingEvtId = id;
+  const del = document.getElementById('deleteEvtBtn');
+  if(id){
+    const e = data.events.find(x=>x.id===id); if(!e) return;
+    document.getElementById('evtModalTitle').textContent = 'Modifier l\'événement';
+    document.getElementById('e-title').value = e.title;
+    document.getElementById('e-date').value = e.date;
+    document.getElementById('e-time').value = e.time || '';
+    document.getElementById('e-type').value = e.type;
+    document.getElementById('e-with').value = e.with || '';
+    document.getElementById('e-notes').value = e.notes || '';
+    del.style.display = 'inline-block';
+  } else {
+    document.getElementById('evtModalTitle').textContent = 'Nouvel événement';
+    ['e-title','e-time','e-with','e-notes'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('e-date').value = dateStr || new Date().toISOString().slice(0,10);
+    document.getElementById('e-type').value = 'reunion';
+    del.style.display = 'none';
+  }
+  document.getElementById('evtOverlay').classList.add('open');
+  document.getElementById('e-title').focus();
+}
+function saveEvt(){
+  const title = document.getElementById('e-title').value.trim();
+  const date = document.getElementById('e-date').value;
+  if(!title || !date){ toast('Il manque un titre ou une date 👀'); return; }
+  const evt = {
+    id: editingEvtId || uid(), title, date,
+    time: document.getElementById('e-time').value.trim(),
+    type: document.getElementById('e-type').value,
+    with: document.getElementById('e-with').value.trim(),
+    notes: document.getElementById('e-notes').value
+  };
+  if(editingEvtId) data.events = data.events.map(e=>e.id===editingEvtId?evt:e);
+  else data.events.push(evt);
+  persist(); closeOverlays(); renderEvts(); toast('Événement enregistré 🗓️');
+}
+function deleteEvt(){
+  const e = data.events.find(x=>x.id===editingEvtId);
+  if(e) data.trash.unshift({kind:'evt', label:e.title, deletedAt:new Date().toISOString(), item:e});
+  data.events = data.events.filter(x=>x.id!==editingEvtId);
+  persist(); closeOverlays(); renderEvts(); toast('Envoyé à la corbeille 🛡️');
+}
+function renderAgenda(){ renderDayPlan(); renderEvts(); }
+
 /* ================== RENDER GLOBAL ================== */
-function renderAll(){ renderCalendar(); renderPostList(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); }
+function renderAll(){ renderCalendar(); renderPostList(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); }
 renderAll();
 </script>
 </body>
