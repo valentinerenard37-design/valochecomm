@@ -45,9 +45,10 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
   width:58px;height:58px;border-radius:46% 54% 55% 45%/50% 42% 58% 50%;
   background:linear-gradient(135deg,var(--rose),var(--lilac));
   box-shadow:var(--clay);display:grid;place-items:center;font-size:26px;
-  animation:squish 6s ease-in-out infinite;transition:transform .2s;
+  animation:squish 6s ease-in-out infinite;transition:transform .45s cubic-bezier(.34,1.56,.64,1);
 }
-.logo:hover .logo-blob{transform:rotate(-8deg) scale(1.06)}
+.logo.menu-open .logo-blob{transform:rotate(360deg) scale(1.08)}
+.logo:not(.menu-open):hover .logo-blob{transform:rotate(-8deg) scale(1.06)}
 @keyframes squish{0%,100%{border-radius:46% 54% 55% 45%/50% 42% 58% 50%}50%{border-radius:55% 45% 44% 56%/44% 56% 44% 56%}}
 .logo h1{font-size:26px;font-weight:600}
 .logo p{font-size:13px;color:var(--muted);font-weight:700}
@@ -859,35 +860,37 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 <!-- ========== MODAL IDÉE ========== -->
 <div class="overlay" id="ideaOverlay">
   <div class="modal">
-    <h3 id="ideaModalTitle">Nouvelle idée vidéo</h3>
-    <label>Titre de l'idée</label>
-    <input type="text" id="i-title" placeholder="ex: Micro-trottoir 'c'est quoi un courtier ?'">
-    <label>Description</label>
-    <textarea id="i-desc" placeholder="Concept, format, références, musique…"></textarea>
-    <label>📜 Script (optionnel)</label>
-    <textarea id="i-script" placeholder="Accroche, texte voix-off, dialogues, plan par plan…" style="min-height:110px"></textarea>
-    <div class="grid-2">
-      <div><label>Proposée par</label>
-        <select id="i-by">
-          <option value="valentine">🌸 Valentine</option>
-          <option value="jade">🌿 Jade</option>
-        </select>
+    <div id="ideaView" style="display:none"></div>
+    <div id="ideaEdit">
+      <h3 id="ideaModalTitle">Nouvelle idée vidéo</h3>
+      <label>Titre de l'idée</label>
+      <input type="text" id="i-title" placeholder="ex: Micro-trottoir 'c'est quoi un courtier ?'">
+      <label>Description</label>
+      <textarea id="i-desc" placeholder="Concept, format, références, musique…"></textarea>
+      <label>📜 Script (optionnel)</label>
+      <textarea id="i-script" placeholder="Accroche, texte voix-off, dialogues, plan par plan…" style="min-height:110px"></textarea>
+      <div class="grid-2">
+        <div><label>Proposée par</label>
+          <select id="i-by">
+            <option value="valentine">🌸 Valentine</option>
+            <option value="jade">🌿 Jade</option>
+          </select>
+        </div>
+        <div><label>Statut</label>
+          <select id="i-status">
+            <option value="idee">💭 En vrac</option>
+            <option value="validee">⭐ Validée</option>
+            <option value="tournee">🎬 Tournée</option>
+          </select>
+        </div>
       </div>
-      <div><label>Statut</label>
-        <select id="i-status">
-          <option value="idee">💭 En vrac</option>
-          <option value="validee">⭐ Validée</option>
-          <option value="tournee">🎬 Tournée</option>
-        </select>
+      <label>🎥 Qui apparaît / filme dans la vidéo ?</label>
+      <div class="cast-picks" id="castPicks"></div>
+      <div class="modal-actions">
+        <button class="btn danger" id="deleteIdeaBtn" style="display:none" onclick="deleteIdea()">🗑️ Corbeille</button>
+        <button class="btn" onclick="cancelIdeaEdit()">Annuler</button>
+        <button class="btn primary" onclick="saveIdea()">💾 Enregistrer</button>
       </div>
-    </div>
-    <label>🎥 Qui apparaît / filme dans la vidéo ?</label>
-    <div class="cast-picks" id="castPicks"></div>
-    <div class="modal-actions">
-      <button class="btn danger" id="deleteIdeaBtn" style="display:none" onclick="deleteIdea()">🗑️ Corbeille</button>
-      <button class="btn sky" id="planIdeaBtn" style="display:none" onclick="planIdea(editingIdeaId)">📅 Planifier au calendrier</button>
-      <button class="btn" onclick="closeOverlays()">Annuler</button>
-      <button class="btn primary" onclick="saveIdea()">💾 Enregistrer</button>
     </div>
   </div>
 </div>
@@ -1022,12 +1025,16 @@ function switchView(v){
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
-  document.getElementById('flowerMenu').classList.remove('open');
+  setFlowerMenu(false);
   renderAll();
 }
-function toggleFlowerMenu(e){ e.stopPropagation(); document.getElementById('flowerMenu').classList.toggle('open'); }
+function setFlowerMenu(open){
+  document.getElementById('flowerMenu').classList.toggle('open', open);
+  document.querySelector('.logo').classList.toggle('menu-open', open);
+}
+function toggleFlowerMenu(e){ e.stopPropagation(); setFlowerMenu(!document.getElementById('flowerMenu').classList.contains('open')); }
 document.addEventListener('click', e=>{
-  if(!e.target.closest('.flower-menu') && !e.target.closest('.logo')) document.getElementById('flowerMenu').classList.remove('open');
+  if(!e.target.closest('.flower-menu') && !e.target.closest('.logo')) setFlowerMenu(false);
 });
 function moveMonth(dir){ current.setMonth(current.getMonth()+dir); renderAll(); }
 function closeOverlays(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')); }
@@ -1720,6 +1727,43 @@ function castMinis(cast){
 }
 function openIdeaModal(id=null){
   editingIdeaId = id;
+  if(id){ showIdeaView(id); }
+  else{ showIdeaEdit(null); }
+  document.getElementById('ideaOverlay').classList.add('open');
+}
+function showIdeaView(id){
+  const i = data.ideas.find(x=>x.id===id); if(!i) return;
+  const IST_TEXT = {idee:'En vrac', validee:'Validée', tournee:'Tournée'};
+  const IST_BG = {idee:'#EFEAF9', validee:'var(--butter)', tournee:'var(--mint)'};
+  const BY_TEXT = {valentine:'Valentine', jade:'Jade'};
+  const BY_BG = {valentine:'var(--lilac)', jade:'var(--mint)'};
+  const vide = '<span class="pv-empty">—</span>';
+  const castTxt = (i.cast && i.cast.length)
+    ? i.cast.map(cid=>{ const p = personById(cid); return p ? `<span class="pill" style="background:#EFEAF9">${p.emo} ${p.name}</span>` : ''; }).join('')
+    : vide;
+  document.getElementById('ideaView').innerHTML = `
+    <div class="pv-head">
+      <div class="pv-date" style="padding:12px"><div class="d" style="font-size:26px">💡</div></div>
+      <div class="pv-title">${esc(i.title)}</div>
+    </div>
+    <div class="pv-grid">
+      <div class="pv-field"><div class="l">Proposée par</div><div class="v"><span class="pill" style="background:${BY_BG[i.by]||'#EFEAF9'}">${BY_TEXT[i.by]||i.by}</span></div></div>
+      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${IST_BG[i.status]}">${IST_TEXT[i.status]}</span></div></div>
+      <div class="pv-field full"><div class="l">Description</div><div class="v" style="white-space:pre-wrap;font-weight:700">${i.desc?esc(i.desc):vide}</div></div>
+      <div class="pv-field full"><div class="l">📜 Script</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:220px;overflow-y:auto">${i.script?esc(i.script):vide}</div></div>
+      <div class="pv-field full"><div class="l">🎥 Au tournage</div><div class="v">${castTxt}</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" onclick="deleteIdea()">🗑️ Corbeille</button>
+      ${i.status!=='tournee'?`<button class="btn sky" onclick="planIdea('${i.id}')">📅 Planifier</button>`:''}
+      <button class="btn" onclick="closeOverlays()">Fermer</button>
+      <button class="btn primary" onclick="showIdeaEdit('${i.id}')">✏️ Modifier</button>
+    </div>`;
+  document.getElementById('ideaView').style.display = 'block';
+  document.getElementById('ideaEdit').style.display = 'none';
+}
+function showIdeaEdit(id=null){
+  editingIdeaId = id;
   const del = document.getElementById('deleteIdeaBtn');
   castSel = id ? [...((data.ideas.find(x=>x.id===id)||{}).cast || [])] : [];
   renderCastPicks();
@@ -1732,9 +1776,7 @@ function openIdeaModal(id=null){
     document.getElementById('i-by').value = i.by;
     document.getElementById('i-status').value = i.status;
     del.style.display = 'inline-block';
-    document.getElementById('planIdeaBtn').style.display = i.status!=='tournee' ? 'inline-block' : 'none';
   } else {
-    document.getElementById('planIdeaBtn').style.display = 'none';
     document.getElementById('ideaModalTitle').textContent = 'Nouvelle idée vidéo';
     document.getElementById('i-title').value = '';
     document.getElementById('i-desc').value = '';
@@ -1743,8 +1785,13 @@ function openIdeaModal(id=null){
     document.getElementById('i-status').value = 'idee';
     del.style.display = 'none';
   }
-  document.getElementById('ideaOverlay').classList.add('open');
+  document.getElementById('ideaView').style.display = 'none';
+  document.getElementById('ideaEdit').style.display = 'block';
   document.getElementById('i-title').focus();
+}
+function cancelIdeaEdit(){
+  if(editingIdeaId){ showIdeaView(editingIdeaId); }
+  else closeOverlays();
 }
 function saveIdea(){
   const title = document.getElementById('i-title').value.trim();
@@ -1759,7 +1806,8 @@ function saveIdea(){
   };
   if(editingIdeaId) data.ideas = data.ideas.map(i=>i.id===editingIdeaId?idea:i);
   else data.ideas.unshift(idea);
-  persist(); closeOverlays(); renderIdeas(); toast('Idée enregistrée 💡');
+  persist(); renderIdeas(); toast('Idée enregistrée 💡');
+  editingIdeaId = idea.id; showIdeaView(idea.id);
 }
 function deleteIdea(){
   const i = data.ideas.find(x=>x.id===editingIdeaId);
@@ -1956,7 +2004,7 @@ function removeType(id){
 /* ================== COFFRE-FORT ================== */
 const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour'};
 function openSafe(){
-  document.getElementById('flowerMenu').classList.remove('open');
+  setFlowerMenu(false);
   renderSafe();
   document.getElementById('safeOverlay').classList.add('open');
 }
@@ -2060,7 +2108,8 @@ function importData(e){
         persist(); renderAll();
         toast(n ? n + ' élément(s) ajouté(s) ✅ (rien n\'a été effacé)' : 'Rien de nouveau à ajouter — tout y était déjà ✅');
       } else {
-        if(!confirm('⚠️ REMPLACER TOUT ? Tes données actuelles seront écrasées par le fichier (une copie de sécurité vient d\'être prise).')) { toast('Import annulé, rien n\'a changé 🛡️'); e.target.value=''; return; }
+        const word = prompt('⚠️ REMPLACEMENT TOTAL : tes données actuelles seront écrasées par le fichier.\n\nPour confirmer, tape REMPLACER en majuscules (sinon rien ne sera touché) :');
+        if(word !== 'REMPLACER'){ toast('Import annulé, rien n\'a changé 🛡️'); e.target.value=''; return; }
         data = Object.assign({}, DEFAULTS, d);
         for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
         if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
