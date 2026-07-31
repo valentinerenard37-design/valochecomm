@@ -98,7 +98,32 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 
 /* ---------- Month nav ---------- */
 .month-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px}
-.month-nav h2{font-size:22px;font-weight:600;min-width:220px;text-align:center;text-transform:capitalize;margin:0}
+.month-nav h2{font-size:22px;font-weight:600;min-width:220px;text-align:center;text-transform:capitalize;margin:0;display:block;flex:none}
+
+/* ---------- Titre de page & sous-navigation ---------- */
+.page-title{font-size:22px;font-weight:600;padding:4px 6px}
+#subNav{display:inline-flex;gap:6px;padding:7px;border-radius:22px;background:var(--surface);box-shadow:var(--clay)}
+#subNav button{font-family:'Fredoka',sans-serif;font-size:14px;font-weight:500;border:none;background:transparent;color:var(--muted);cursor:pointer;padding:9px 17px;border-radius:16px;transition:all .15s;white-space:nowrap}
+#subNav button.active{background:linear-gradient(135deg,var(--sky),#C6E2FF);color:var(--ink);box-shadow:var(--clay-soft)}
+#subNav:empty{display:none}
+
+/* ---------- Composeur agenda ---------- */
+.composer{display:flex;gap:10px;flex-wrap:wrap;background:var(--surface-2);border-radius:22px;padding:12px;box-shadow:var(--clay-in)}
+.composer input[type=time]{flex:none;width:112px;background:var(--surface);box-shadow:var(--clay-soft);border:none;border-radius:15px;padding:12px 14px;font-family:'Fredoka',sans-serif;font-weight:500;font-size:14px;color:var(--ink)}
+.composer input[type=text]{flex:1;min-width:200px;background:var(--surface);box-shadow:var(--clay-soft)}
+.composer .btn{flex:none}
+
+/* ---------- Timeline horaire ---------- */
+.tl-row{display:grid;grid-template-columns:54px minmax(0,1fr);gap:12px;align-items:stretch;margin-bottom:7px}
+.tl-hour{font-family:'Fredoka',sans-serif;font-weight:500;font-size:12.5px;color:var(--muted);text-align:right;padding-top:9px}
+.tl-slot{min-height:36px;border-radius:15px;background:var(--surface-2);box-shadow:var(--clay-in);padding:5px 8px}
+.tl-slot.free{opacity:.55}
+.day-item.sm{padding:8px 12px;margin-bottom:5px;border-radius:14px}
+.day-item.sm:last-child{margin-bottom:0}
+.tl-evt{display:flex;align-items:center;gap:10px;border-radius:14px;padding:8px 12px;margin-bottom:5px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:var(--clay-soft);transition:transform .12s}
+.tl-evt:hover{transform:translateY(-1px)}
+.remote-badge{font-size:12px;font-weight:800;background:linear-gradient(135deg,var(--mint),#D8F5E6);border-radius:12px;padding:4px 11px;box-shadow:var(--clay-soft);vertical-align:3px;margin-left:8px}
+.fchip.remote-on{background:linear-gradient(135deg,var(--mint),#CFF5E2);color:var(--ink);box-shadow:var(--clay-in)}
 .round-btn{
   width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;background:var(--surface);
   box-shadow:var(--clay-soft);font-size:18px;color:var(--ink);transition:transform .12s, box-shadow .12s;
@@ -427,44 +452,31 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       </div>
     </button>
     <div class="flower-menu" id="flowerMenu">
-      <button onclick="switchView('planning')"><span class="ndot" style="background:var(--sky)"></span>Planning édito</button>
-      <button onclick="switchView('taches')"><span class="ndot" style="background:var(--mint)"></span>Journal de bord</button>
-      <button onclick="switchView('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda du jour &amp; RDV</button>
-      <button onclick="switchView('idees')"><span class="ndot" style="background:var(--butter)"></span>Vidéos &amp; idées</button>
-      <button onclick="switchView('bilan')"><span class="ndot" style="background:var(--rose)"></span>Bilan global</button>
-      <button onclick="switchView('tags')"><span class="ndot" style="background:var(--lilac)"></span>Tags &amp; types</button>
-      <button onclick="openSafe()"><span class="ndot" style="background:var(--peach)"></span>Coffre-fort des données</button>
+      <button onclick="switchPage('dashboard')"><span class="ndot" style="background:var(--mint)"></span>Mon tableau de bord</button>
+      <button onclick="switchPage('contenu')"><span class="ndot" style="background:var(--sky)"></span>Création de contenu</button>
+      <button onclick="switchPage('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda</button>
+      <button onclick="switchPage('params')"><span class="ndot" style="background:var(--lilac)"></span>Paramètres</button>
     </div>
     <div class="data-btns">
-      <button class="btn small" onclick="openSafe()">🛡️ Coffre-fort</button>
+      <button class="btn small" onclick="switchView('coffre')">🛡️ Coffre-fort</button>
       <button class="btn small" onclick="exportData()">⬇️ Exporter</button>
       <button class="btn small" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
       <input type="file" id="importFile" accept=".json" hidden onchange="importData(event)">
     </div>
   </header>
 
-  <nav>
-    <button class="active" data-view="planning" onclick="switchView('planning')"><span class="ndot" style="background:var(--sky)"></span>Planning</button>
-    <button data-view="taches" onclick="switchView('taches')"><span class="ndot" style="background:var(--mint)"></span>Tâches</button>
-    <button data-view="agenda" onclick="switchView('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda</button>
-    <button data-view="idees" onclick="switchView('idees')"><span class="ndot" style="background:var(--butter)"></span>Vidéos</button>
-    <button data-view="bilan" onclick="switchView('bilan')"><span class="ndot" style="background:var(--rose)"></span>Bilan global</button>
-    <button data-view="tags" onclick="switchView('tags')"><span class="ndot" style="background:var(--lilac)"></span>Tags</button>
-  </nav>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px">
+    <div class="page-title fredoka" id="pageTitle"></div>
+    <nav id="subNav" style="margin-bottom:0"></nav>
+  </div>
 
   <!-- ================= PLANNING ================= -->
   <section id="view-planning" class="view active">
     <div class="card" style="padding:20px 26px">
-      <div class="month-nav" style="margin-bottom:14px">
+      <div class="month-nav" style="margin-bottom:0">
         <button class="round-btn" onclick="moveMonth(-1)" aria-label="Mois précédent">←</button>
         <h2 id="calTitle"></h2>
         <button class="round-btn" onclick="moveMonth(1)" aria-label="Mois suivant">→</button>
-      </div>
-      <div style="display:flex;justify-content:center">
-        <div class="view-switch" role="tablist" aria-label="Planning ou bilan">
-          <button class="active" data-ptab="cal" onclick="setPlanTab('cal')">Calendrier</button>
-          <button data-ptab="bilan" onclick="setPlanTab('bilan')">Bilan du mois</button>
-        </div>
       </div>
     </div>
 
@@ -651,23 +663,28 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <!-- ================= AGENDA ================= -->
   <section id="view-agenda" class="view">
     <div class="card">
-      <div class="month-nav">
+      <div class="month-nav" style="margin-bottom:6px">
         <button class="round-btn" onclick="moveDay(-1)" aria-label="Jour précédent">←</button>
-        <h2 id="dayTitle" style="min-width:280px"></h2>
+        <h2 id="dayTitle" style="min-width:290px"></h2>
         <button class="round-btn" onclick="moveDay(1)" aria-label="Jour suivant">→</button>
       </div>
-      <p class="section-hint" style="text-align:center">Mon planning du jour — coche au fil de la journée <button class="btn small" style="margin-left:8px" onclick="goToday()">Aujourd'hui</button></p>
-      <div class="ask-row">
-        <input type="time" id="dp-time" class="fselect" style="flex:none;width:110px">
-        <input type="text" id="dp-text" placeholder="ex : préparer le tournage de 14h, répondre aux commentaires…" onkeydown="if(event.key==='Enter')addDayItem()">
+      <div class="filters" style="justify-content:center;margin-bottom:16px">
+        <button class="btn small" onclick="goToday()">Aujourd'hui</button>
+        <button class="fchip v active" data-awho="valentine" onclick="setAgendaWho('valentine')">🌸 Valentine</button>
+        <button class="fchip j" data-awho="jade" onclick="setAgendaWho('jade')">🌿 Jade</button>
+        <button class="fchip" id="remoteBtn" onclick="toggleRemote()">🏠 Télétravail</button>
+      </div>
+      <div class="composer">
+        <input type="time" id="dp-time" aria-label="Heure">
+        <input type="text" id="dp-text" placeholder="Qu'est-ce qui est prévu ? ex : montage reel, point avec Dimitri…" onkeydown="if(event.key==='Enter')addDayItem()">
         <button class="btn primary" onclick="addDayItem()">+ Ajouter</button>
       </div>
-      <div id="dayList" style="margin-top:16px"></div>
+      <div id="dayTimeline" style="margin-top:18px"></div>
     </div>
 
     <div class="card">
       <h2>Réunions &amp; tournages <button class="btn primary small" style="margin-left:auto" onclick="openEvtModal()">+ Nouvel événement</button></h2>
-      <p class="section-hint">Les rendez-vous avec les courtiers — clique sur un jour pour en ajouter un.</p>
+      <p class="section-hint">Les rendez-vous avec les courtiers — communs aux deux agendas. Clique sur un jour pour en ajouter un.</p>
       <div class="month-nav">
         <button class="round-btn" onclick="moveMonth(-1)" aria-label="Mois précédent">←</button>
         <h2 id="evtTitle"></h2>
@@ -703,6 +720,22 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <label>Couleur</label>
       <div class="color-picks" id="colorPicks2"></div>
       <div class="modal-actions"><button class="btn primary" onclick="addType()">+ Ajouter le type</button></div>
+    </div>
+  </section>
+
+  <!-- ================= COFFRE-FORT ================= -->
+  <section id="view-coffre" class="view">
+    <div class="card">
+      <h2>🛡️ Coffre-fort des données</h2>
+      <div class="safe-banner">🔒 Rien n'est jamais supprimé directement : tout passe par la corbeille, et une copie de sécurité est prise automatiquement à chaque enregistrement.</div>
+      <h4 style="font-size:15px;margin:14px 0 8px">🗑️ Corbeille</h4>
+      <div id="trashList"></div>
+      <div class="modal-actions"><button class="btn danger small" onclick="emptyTrash()">Vider la corbeille</button></div>
+    </div>
+    <div class="card">
+      <h2>🕰️ Copies de sécurité automatiques</h2>
+      <p class="section-hint">Les 12 dernières versions sont conservées (sans les visuels). Restaurer = revenir en arrière — une copie de l'état actuel est prise avant, aucun risque.</p>
+      <div id="backupList"></div>
     </div>
   </section>
 </div>
@@ -895,22 +928,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   </div>
 </div>
 
-<!-- ========== COFFRE-FORT ========== -->
-<div class="overlay" id="safeOverlay">
-  <div class="modal" style="max-width:600px">
-    <h3>🛡️ Coffre-fort des données</h3>
-    <div class="safe-banner">🔒 Rien n'est jamais supprimé directement : tout passe par la corbeille, et une copie de sécurité est prise automatiquement à chaque enregistrement.</div>
-    <h4 style="font-size:15px;margin:14px 0 8px">🗑️ Corbeille</h4>
-    <div id="trashList"></div>
-    <h4 style="font-size:15px;margin:20px 0 8px">🕰️ Copies de sécurité automatiques</h4>
-    <p class="section-hint" style="margin-bottom:10px">Les 12 dernières versions sont conservées. Restaurer = revenir en arrière (une copie de l'état actuel est prise avant, aucun risque).</p>
-    <div id="backupList"></div>
-    <div class="modal-actions">
-      <button class="btn danger small" onclick="emptyTrash()">Vider la corbeille</button>
-      <button class="btn" onclick="closeOverlays()">Fermer</button>
-    </div>
-  </div>
-</div>
+<!-- ========== COFFRE-FORT (supprimé : devenu section view-coffre) ==========-->
 
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
@@ -959,11 +977,13 @@ const DEFAULTS = {
   reports: {},
   events: [],
   dayplans: {},
+  remote: {},
   trash: []
 };
 let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
 for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
 if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
+if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
 if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
 
 function snapshot(){
@@ -1021,13 +1041,39 @@ function postsOfMonth(){
 }
 
 /* ================== NAVIGATION ================== */
-function switchView(v){
+const PAGES = {
+  dashboard: {title:'Mon tableau de bord', subs:[['taches','Journal de bord'],['bilan','Bilan']]},
+  contenu:   {title:'Création de contenu', subs:[['planning','Planning'],['idees','Idées'],['bilanmois','Bilan']]},
+  agenda:    {title:'Agenda', subs:[]},
+  params:    {title:'Paramètres', subs:[['tags','Tags & types'],['coffre','Coffre-fort']]}
+};
+const SUB_SECTION = {taches:'view-taches', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre'};
+let currentPage = 'dashboard', currentSub = 'taches';
+function switchPage(page, sub=null){
+  currentPage = page;
+  const cfg = PAGES[page];
+  currentSub = sub || (cfg.subs.length ? cfg.subs[0][0] : null);
+  document.querySelectorAll('#mainNav button, nav [data-page]').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  document.getElementById('pageTitle').textContent = cfg.title;
+  const sn = document.getElementById('subNav');
+  sn.innerHTML = cfg.subs.length > 1
+    ? cfg.subs.map(([id,label])=>`<button class="${id===currentSub?'active':''}" onclick="switchPage('${page}','${id}')">${label}</button>`).join('')
+    : '';
+  const sectionId = currentSub ? SUB_SECTION[currentSub] : 'view-'+page;
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
-  document.getElementById('view-'+v).classList.add('active');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  document.getElementById(sectionId).classList.add('active');
+  if(currentSub==='planning') setPlanTab('cal');
+  if(currentSub==='bilanmois') setPlanTab('bilan');
   setFlowerMenu(false);
   renderAll();
 }
+/* Alias de compatibilité pour les anciens appels */
+const VIEW_TO_PAGE = {planning:['contenu','planning'], taches:['dashboard','taches'], idees:['contenu','idees'], bilan:['dashboard','bilan'], tags:['params','tags'], agenda:['agenda',null], coffre:['params','coffre']};
+function switchView(v){
+  const m = VIEW_TO_PAGE[v] || ['dashboard', null];
+  switchPage(m[0], m[1]);
+}
+function openSafe(){ switchPage('params','coffre'); }
 function setFlowerMenu(open){
   document.getElementById('flowerMenu').classList.toggle('open', open);
   document.querySelector('.logo').classList.toggle('menu-open', open);
@@ -2003,11 +2049,6 @@ function removeType(id){
 
 /* ================== COFFRE-FORT ================== */
 const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour'};
-function openSafe(){
-  setFlowerMenu(false);
-  renderSafe();
-  document.getElementById('safeOverlay').classList.add('open');
-}
 function renderSafe(){
   const tl = document.getElementById('trashList');
   tl.innerHTML = data.trash.length ? data.trash.map((x,i)=>
@@ -2133,8 +2174,7 @@ function setPlanTab(t){
 function gotoMonthBilan(k){
   const [y,m] = k.split('-');
   current = new Date(+y, +m-1, 1);
-  switchView('planning');
-  setPlanTab('bilan');
+  switchPage('contenu','bilanmois');
   window.scrollTo({top:0, behavior:'smooth'});
 }
 function renderGlobal(){
@@ -2212,27 +2252,79 @@ let editingEvtId = null;
 const dkey = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 function moveDay(dir){ dayCursor.setDate(dayCursor.getDate()+dir); renderDayPlan(); }
 function goToday(){ dayCursor = new Date(); renderDayPlan(); }
+let agendaWho = 'valentine';
+function setAgendaWho(w){
+  agendaWho = w;
+  document.querySelectorAll('[data-awho]').forEach(b=>b.classList.toggle('active', b.dataset.awho===w));
+  renderDayPlan();
+}
+function isRemote(k, who){ return !!(data.remote[k] && data.remote[k].includes(who)); }
+function toggleRemote(){
+  const k = dkey(dayCursor);
+  if(!data.remote[k]) data.remote[k] = [];
+  if(data.remote[k].includes(agendaWho)) data.remote[k] = data.remote[k].filter(w=>w!==agendaWho);
+  else data.remote[k].push(agendaWho);
+  persist(); renderDayPlan();
+  toast(isRemote(k, agendaWho) ? 'Journée en télétravail 🏠' : 'Retour au bureau 🏢');
+}
+function hourOf(t){
+  if(!t) return null;
+  const m = String(t).match(/(\d{1,2})/);
+  if(!m) return null;
+  const h = parseInt(m[1]);
+  return (h>=0 && h<=23) ? h : null;
+}
 function renderDayPlan(){
   const k = dkey(dayCursor);
   const todayK = dkey(new Date());
+  const who = agendaWho;
+  const remote = isRemote(k, who);
   const label = (k===todayK ? "Aujourd'hui — " : '') + WEEKDAYS[dayCursor.getDay()] + ' ' + dayCursor.getDate() + ' ' + MONTHS[dayCursor.getMonth()];
-  document.getElementById('dayTitle').textContent = label;
-  const items = (data.dayplans[k] || []).slice().sort((a,b)=>(a.time||'99').localeCompare(b.time||'99'));
-  document.getElementById('dayList').innerHTML = items.length ? items.map(it=>`
-    <div class="day-item ${it.done?'done':''}">
+  document.getElementById('dayTitle').innerHTML = esc(label) + (remote ? '<span class="remote-badge">🏠 Télétravail</span>' : '');
+  const rb = document.getElementById('remoteBtn');
+  rb.classList.toggle('remote-on', remote);
+  rb.textContent = remote ? '🏠 Télétravail ✓' : '🏠 Télétravail';
+
+  const items = (data.dayplans[k] || []).filter(it=>(it.who||'valentine')===who);
+  const evts = data.events.filter(e=>e.date===k);
+  const itemHtml = it => `
+    <div class="day-item sm ${it.done?'done':''}">
       <button class="day-check ${it.done?'on':''}" onclick="toggleDayItem('${k}','${it.id}')" aria-label="Cocher">${it.done?'✓':''}</button>
       ${it.time?`<span class="h">${esc(it.time)}</span>`:''}
       <span class="txt">${esc(it.text)}</span>
       <button class="tiny-del" onclick="delDayItem('${k}','${it.id}')" aria-label="Retirer">✕</button>
-    </div>`).join('')
-    : '<p class="empty-msg">Rien de prévu pour cette journée — ajoute ta première étape au-dessus 🌱</p>';
+    </div>`;
+  const evtHtml = e => `
+    <div class="tl-evt" style="background:linear-gradient(135deg,${EVT_COLOR[e.type]||'var(--butter)'},var(--surface-2))" onclick="openEvtModal('${e.id}')">
+      ${e.time?`<span class="h" style="font-family:'Fredoka',sans-serif">${esc(e.time)}</span>`:''}
+      <span style="flex:1">${esc(e.title)}${e.with?` · avec ${esc(e.with)}`:''}</span>
+      <span class="pill" style="background:rgba(255,255,255,.55)">${EVT_LABEL[e.type]}</span>
+    </div>`;
+
+  const noTime = items.filter(it=>hourOf(it.time)===null);
+  let html = '';
+  if(noTime.length) html += `<div class="tl-row"><div class="tl-hour">☀️</div><div class="tl-slot">${noTime.map(itemHtml).join('')}</div></div>`;
+  for(let h=8; h<=19; h++){
+    const slotItems = items.filter(it=>hourOf(it.time)===h);
+    const slotEvts = evts.filter(e=>hourOf(e.time)===h);
+    const content = slotEvts.map(evtHtml).join('') + slotItems.map(itemHtml).join('');
+    html += `<div class="tl-row"><div class="tl-hour">${h}h</div><div class="tl-slot ${content?'':'free'}">${content}</div></div>`;
+  }
+  const offHours = [...items.filter(it=>{const h=hourOf(it.time); return h!==null && (h<8||h>19);}),
+                    ];
+  const offEvts = evts.filter(e=>{const h=hourOf(e.time); return h!==null && (h<8||h>19);});
+  if(offHours.length || offEvts.length) html += `<div class="tl-row"><div class="tl-hour">🌙</div><div class="tl-slot">${offEvts.map(evtHtml).join('')}${offHours.map(itemHtml).join('')}</div></div>`;
+  const evtsNoTime = evts.filter(e=>hourOf(e.time)===null);
+  if(evtsNoTime.length) html = `<div class="tl-row"><div class="tl-hour">📌</div><div class="tl-slot">${evtsNoTime.map(evtHtml).join('')}</div></div>` + html;
+  if(!items.length && !evts.length) html += '<p class="empty-msg">Journée toute vide pour l\'instant — ajoute une première étape au-dessus 🌱</p>';
+  document.getElementById('dayTimeline').innerHTML = html;
 }
 function addDayItem(){
   const text = document.getElementById('dp-text').value.trim();
   if(!text){ toast('Écris ce que tu prévois de faire ✍️'); return; }
   const k = dkey(dayCursor);
   if(!data.dayplans[k]) data.dayplans[k] = [];
-  data.dayplans[k].push({id:uid(), time:document.getElementById('dp-time').value, text, done:false});
+  data.dayplans[k].push({id:uid(), time:document.getElementById('dp-time').value, text, done:false, who:agendaWho});
   document.getElementById('dp-text').value = '';
   persist(); renderDayPlan(); toast('Ajouté au planning du jour 🗓️');
 }
@@ -2324,8 +2416,8 @@ function deleteEvt(){
 function renderAgenda(){ renderDayPlan(); renderEvts(); }
 
 /* ================== RENDER GLOBAL ================== */
-function renderAll(){ renderCalendar(); renderPostList(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); }
-renderAll();
+function renderAll(){ renderCalendar(); renderPostList(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); renderSafe(); }
+switchPage('dashboard');
 </script>
 </body>
 </html>
