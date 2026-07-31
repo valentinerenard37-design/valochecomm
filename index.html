@@ -98,6 +98,11 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 
 /* ---------- Month nav ---------- */
 .month-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:20px}
+.round-btn{width:42px;height:42px;flex:none;border:none;cursor:pointer;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--clay-soft);display:grid;place-items:center;transition:transform .12s ease, box-shadow .12s ease}
+.round-btn:hover{transform:translateY(-2px)}
+.round-btn:active{transform:scale(.94);box-shadow:var(--clay-in)}
+.round-btn:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
+.round-btn svg{display:block}
 .month-nav h2{font-size:22px;font-weight:600;min-width:220px;text-align:center;text-transform:capitalize;margin:0;display:block;flex:none}
 
 /* ---------- Titre de page & sous-navigation ---------- */
@@ -162,7 +167,6 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .dur-chips{display:flex;gap:5px;align-items:center;flex:none;flex-wrap:wrap}
 .dchip{border:none;cursor:pointer;border-radius:13px;padding:10px 12px;font-family:'Fredoka',sans-serif;font-weight:500;font-size:13px;background:var(--surface);box-shadow:var(--clay-soft);color:var(--muted);transition:all .15s}
 .dchip.on{background:linear-gradient(135deg,var(--lilac),#DCCEF8);color:var(--ink);box-shadow:var(--clay-in)}
-.round-btn svg{display:block}
 .remote-badge.office{background:linear-gradient(135deg,var(--peach),#FFD9C9)}
 .fchip.office-on{background:linear-gradient(135deg,var(--peach),#FFD9C9);color:var(--ink);box-shadow:var(--clay-in)}
 
@@ -778,7 +782,6 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         </div>
       </div>
       <div class="filters" style="justify-content:center;margin-bottom:12px">
-        <button class="btn small" onclick="goToday()">Aujourd'hui</button>
         <div class="view-switch" role="tablist" aria-label="Quel agenda ?">
           <button class="active" data-awho="valentine" onclick="setAgendaWho('valentine')">🌸 Valentine</button>
           <button data-awho="jade" onclick="setAgendaWho('jade')">🌿 Jade</button>
@@ -2551,11 +2554,8 @@ function renderDayPlan(){
   document.getElementById('dayTitle').textContent = label;
 
   const pp = document.getElementById('presPicker');
-  const other = who==='valentine' ? 'jade' : 'valentine';
-  const op = presenceOf(k, other);
   pp.innerHTML = `<span class="plabel">Présence de ${who==='valentine'?'Valentine':'Jade'} :</span>`
-    + ['tt','office','leave'].map(m=>`<button class="pres-opt ${m} ${pres===m?'on':''}" onclick="setPresence('${m}')">${PRES_LABEL[m]}</button>`).join('')
-    + (op ? `<span class="pcell ${op}" style="margin-left:8px">${PRES_ICON[op]} ${other==='valentine'?'Valentine':'Jade'}</span>` : '');
+    + ['tt','office','leave'].map(m=>`<button class="pres-opt ${m} ${pres===m?'on':''}" onclick="setPresence('${m}')">${PRES_LABEL[m]}</button>`).join('');
   pp.style.display = 'flex';
 
   const items = (data.dayplans[k] || []).filter(it=>(it.who||'valentine')===who);
