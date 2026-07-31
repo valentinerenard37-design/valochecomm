@@ -473,15 +473,26 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <!-- ================= PLANNING ================= -->
   <section id="view-planning" class="view active">
     <div class="card" style="padding:20px 26px">
-      <div class="month-nav" style="margin-bottom:0">
-        <button class="round-btn" onclick="moveMonth(-1)" aria-label="Mois précédent">←</button>
-        <h2 id="calTitle"></h2>
-        <button class="round-btn" onclick="moveMonth(1)" aria-label="Mois suivant">→</button>
+      <div class="month-nav" style="margin-bottom:12px">
+        <button class="round-btn" onclick="navPlanning(-1)" aria-label="Précédent">←</button>
+        <h2 id="calTitle" style="min-width:280px"></h2>
+        <button class="round-btn" onclick="navPlanning(1)" aria-label="Suivant">→</button>
+      </div>
+      <div style="display:flex;justify-content:center" id="calViewSwitch">
+        <div class="view-switch" role="tablist" aria-label="Vue jour ou mois">
+          <button data-calview="jour" onclick="setCalView('jour')">Jour</button>
+          <button class="active" data-calview="mois" onclick="setCalView('mois')">Mois</button>
+        </div>
       </div>
     </div>
 
     <div id="planTab-cal">
-    <div class="card">
+    <div class="card" id="dayViewCard" style="display:none">
+      <h2>Publications du jour <button class="btn primary small" style="margin-left:auto" onclick="openPostModal(null, dkey(planDayCursor))">+ Publi ce jour</button></h2>
+      <div id="dayPostList"></div>
+      <div id="dayEvtHint"></div>
+    </div>
+    <div class="card" id="monthViewCard">
       <div style="display:flex;justify-content:center;margin-bottom:18px">
         <div class="view-switch" role="tablist" aria-label="Filtrer le calendrier">
           <button class="active" data-calf="all" onclick="setCalFilter('all')">Tout</button>
@@ -512,7 +523,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         </aside>
       </div>
     </div>
-    <div class="card">
+    <div class="card" id="monthListCard">
       <h2>✍️ Publications du mois <button class="btn primary small" style="margin-left:auto" onclick="openPostModal()">+ Nouvelle publi</button></h2>
       <div id="postList"></div>
     </div>
@@ -1089,10 +1100,57 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeOverlays(); 
 
 /* ================== CALENDRIER ================== */
 let calFilter = 'all';
+let calView = 'mois';
+let planDayCursor = new Date();
 function setCalFilter(f){
   calFilter = f;
   document.querySelectorAll('[data-calf]').forEach(b=>b.classList.toggle('active', b.dataset.calf===f));
   renderCalendar(); renderPostList();
+}
+function setCalView(v){
+  calView = v;
+  document.querySelectorAll('[data-calview]').forEach(b=>b.classList.toggle('active', b.dataset.calview===v));
+  if(v==='jour' && monthKey(planDayCursor)!==monthKey(current)){
+    planDayCursor = new Date(current.getFullYear(), current.getMonth(), 1);
+    const now = new Date();
+    if(monthKey(now)===monthKey(current)) planDayCursor = new Date(now);
+  }
+  document.getElementById('dayViewCard').style.display = v==='jour' ? 'block' : 'none';
+  document.getElementById('monthViewCard').style.display = v==='mois' ? 'block' : 'none';
+  document.getElementById('monthListCard').style.display = v==='mois' ? 'block' : 'none';
+  renderCalendar(); renderPlanningDay();
+}
+function navPlanning(dir){
+  if(planTab==='cal' && calView==='jour'){
+    planDayCursor.setDate(planDayCursor.getDate()+dir);
+    current = new Date(planDayCursor.getFullYear(), planDayCursor.getMonth(), 1);
+    renderAll();
+  } else {
+    moveMonth(dir);
+  }
+}
+function renderPlanningDay(){
+  if(calView!=='jour') return;
+  const k = dkey(planDayCursor);
+  const posts = data.posts.filter(p=>p.date===k).sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  const list = document.getElementById('dayPostList');
+  list.innerHTML = posts.length ? posts.map(p=>{
+    const t = tagById(p.tagId);
+    const platClass = p.platform==='instagram'?'ig':p.platform==='linkedin'?'li':'both';
+    return `<div class="post-row" onclick="openPostModal('${p.id}')">
+      ${p.img?`<img class="thumb" src="${p.img}" alt="">`:''}
+      <span class="post-title">${esc(p.title)}</span>
+      ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
+      ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
+      <span class="pill ${platClass}">${PLAT_LABEL[p.platform]}</span>
+      <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
+      ${p.valid==='valide'?'<span class="pill" style="background:var(--mint)">✓ Dimitri</span>':p.valid==='arevoir'?'<span class="pill" style="background:var(--rose)">✏️ À revoir</span>':p.status!=='publie'?'<span class="pill" style="background:var(--butter)">⏳ À valider</span>':''}
+    </div>`;
+  }).join('') : '<p class="empty-msg">Aucune publication prévue ce jour-là — le bouton vert t\'attend 🌱</p>';
+  const evts = data.events.filter(e=>e.date===k);
+  document.getElementById('dayEvtHint').innerHTML = evts.length
+    ? '<p class="section-hint" style="margin:14px 0 0">📌 Aussi ce jour-là : ' + evts.map(e=>`${EVT_LABEL[e.type]} « ${esc(e.title)} »${e.time?' à '+esc(e.time):''}`).join(' · ') + '</p>'
+    : '';
 }
 function matchCalFilter(p){
   if(calFilter==='publie') return p.status==='publie' || p.status==='programme';
@@ -1100,7 +1158,10 @@ function matchCalFilter(p){
   return true;
 }
 function renderCalendar(){
-  document.getElementById('calTitle').textContent = fmtMonth(current);
+  const title = (planTab==='cal' && calView==='jour')
+    ? WEEKDAYS[planDayCursor.getDay()] + ' ' + planDayCursor.getDate() + ' ' + MONTHS[planDayCursor.getMonth()] + ' ' + planDayCursor.getFullYear()
+    : fmtMonth(current);
+  document.getElementById('calTitle').textContent = title;
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
   const y = current.getFullYear(), m = current.getMonth();
@@ -2169,6 +2230,7 @@ function setPlanTab(t){
   planTab = t;
   document.getElementById('planTab-cal').style.display = t==='cal' ? 'block' : 'none';
   document.getElementById('planTab-bilan').style.display = t==='bilan' ? 'block' : 'none';
+  document.getElementById('calViewSwitch').style.display = t==='cal' ? 'flex' : 'none';
   document.querySelectorAll('[data-ptab]').forEach(b=>b.classList.toggle('active', b.dataset.ptab===t));
 }
 function gotoMonthBilan(k){
@@ -2416,7 +2478,7 @@ function deleteEvt(){
 function renderAgenda(){ renderDayPlan(); renderEvts(); }
 
 /* ================== RENDER GLOBAL ================== */
-function renderAll(){ renderCalendar(); renderPostList(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); renderSafe(); }
+function renderAll(){ renderCalendar(); renderPostList(); renderPlanningDay(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); renderSafe(); }
 switchPage('dashboard');
 </script>
 </body>
