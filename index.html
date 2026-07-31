@@ -133,7 +133,6 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .day-item.sm:last-child{margin-bottom:0}
 .tray{background:var(--surface-2);border-radius:16px;box-shadow:var(--clay-in);padding:8px 10px;margin-top:14px}
 .tray label{margin:2px 0 6px}
-.composer select{flex:none;background:var(--surface);box-shadow:var(--clay-soft);border:none;border-radius:15px;padding:12px 14px;font-family:'Fredoka',sans-serif;font-weight:500;font-size:14px;color:var(--ink);cursor:pointer}
 
 /* ---------- Calendrier ---------- */
 .cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-bottom:8px}
@@ -150,6 +149,20 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pcell{display:inline-block;align-self:flex-start;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px;font-weight:800;color:var(--ink);padding:2px 7px;border-radius:8px;box-shadow:0 1px 2px rgba(93,77,120,.16)}
 .pcell.tt{background:var(--mint)}
 .pcell.office{background:var(--peach)}
+.pcell.leave{background:var(--butter)}
+.pchip.leave{background:linear-gradient(135deg,var(--butter),#FFF0C2)}
+.pres-picker{display:none;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.pres-picker .plabel{font-family:'Fredoka',sans-serif;font-weight:500;font-size:13.5px;color:var(--muted)}
+.pres-opt{border:none;cursor:pointer;border-radius:13px;padding:8px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:12.5px;background:var(--surface);box-shadow:var(--clay-soft);color:var(--muted);transition:all .15s}
+.pres-opt:hover{transform:translateY(-1px)}
+.pres-opt.on{color:var(--ink);box-shadow:var(--clay-in)}
+.pres-opt.on.tt{background:linear-gradient(135deg,var(--mint),#D9F5E7)}
+.pres-opt.on.office{background:linear-gradient(135deg,var(--peach),#FFE3D5)}
+.pres-opt.on.leave{background:linear-gradient(135deg,var(--butter),#FFF0C2)}
+.dur-chips{display:flex;gap:5px;align-items:center;flex:none;flex-wrap:wrap}
+.dchip{border:none;cursor:pointer;border-radius:13px;padding:10px 12px;font-family:'Fredoka',sans-serif;font-weight:500;font-size:13px;background:var(--surface);box-shadow:var(--clay-soft);color:var(--muted);transition:all .15s}
+.dchip.on{background:linear-gradient(135deg,var(--lilac),#DCCEF8);color:var(--ink);box-shadow:var(--clay-in)}
+.round-btn svg{display:block}
 .remote-badge.office{background:linear-gradient(135deg,var(--peach),#FFD9C9)}
 .fchip.office-on{background:linear-gradient(135deg,var(--peach),#FFD9C9);color:var(--ink);box-shadow:var(--clay-in)}
 
@@ -538,9 +551,9 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <section id="view-planning" class="view active">
     <div class="card" style="padding:20px 26px">
       <div class="month-nav" style="margin-bottom:12px">
-        <button class="round-btn" onclick="navPlanning(-1)" aria-label="Précédent">←</button>
+        <button class="round-btn" onclick="navPlanning(-1)" aria-label="Précédent"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
         <h2 id="calTitle" style="min-width:280px"></h2>
-        <button class="round-btn" onclick="navPlanning(1)" aria-label="Suivant">→</button>
+        <button class="round-btn" onclick="navPlanning(1)" aria-label="Suivant"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <div style="display:flex;justify-content:center" id="calViewSwitch">
         <div class="view-switch" role="tablist" aria-label="Vue jour ou mois">
@@ -583,6 +596,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
             <h4>Présence</h4>
             <div class="lg-row"><span class="pcell tt">🏠 Télétravail</span></div>
             <div class="lg-row"><span class="pcell office">🏢 Présentiel</span></div>
+            <div class="lg-row"><span class="pcell leave">🏖️ Congés</span></div>
             <div class="lg-row" style="font-size:11px">À régler dans l'Agenda</div>
           </div>
           <div class="legend-box">
@@ -752,9 +766,9 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <section id="view-agenda" class="view">
     <div class="card">
       <div class="month-nav" style="margin-bottom:6px">
-        <button class="round-btn" onclick="navAgenda(-1)" aria-label="Précédent">←</button>
+        <button class="round-btn" onclick="navAgenda(-1)" aria-label="Précédent"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
         <h2 id="dayTitle" style="min-width:290px"></h2>
-        <button class="round-btn" onclick="navAgenda(1)" aria-label="Suivant">→</button>
+        <button class="round-btn" onclick="navAgenda(1)" aria-label="Suivant"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
       <div style="display:flex;justify-content:center;margin-bottom:12px">
         <div class="view-switch" role="tablist" aria-label="Vue de l'agenda">
@@ -763,25 +777,26 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
           <button data-aview="mois" onclick="setAgendaView('mois')">Mois</button>
         </div>
       </div>
-      <div class="filters" style="justify-content:center;margin-bottom:16px">
+      <div class="filters" style="justify-content:center;margin-bottom:12px">
         <button class="btn small" onclick="goToday()">Aujourd'hui</button>
-        <button class="fchip v active" data-awho="valentine" onclick="setAgendaWho('valentine')">🌸 Valentine</button>
-        <button class="fchip j" data-awho="jade" onclick="setAgendaWho('jade')">🌿 Jade</button>
-        <button class="fchip" id="remoteBtn" onclick="toggleRemote()">📍 Présence</button>
+        <div class="view-switch" role="tablist" aria-label="Quel agenda ?">
+          <button class="active" data-awho="valentine" onclick="setAgendaWho('valentine')">🌸 Valentine</button>
+          <button data-awho="jade" onclick="setAgendaWho('jade')">🌿 Jade</button>
+        </div>
         <button class="btn primary small" onclick="openEvtModal()">+ Événement</button>
       </div>
-      <div id="agPresence" style="display:none;justify-content:center;gap:10px;flex-wrap:wrap;margin:-4px 0 16px"></div>
+      <div id="presPicker" class="pres-picker"></div>
+      <div id="agPresence" style="display:none"></div>
       <div id="agendaJour">
         <div class="composer">
           <input type="time" id="dp-time" aria-label="Heure">
-          <select id="dp-dur" aria-label="Durée">
-            <option value="30">30 min</option>
-            <option value="60" selected>1h</option>
-            <option value="90">1h30</option>
-            <option value="120">2h</option>
-            <option value="180">3h</option>
-            <option value="240">4h</option>
-          </select>
+          <div class="dur-chips" role="radiogroup" aria-label="Durée">
+            <button class="dchip" data-dur="30" onclick="setDur(30)">30&nbsp;min</button>
+            <button class="dchip on" data-dur="60" onclick="setDur(60)">1h</button>
+            <button class="dchip" data-dur="90" onclick="setDur(90)">1h30</button>
+            <button class="dchip" data-dur="120" onclick="setDur(120)">2h</button>
+            <button class="dchip" data-dur="180" onclick="setDur(180)">3h</button>
+          </div>
           <input type="text" id="dp-text" placeholder="Qu'est-ce qui est prévu ? ex : montage reel, point avec Dimitri…" onkeydown="if(event.key==='Enter')addDayItem()">
           <button class="btn primary" onclick="addDayItem()">+ Ajouter</button>
         </div>
@@ -797,6 +812,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
           <span class="lg-row" style="margin:0"><span class="ndot" style="background:var(--butter)"></span>Autre</span>
           <span class="lg-row" style="margin:0"><span class="pcell tt">🏠 Télétravail</span></span>
           <span class="lg-row" style="margin:0"><span class="pcell office">🏢 Présentiel</span></span>
+          <span class="lg-row" style="margin:0"><span class="pcell leave">🏖️ Congés</span></span>
         </div>
         <div class="cal-head"><span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span></div>
         <div class="cal mini" id="evtGrid"></div>
@@ -1097,6 +1113,7 @@ const DEFAULTS = {
   dayplans: {},
   remote: {},
   office: {},
+  leave: {},
   notes: [],
   trash: []
 };
@@ -1105,6 +1122,7 @@ for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','not
 if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
 if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
 if(typeof data.office !== 'object' || !data.office) data.office = {};
+if(typeof data.leave !== 'object' || !data.leave) data.leave = {};
 if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
 
 function snapshot(){
@@ -2262,7 +2280,7 @@ function restoreBackup(kind, i){
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
   for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes']) if(!Array.isArray(data[k])) data[k] = [];
-  for(const k of ['reports','dayplans','remote','office']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
+  for(const k of ['reports','dayplans','remote','office','leave']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
   persist(); renderAll(); toast('Version restaurée 🕰️');
 }
 
@@ -2302,6 +2320,7 @@ function mergeData(d){
   }
   for(const k in (d.remote||{})) if(!data.remote[k]) data.remote[k] = d.remote[k];
   for(const k in (d.office||{})) if(!data.office[k]) data.office[k] = d.office[k];
+  for(const k in (d.leave||{})) if(!data.leave[k]) data.leave[k] = d.leave[k];
   return added;
 }
 function importData(e){
@@ -2421,6 +2440,11 @@ const EVT_LABEL = {reunion:'Réunion', tournage:'Tournage', autre:'Autre'};
 let dayCursor = new Date();
 let editingEvtId = null;
 const dkey = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+let composerDur = 60;
+function setDur(v){
+  composerDur = v;
+  document.querySelectorAll('.dchip').forEach(b=>b.classList.toggle('on', +b.dataset.dur===v));
+}
 let agendaView = 'jour';
 function setAgendaView(v){
   agendaView = v;
@@ -2428,7 +2452,7 @@ function setAgendaView(v){
   document.getElementById('agendaJour').style.display = v==='jour' ? 'block' : 'none';
   document.getElementById('agendaSemaine').style.display = v==='semaine' ? 'block' : 'none';
   document.getElementById('agendaMois').style.display = v==='mois' ? 'block' : 'none';
-  document.getElementById('remoteBtn').style.display = v==='jour' ? '' : 'none';
+  document.getElementById('presPicker').style.display = v==='jour' ? 'flex' : 'none';
   renderAgenda();
 }
 function navAgenda(dir){
@@ -2449,29 +2473,51 @@ function setAgendaWho(w){
   document.querySelectorAll('[data-awho]').forEach(b=>b.classList.toggle('active', b.dataset.awho===w));
   renderAgenda();
 }
-function isRemote(k, who){ return !!(data.remote[k] && data.remote[k].includes(who)); }
-function isOffice(k, who){ return !!(data.office[k] && data.office[k].includes(who)); }
-function presenceOf(k, who){ return isRemote(k, who) ? 'tt' : isOffice(k, who) ? 'office' : null; }
+const PRES_LABEL = {tt:'🏠 Télétravail', office:'🏢 Présentiel', leave:'🏖️ Congés'};
+const PRES_ICON = {tt:'🏠', office:'🏢', leave:'🏖️'};
+function presenceOf(k, who){
+  if(data.remote[k] && data.remote[k].includes(who)) return 'tt';
+  if(data.office[k] && data.office[k].includes(who)) return 'office';
+  if(data.leave[k] && data.leave[k].includes(who)) return 'leave';
+  return null;
+}
 function presenceBands(k, big=false){
   return ['valentine','jade'].map(w=>{
     const p = presenceOf(k, w);
     if(!p) return '';
     const name = w==='valentine' ? 'Valentine' : 'Jade';
-    const lbl = (p==='tt' ? '🏠 ' : '🏢 ') + name;
-    return `<span class="${big?'pchip':'pcell'} ${p}" title="${name} — ${p==='tt'?'télétravail':'présentiel'}">${lbl}</span>`;
+    return `<span class="${big?'pchip':'pcell'} ${p}" title="${name} — ${PRES_LABEL[p]}">${PRES_ICON[p]} ${name}</span>`;
   }).join('');
 }
-function toggleRemote(){
+function setPresence(mode){
   const k = dkey(dayCursor), who = agendaWho;
   const cur = presenceOf(k, who);
-  if(data.remote[k]) data.remote[k] = data.remote[k].filter(w=>w!==who);
-  if(data.office[k]) data.office[k] = data.office[k].filter(w=>w!==who);
-  if(cur===null){ (data.remote[k] = data.remote[k] || []).push(who); toast('Journée en télétravail 🏠'); }
-  else if(cur==='tt'){ (data.office[k] = data.office[k] || []).push(who); toast('Journée en présentiel 🏢'); }
-  else { toast('Présence effacée pour ce jour'); }
+  for(const st of [data.remote, data.office, data.leave]) if(st[k]) st[k] = st[k].filter(w=>w!==who);
+  if(cur !== mode){
+    const target = mode==='tt' ? data.remote : mode==='office' ? data.office : data.leave;
+    (target[k] = target[k] || []).push(who);
+    toast('Journée notée : ' + PRES_LABEL[mode] + ' ✓');
+  } else {
+    toast('Présence effacée pour ce jour');
+  }
   persist(); renderAgenda(); renderCalendar();
 }
 const AG_START = 8, AG_END = 20, HOUR_H = 56;
+function stepColor(text){
+  const t = (text||'').toLowerCase().trim();
+  if(t.length < 3) return null;
+  for(const task of data.tasks){
+    const n = (task.name||'').toLowerCase().trim();
+    if(n.length >= 4 && (t.includes(n) || n.includes(t))){
+      const ty = data.taskTypes.find(x=>x.id===task.typeId);
+      if(ty) return ty.color;
+    }
+  }
+  for(const ty of data.taskTypes){
+    if(ty.name && t.includes(ty.name.toLowerCase())) return ty.color;
+  }
+  return null;
+}
 function minOf(t){
   if(!t) return null;
   const m = String(t).match(/(\d{1,2})\s*[h:.]?\s*(\d{2})?/);
@@ -2503,14 +2549,14 @@ function renderDayPlan(){
   const pres = presenceOf(k, who);
   const label = (k===todayK ? "Aujourd'hui — " : '') + WEEKDAYS[dayCursor.getDay()] + ' ' + dayCursor.getDate() + ' ' + MONTHS[dayCursor.getMonth()];
   document.getElementById('dayTitle').textContent = label;
-  const ap = document.getElementById('agPresence');
-  ap.innerHTML = presenceBands(k, true);
-  ap.style.display = ap.innerHTML ? 'flex' : 'none';
-  const rb = document.getElementById('remoteBtn');
-  rb.classList.toggle('remote-on', pres==='tt');
-  rb.classList.toggle('office-on', pres==='office');
-  rb.textContent = pres==='tt' ? '🏠 Télétravail ✓' : pres==='office' ? '🏢 Présentiel ✓' : '📍 Présence';
-  rb.title = 'Clique pour alterner : télétravail → présentiel → rien';
+
+  const pp = document.getElementById('presPicker');
+  const other = who==='valentine' ? 'jade' : 'valentine';
+  const op = presenceOf(k, other);
+  pp.innerHTML = `<span class="plabel">Présence de ${who==='valentine'?'Valentine':'Jade'} :</span>`
+    + ['tt','office','leave'].map(m=>`<button class="pres-opt ${m} ${pres===m?'on':''}" onclick="setPresence('${m}')">${PRES_LABEL[m]}</button>`).join('')
+    + (op ? `<span class="pcell ${op}" style="margin-left:8px">${PRES_ICON[op]} ${other==='valentine'?'Valentine':'Jade'}</span>` : '');
+  pp.style.display = 'flex';
 
   const items = (data.dayplans[k] || []).filter(it=>(it.who||'valentine')===who);
   const evts = data.events.filter(e=>e.date===k);
@@ -2551,7 +2597,8 @@ function renderDayPlan(){
     const pos = `top:${top}px;height:${hgt}px;left:calc(${l}% + 2px);width:calc(${w}% - 7px)`;
     if(b.kind==='item'){
       const it = b.o;
-      return `<div class="tblock item ${it.done?'done':''}" data-kind="item" data-id="${it.id}" style="${pos}">
+      const sc = stepColor(it.text);
+      return `<div class="tblock item ${it.done?'done':''}" data-kind="item" data-id="${it.id}" style="${pos}${sc?`;background:linear-gradient(135deg,${sc},var(--surface) 70%)`:''}">
         <div class="t"><span class="tt-time">${fmtMin(b.s)} – ${fmtMin(b.s+b.d)}</span>
           <button class="day-check ${it.done?'on':''}" onclick="toggleDayItem('${k}','${it.id}')" aria-label="Cocher">${it.done?'✓':''}</button>
           <button class="tiny-del" onclick="delDayItem('${k}','${it.id}')" aria-label="Retirer">✕</button></div>
@@ -2570,7 +2617,7 @@ function renderDayPlan(){
     + (tray.length ? `<div class="tray"><label>☀️ En journée (sans heure)</label>${tray.map(it=>`
       <div class="day-item sm ${it.done?'done':''}">
         <button class="day-check ${it.done?'on':''}" onclick="toggleDayItem('${k}','${it.id}')" aria-label="Cocher">${it.done?'✓':''}</button>
-        <span class="txt">${esc(it.text)}</span>
+        <span class="txt">${stepColor(it.text)?`<span class="ndot" style="background:${stepColor(it.text)}"></span>`:''}${esc(it.text)}</span>
         <button class="tiny-del" style="position:static" onclick="giveTime('${k}','${it.id}')" title="Poser sur la grille" aria-label="Donner une heure">🕐</button>
         <button class="tiny-del" onclick="delDayItem('${k}','${it.id}')" aria-label="Retirer">✕</button>
       </div>`).join('')}</div>` : '')
@@ -2621,7 +2668,7 @@ function addDayItem(){
   if(!text){ toast('Écris ce que tu prévois de faire ✍️'); return; }
   const k = dkey(dayCursor);
   if(!data.dayplans[k]) data.dayplans[k] = [];
-  data.dayplans[k].push({id:uid(), time:document.getElementById('dp-time').value, dur:+document.getElementById('dp-dur').value || 60, text, done:false, who:agendaWho});
+  data.dayplans[k].push({id:uid(), time:document.getElementById('dp-time').value, dur:composerDur, text, done:false, who:agendaWho});
   document.getElementById('dp-text').value = '';
   persist(); renderAgenda(); toast('Ajouté au planning du jour 🗓️');
 }
@@ -2640,8 +2687,7 @@ function delDayItem(k, id){
   persist(); renderAgenda(); toast('Retiré (restaurable dans le coffre-fort) 🛡️');
 }
 function renderEvts(){
-  const ap = document.getElementById('agPresence');
-  ap.innerHTML = ''; ap.style.display = 'none';
+  document.getElementById('presPicker').style.display = 'none';
   const base = dayCursor;
   const y = base.getFullYear(), m = base.getMonth();
   document.getElementById('dayTitle').textContent = MONTHS[m] + ' ' + y;
@@ -2672,8 +2718,7 @@ function renderEvts(){
     </div>`).join('') : '<p class="empty-msg">Aucun rendez-vous à venir pour l\'instant 🌱</p>';
 }
 function renderWeek(){
-  const ap = document.getElementById('agPresence');
-  ap.innerHTML = ''; ap.style.display = 'none';
+  document.getElementById('presPicker').style.display = 'none';
   const monday = new Date(dayCursor);
   monday.setDate(monday.getDate() - ((monday.getDay()+6)%7));
   const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
@@ -2690,7 +2735,7 @@ function renderWeek(){
       <button class="wday-head" onclick="gotoAgendaDay('${k}')">${labels[i]} ${d.getDate()}</button>
       ${presenceBands(k)}
       ${evts.map(e=>`<button class="witem" style="background:${EVT_COLOR[e.type]}" onclick="openEvtModal('${e.id}')" title="${EVT_LABEL[e.type]}">${e.time?esc(e.time)+' ':''}${esc(e.title)}</button>`).join('')}
-      ${items.map(it=>`<button class="witem ${it.done?'done':''}" onclick="toggleDayItem('${k}','${it.id}')" title="Clic = fait / pas fait">${it.time?esc(it.time)+' ':''}${esc(it.text)}</button>`).join('')}
+      ${items.map(it=>{const sc=stepColor(it.text);return `<button class="witem ${it.done?'done':''}" ${sc?`style="background:linear-gradient(135deg,${sc},var(--surface) 75%)"`:''} onclick="toggleDayItem('${k}','${it.id}')" title="Clic = fait / pas fait">${it.time?esc(it.time)+' ':''}${esc(it.text)}</button>`}).join('')}
       ${(!evts.length && !items.length)?'<span style="font-size:11px;font-weight:700;color:var(--muted)">—</span>':''}
     </div>`;
   }
