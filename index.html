@@ -2892,7 +2892,7 @@ switchPage('dashboard');
 
 
   /* ================== SYNCHRO EN LIGNE (Supabase) ================== */
-const SUPABASE_URL = 'https://wxtcthrotvzkubhrzlne.supabase.co/rest/v1/';   /* ← à remplacer par ton Project URL */
+const SUPABASE_URL = 'https://wxtcthrotvzkubhrzlne.supabase.co';   /* ← à remplacer par ton Project URL */
 const SUPABASE_KEY = 'sb_publishable_54LM0AUyx_A64EyVN7iOzQ_i-FoBh8Z';                      /* ← à remplacer par ta clé "anon public" */
 const CLOUD_ID = 'studio-edito';
 const cloudOK = () => SUPABASE_URL.includes('.supabase.co') && !SUPABASE_URL.includes('TON-PROJET');
@@ -2949,7 +2949,7 @@ const _persistLocal = persist;
 persist = function(){ _persistLocal(); cloudSaveSoon(); };
 cloudLoad();
 
-------- FIN DU JAVASCRIPT -------
+
 </script>
 </body>
 </html>
