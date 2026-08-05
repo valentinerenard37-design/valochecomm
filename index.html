@@ -226,10 +226,10 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .chip.cs-idee{opacity:.5;border:1.6px dashed rgba(93,77,120,.5);box-shadow:none}
 .chip.cs-afaire{border:1.6px dashed rgba(93,77,120,.45);box-shadow:none}
 .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(93,77,120,.25);vertical-align:0;margin-right:2px;flex:none}
-.pdot.ig{background:#FF9EC6}
-.pdot.li{background:#7FB8FF}
-.pdot.tiktok{background:#7FE0D0}
-.pdot.youtube{background:#FF9E8A}
+.pdot.ig{background:#FF6F9E}
+.pdot.li{background:#4E90FF}
+.pdot.tiktok{background:#34C2A8}
+.pdot.youtube{background:#FF8A3D}
 
 /* ---------- Panneau latéral calendrier ---------- */
 .cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:20px;align-items:start}
@@ -248,10 +248,10 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .post-title{font-weight:800;flex:1;min-width:140px;overflow-wrap:anywhere}
 .kcard .t{font-weight:800;font-size:14px;margin-bottom:7px;overflow-wrap:anywhere}
 .pill{font-size:11px;font-weight:800;padding:5px 11px;border-radius:12px;box-shadow:inset 1px 1px 3px rgba(255,255,255,.6),1px 2px 4px rgba(93,77,120,.12);color:var(--ink)}
-.pill.ig{background:linear-gradient(135deg,#FFD3C2,var(--rose))}
-.pill.li{background:linear-gradient(135deg,var(--sky),#C9E4FF)}
-.pill.tiktok{background:linear-gradient(135deg,#B8EDE3,#7FE0D0)}
-.pill.youtube{background:linear-gradient(135deg,#FFCFC2,#FF9E8A)}
+.pill.ig{background:linear-gradient(135deg,#FF8FB8,#FF6F9E);color:#fff}
+.pill.li{background:linear-gradient(135deg,#6FA8FF,#4E90FF);color:#fff}
+.pill.tiktok{background:linear-gradient(135deg,#57DBC3,#34C2A8);color:#fff}
+.pill.youtube{background:linear-gradient(135deg,#FFB020,#FF8A3D);color:#fff}
 .pill.st-idee{background:#EFEAF9;color:var(--muted)}
 .pill.st-afaire{background:var(--butter)}
 .pill.st-encours{background:var(--sky)}
@@ -610,7 +610,6 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
             <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
             <div class="lg-row"><span class="pdot tiktok"></span> TikTok</div>
             <div class="lg-row"><span class="pdot youtube"></span> YouTube</div>
-            <div class="lg-row" style="font-size:11px">Plusieurs pastilles = publié sur plusieurs réseaux</div>
           </div>
         </aside>
       </div>
@@ -890,8 +889,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <input type="text" id="p-title" placeholder="ex: Reel — 3 astuces taux immo">
       <div class="grid-2">
         <div><label>Date</label><input type="date" id="p-date"></div>
-        <div><label>Plateforme(s)</label>
-          <div class="cast-picks" id="platPicks"></div>
+        <div><label>Plateforme</label>
+          <select id="p-platform">
+            <option value="instagram">📸 Instagram</option>
+            <option value="linkedin">💼 LinkedIn</option>
+            <option value="tiktok">🎵 TikTok</option>
+            <option value="youtube">▶️ YouTube</option>
+          </select>
         </div>
       </div>
       <div class="grid-2">
@@ -1112,7 +1116,6 @@ const PEOPLE = [
 ];
 const personById = id => PEOPLE.find(p=>p.id===id);
 let castSel = [];
-let platSel = [];
 
 const DEFAULTS = {
   posts: [], tasks: [], ideas: [],
@@ -1402,16 +1405,6 @@ function renderImgPrev(slot){
     : '';
 }
 
-/* ================== PLATEFORMES (choix multiple) ================== */
-function renderPlatPicks(){
-  document.getElementById('platPicks').innerHTML = PLAT_ORDER.map(p=>
-    `<button type="button" class="${platSel.includes(p)?'sel':''}" onclick="togglePlat('${p}')">${PLAT_LABEL[p]}</button>`).join('');
-}
-function togglePlat(p){
-  platSel = platSel.includes(p) ? platSel.filter(x=>x!==p) : [...platSel, p];
-  renderPlatPicks();
-}
-
 /* ================== MODAL POST ================== */
 const VALID_LABEL = {valide:'✓ Validé par Dimitri', arevoir:'✏️ À retravailler', '':'⏳ En attente de validation'};
 function openPostModal(id=null, dateStr=null, prefill=null){
@@ -1468,8 +1461,7 @@ function showPostEdit(id=null, dateStr=null, prefill=null){
     document.getElementById('modalTitle').textContent = 'Modifier la publication';
     document.getElementById('p-title').value = p.title;
     document.getElementById('p-date').value = p.date;
-    platSel = platArr(p);
-    renderPlatPicks();
+    document.getElementById('p-platform').value = platArr(p)[0] || 'instagram';
     sel.value = p.tagId;
     document.getElementById('p-status').value = p.status;
     document.getElementById('p-notes').value = p.notes || '';
@@ -1487,8 +1479,7 @@ function showPostEdit(id=null, dateStr=null, prefill=null){
     document.getElementById('p-author').value = '';
     document.getElementById('p-valid').value = '';
     document.getElementById('p-date').value = dateStr || new Date().toISOString().slice(0,10);
-    platSel = ['instagram'];
-    renderPlatPicks();
+    document.getElementById('p-platform').value = 'instagram';
     document.getElementById('p-status').value = prefill ? 'afaire' : 'idee';
     if(prefill){
       document.getElementById('p-title').value = prefill.title || '';
@@ -1510,10 +1501,9 @@ function savePost(){
   const title = document.getElementById('p-title').value.trim();
   const date = document.getElementById('p-date').value;
   if(!title || !date){ toast('Il manque un titre ou une date 👀'); return; }
-  if(!platSel.length){ toast('Choisis au moins une plateforme 📱'); return; }
   const post = {
     id: editingId || uid(), title, date,
-    platforms: [...platSel],
+    platform: document.getElementById('p-platform').value,
     tagId: document.getElementById('p-tag').value,
     status: document.getElementById('p-status').value,
     notes: document.getElementById('p-notes').value,
