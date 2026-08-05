@@ -230,7 +230,6 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pdot.li{background:#7FB8FF}
 .pdot.tiktok{background:#7FE0D0}
 .pdot.youtube{background:#FF9E8A}
-.pdot.both{background:linear-gradient(135deg,#FF9EC6,#7FB8FF)}
 
 /* ---------- Panneau latéral calendrier ---------- */
 .cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:20px;align-items:start}
@@ -253,7 +252,6 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pill.li{background:linear-gradient(135deg,var(--sky),#C9E4FF)}
 .pill.tiktok{background:linear-gradient(135deg,#B8EDE3,#7FE0D0)}
 .pill.youtube{background:linear-gradient(135deg,#FFCFC2,#FF9E8A)}
-.pill.both{background:linear-gradient(135deg,var(--butter),var(--peach))}
 .pill.st-idee{background:#EFEAF9;color:var(--muted)}
 .pill.st-afaire{background:var(--butter)}
 .pill.st-encours{background:var(--sky)}
@@ -606,14 +604,14 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
             <div class="lg-row"><span class="pcell leave">🏖️ Congés</span></div>
             <div class="lg-row" style="font-size:11px">À régler dans l'Agenda</div>
           </div>
-         <div class="legend-box">
-  <h4>Plateformes</h4>
-  <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
-  <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
-  <div class="lg-row"><span class="pdot tiktok"></span> TikTok</div>
-  <div class="lg-row"><span class="pdot youtube"></span> YouTube</div>
-  <div class="lg-row"><span class="pdot both"></span> Tous les réseaux </div>
-</div>
+          <div class="legend-box">
+            <h4>Plateformes</h4>
+            <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
+            <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
+            <div class="lg-row"><span class="pdot tiktok"></span> TikTok</div>
+            <div class="lg-row"><span class="pdot youtube"></span> YouTube</div>
+            <div class="lg-row" style="font-size:11px">Plusieurs pastilles = publié sur plusieurs réseaux</div>
+          </div>
         </aside>
       </div>
     </div>
@@ -892,7 +890,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <input type="text" id="p-title" placeholder="ex: Reel — 3 astuces taux immo">
       <div class="grid-2">
         <div><label>Date</label><input type="date" id="p-date"></div>
-       <div><label>Plateforme(s)</label>
+        <div><label>Plateforme(s)</label>
           <div class="cast-picks" id="platPicks"></div>
         </div>
       </div>
@@ -1066,8 +1064,6 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   </div>
 </div>
 
-<!-- ========== COFFRE-FORT (supprimé : devenu section view-coffre) ==========-->
-
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
@@ -1083,15 +1079,24 @@ const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','aoû
 const STATUS_LABEL = {idee:'💡 Idée', afaire:'📝 À faire', programme:'⏰ Programmé', publie:'✅ Publié'};
 const TSTATUS_LABEL = {afaire:'📝 À faire', encours:'🔄 En cours', fait:'✅ Fait'};
 const PRIO_LABEL = {haute:'🔥 Haute', moyenne:'🌤️ Moyenne', basse:'🍃 Basse'};
+
+/* ---- Plateformes (multi-sélection) ---- */
 const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', tiktok:'🎵 TikTok', youtube:'▶️ YouTube'};
-const PLAT_DOT = {instagram:'ig', linkedin:'li', tiktok:'tiktok', youtube:'youtube'};
+const PLAT_TEXT  = {instagram:'Instagram', linkedin:'LinkedIn', tiktok:'TikTok', youtube:'YouTube'};
+const PLAT_DOT   = {instagram:'ig', linkedin:'li', tiktok:'tiktok', youtube:'youtube'};
 const PLAT_ORDER = ['instagram','linkedin','tiktok','youtube'];
+/* Renvoie toujours un tableau de plateformes pour une publi, quel que soit son format (ancien ou nouveau) */
 function platArr(p){
+  if(!p) return [];
   if(Array.isArray(p.platforms)) return p.platforms;
   if(p.platform==='both') return ['instagram','linkedin'];
   if(p.platform) return [p.platform];
   return [];
 }
+function platDots(p){ return platArr(p).map(pl=>`<span class="pdot ${PLAT_DOT[pl]||''}"></span>`).join(''); }
+function platPills(p){ return platArr(p).map(pl=>`<span class="pill ${PLAT_DOT[pl]||''}">${PLAT_LABEL[pl]||pl}</span>`).join(''); }
+function platTitle(p){ return platArr(p).map(pl=>PLAT_LABEL[pl]||pl).join(' + '); }
+
 const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade', luna:'🪄 Luna'};
 const ISTATUS_LABEL = {idee:'💭 En vrac', validee:'⭐ Validée', tournee:'🎬 Tournée'};
 const PEOPLE = [
@@ -1107,7 +1112,7 @@ const PEOPLE = [
 ];
 const personById = id => PEOPLE.find(p=>p.id===id);
 let castSel = [];
-  let platSel = [];
+let platSel = [];
 
 const DEFAULTS = {
   posts: [], tasks: [], ideas: [],
@@ -1289,13 +1294,12 @@ function renderPlanningDay(){
   const list = document.getElementById('dayPostList');
   list.innerHTML = posts.length ? posts.map(p=>{
     const t = tagById(p.tagId);
-    const platClass = ({instagram:'ig',linkedin:'li',tiktok:'tiktok',youtube:'youtube',both:'both'}[p.platform]||'both');
     return `<div class="post-row" onclick="openPostModal('${p.id}')">
       ${p.img?`<img class="thumb" src="${p.img}" alt="">`:''}
       <span class="post-title">${esc(p.title)}</span>
       ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
       ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
-      <span class="pill ${platClass}">${PLAT_LABEL[p.platform]}</span>
+      ${platPills(p)}
       <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
       ${p.valid==='valide'?'<span class="pill" style="background:var(--mint)">✓ Dimitri</span>':p.valid==='arevoir'?'<span class="pill" style="background:var(--rose)">✏️ À revoir</span>':p.status!=='publie'?'<span class="pill" style="background:var(--butter)">⏳ À valider</span>':''}
     </div>`;
@@ -1330,8 +1334,7 @@ function renderCalendar(){
     const chips = dayPosts.slice(0,3).map(p=>{
       const t = tagById(p.tagId);
       const check = (p.status==='publie' || p.status==='programme') ? '✓ ' : '';
-    const plats = platArr(p);
-      return `<span class="chip cs-${p.status}" style="background:${t?t.color:'#ddd'}" title="${STATUS_LABEL[p.status]} · ${PLAT_LABEL[p.platform]}" onclick="event.stopPropagation();openPostModal('${p.id}')"><span class="pdot ${pd}"></span> ${check}${esc(p.title)}</span>`;
+      return `<span class="chip cs-${p.status}" style="background:${t?t.color:'#ddd'}" title="${STATUS_LABEL[p.status]} · ${platTitle(p)}" onclick="event.stopPropagation();openPostModal('${p.id}')">${platDots(p)} ${check}${esc(p.title)}</span>`;
     }).join('') + (dayPosts.length>3 ? `<span class="chip" style="background:#EFEAF9">+${dayPosts.length-3}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
       `<div class="day ${dateStr===todayStr?'today':''}" onclick="openPostModal(null,'${dateStr}')" title="Ajouter une publi"><span class="num">${d}</span>${presenceBands(dateStr)}${chips}</div>`);
@@ -1354,14 +1357,13 @@ function renderPostList(){
   }
   list.innerHTML = posts.map(p=>{
     const t = tagById(p.tagId);
-    const platClass = p.platform==='instagram'?'ig':p.platform==='linkedin'?'li':'both';
     return `<div class="post-row" onclick="openPostModal('${p.id}')">
       <div class="post-date">${p.date.slice(8,10)}<br><span style="font-size:10px;color:var(--muted)">${MONTHS[current.getMonth()].slice(0,3)}</span></div>
       ${p.img?`<img class="thumb" src="${p.img}" alt="">`:''}
       <span class="post-title">${esc(p.title)}</span>
       ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
       ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
-      <span class="pill ${platClass}">${PLAT_LABEL[p.platform]}</span>
+      ${platPills(p)}
       <span class="pill st-${p.status}">${STATUS_LABEL[p.status]}</span>
       ${p.valid==='valide'?'<span class="pill" style="background:var(--mint)">✓ Dimitri</span>':p.valid==='arevoir'?'<span class="pill" style="background:var(--rose)">✏️ À revoir</span>':p.status!=='publie'?'<span class="pill" style="background:var(--butter)">⏳ À valider</span>':''}
       ${p.link?`<a class="pill" style="background:#EFEAF9" href="${esc(p.link)}" target="_blank" onclick="event.stopPropagation()">🔗</a>`:''}
@@ -1400,6 +1402,16 @@ function renderImgPrev(slot){
     : '';
 }
 
+/* ================== PLATEFORMES (choix multiple) ================== */
+function renderPlatPicks(){
+  document.getElementById('platPicks').innerHTML = PLAT_ORDER.map(p=>
+    `<button type="button" class="${platSel.includes(p)?'sel':''}" onclick="togglePlat('${p}')">${PLAT_LABEL[p]}</button>`).join('');
+}
+function togglePlat(p){
+  platSel = platSel.includes(p) ? platSel.filter(x=>x!==p) : [...platSel, p];
+  renderPlatPicks();
+}
+
 /* ================== MODAL POST ================== */
 const VALID_LABEL = {valide:'✓ Validé par Dimitri', arevoir:'✏️ À retravailler', '':'⏳ En attente de validation'};
 function openPostModal(id=null, dateStr=null, prefill=null){
@@ -1412,8 +1424,7 @@ function openPostModal(id=null, dateStr=null, prefill=null){
 function showPostView(id){
   const p = data.posts.find(x=>x.id===id); if(!p) return;
   const t = tagById(p.tagId);
-  const pd = p.platform==='instagram' ? 'ig' : p.platform==='linkedin' ? 'li' : 'both';
-  const PLAT_TEXT = {instagram:'Instagram', linkedin:'LinkedIn', tiktok:'TikTok', youtube:'YouTube'};
+  const plats = platArr(p);
   const STATUS_TEXT = {idee:'Idée', afaire:'À créer', programme:'Programmé', publie:'Publié'};
   const STATUS_BG = {idee:'#EFEAF9', afaire:'var(--butter)', programme:'var(--sky)', publie:'var(--mint)'};
   const AUTHOR_TEXT = {valentine:'Valentine', jade:'Jade', luna:'Luna (freelance)'};
@@ -1457,7 +1468,7 @@ function showPostEdit(id=null, dateStr=null, prefill=null){
     document.getElementById('modalTitle').textContent = 'Modifier la publication';
     document.getElementById('p-title').value = p.title;
     document.getElementById('p-date').value = p.date;
-   platSel = platArr(p);
+    platSel = platArr(p);
     renderPlatPicks();
     sel.value = p.tagId;
     document.getElementById('p-status').value = p.status;
@@ -1499,9 +1510,10 @@ function savePost(){
   const title = document.getElementById('p-title').value.trim();
   const date = document.getElementById('p-date').value;
   if(!title || !date){ toast('Il manque un titre ou une date 👀'); return; }
+  if(!platSel.length){ toast('Choisis au moins une plateforme 📱'); return; }
   const post = {
     id: editingId || uid(), title, date,
-   platforms: [...platSel],
+    platforms: [...platSel],
     tagId: document.getElementById('p-tag').value,
     status: document.getElementById('p-status').value,
     notes: document.getElementById('p-notes').value,
@@ -2080,23 +2092,15 @@ function deleteIdea(){
   persist(); closeOverlays(); renderIdeas(); toast('Envoyé à la corbeille 🛡️');
 }
 
-function renderPlatPicks(){
-  document.getElementById('platPicks').innerHTML = PLAT_ORDER.map(p=>
-    `<button type="button" class="${platSel.includes(p)?'sel':''}" onclick="togglePlat('${p}')">${PLAT_LABEL[p]}</button>`).join('');
-}
-function togglePlat(p){
-  platSel = platSel.includes(p) ? platSel.filter(x=>x!==p) : [...platSel, p];
-  renderPlatPicks();
-}
-
-  
 /* ================== BILAN ================== */
 function renderBilan(){
   document.getElementById('bilanTitle').textContent = fmtMonth(current);
   const posts = postsOfMonth();
   const published = posts.filter(p=>p.status==='publie');
-  const ig = published.filter(p=>p.platform==='instagram'||p.platform==='both').length;
-  const li = published.filter(p=>p.platform==='linkedin'||p.platform==='both').length;
+  const ig = published.filter(p=>platArr(p).includes('instagram')).length;
+  const li = published.filter(p=>platArr(p).includes('linkedin')).length;
+  const tk = published.filter(p=>platArr(p).includes('tiktok')).length;
+  const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const rate = posts.length ? Math.round(published.length/posts.length*100) : 0;
   const k = monthKey(current);
   const monthTasks = data.tasks.filter(t=>t.status==='fait' && t.done && t.done.startsWith(k));
@@ -2106,6 +2110,8 @@ function renderBilan(){
     {big: published.length, lbl:'publis publiées'},
     {big: ig, lbl:'Instagram'},
     {big: li, lbl:'LinkedIn'},
+    {big: tk, lbl:'TikTok'},
+    {big: yt, lbl:'YouTube'},
     {big: rate + '%', lbl:'du planning réalisé'},
     {big: monthTasks.length, lbl:'tâches terminées'},
     {big: fmtMin(taskMin), lbl:'temps de travail'}
@@ -2173,19 +2179,23 @@ function reportContext(){
   const r = data.reports[k];
   const posts = postsOfMonth();
   const published = posts.filter(p=>p.status==='publie');
-  const ig = published.filter(p=>p.platform==='instagram'||p.platform==='both').length;
-  const li = published.filter(p=>p.platform==='linkedin'||p.platform==='both').length;
+  const ig = published.filter(p=>platArr(p).includes('instagram')).length;
+  const li = published.filter(p=>platArr(p).includes('linkedin')).length;
+  const tk = published.filter(p=>platArr(p).includes('tiktok')).length;
+  const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const monthTasks = data.tasks.filter(t=>t.status==='fait' && t.done && t.done.startsWith(k));
-  return {r, posts, published, ig, li, monthTasks};
+  return {r, posts, published, ig, li, tk, yt, monthTasks};
 }
 function copyReport(){
-  const {r, posts, published, ig, li, monthTasks} = reportContext();
+  const {r, posts, published, ig, li, tk, yt, monthTasks} = reportContext();
   const txt =
 `📊 COMPTE-RENDU COM' — ${fmtMonth(current).toUpperCase()}
 
 Publications : ${published.length} publiées / ${posts.length} prévues
 • Instagram : ${ig}
 • LinkedIn : ${li}
+• TikTok : ${tk}
+• YouTube : ${yt}
 Vues globales : ${r.views || '—'}
 Abonnés Instagram : ${r.figIg || '—'}
 Abonnés LinkedIn : ${r.figLi || '—'}
@@ -2203,14 +2213,14 @@ ${r.improve || '—'}`;
   navigator.clipboard.writeText(txt).then(()=>toast('Compte-rendu copié 📋')).catch(()=>toast('Copie impossible, sélectionne à la main 🥲'));
 }
 function exportPDF(){
-  const {r, posts, published, ig, li, monthTasks} = reportContext();
+  const {r, posts, published, ig, li, tk, yt, monthTasks} = reportContext();
   const taskRows = monthTasks.map(t=>{
     const ty = typeById(t.typeId);
     return `<tr><td>${esc(t.name)}</td><td>${WHO_LABEL[t.who].replace(/🌸 |🌿 /,'')}</td><td>${ty?esc(ty.name):'—'}</td><td>${t.done?fmtDate(t.done):'—'}</td><td>${esc(t.time)||'—'}</td><td>${esc(t.deliv)||'—'}</td></tr>`;
   }).join('');
   const postRows = published.map(p=>{
     const t = tagById(p.tagId);
-    return `<tr><td>${fmtDate(p.date)}</td><td>${esc(p.title)}</td><td>${t?esc(t.name):'—'}</td><td>${PLAT_LABEL[p.platform].replace(/📸 |💼 |✨ /,'')}</td></tr>`;
+    return `<tr><td>${fmtDate(p.date)}</td><td>${esc(p.title)}</td><td>${t?esc(t.name):'—'}</td><td>${platTitle(p)}</td></tr>`;
   }).join('');
   document.getElementById('printArea').innerHTML = `
     <h1>Compte-rendu communication — ${fmtMonth(current)}</h1>
@@ -2220,6 +2230,8 @@ function exportPDF(){
       <div><b>${published.length}</b>publications</div>
       <div><b>${ig}</b>Instagram</div>
       <div><b>${li}</b>LinkedIn</div>
+      <div><b>${tk}</b>TikTok</div>
+      <div><b>${yt}</b>YouTube</div>
       <div><b>${r.views||'—'}</b>vues globales</div>
       <div><b>${r.figIg||'—'}</b>abonnés IG</div>
       <div><b>${r.figLi||'—'}</b>abonnés LI</div>
@@ -2228,7 +2240,7 @@ function exportPDF(){
     <h2>✅ Ce qui a marché</h2><p>${esc(r.worked)||'—'}</p>
     <h2>❌ Ce qui n'a pas marché</h2><p>${esc(r.flopped)||'—'}</p>
     <h2>🚀 Axes d'amélioration</h2><p>${esc(r.improve)||'—'}</p>
-    ${published.length?`<h2>Publications du mois</h2><table><tr><th>Date</th><th>Titre</th><th>Tag</th><th>Plateforme</th></tr>${postRows}</table>`:''}
+    ${published.length?`<h2>Publications du mois</h2><table><tr><th>Date</th><th>Titre</th><th>Tag</th><th>Plateforme(s)</th></tr>${postRows}</table>`:''}
     ${monthTasks.length?`<h2>Tâches réalisées (${monthTasks.length})</h2><table><tr><th>Tâche</th><th>Par</th><th>Type</th><th>Terminé le</th><th>Temps</th><th>Livrable</th></tr>${taskRows}</table>`:''}`;
   window.print();
 }
@@ -2394,8 +2406,10 @@ function gotoMonthBilan(k){
 }
 function renderGlobal(){
   const published = data.posts.filter(p=>p.status==='publie');
-  const ig = published.filter(p=>p.platform==='instagram'||p.platform==='both').length;
-  const li = published.filter(p=>p.platform==='linkedin'||p.platform==='both').length;
+  const ig = published.filter(p=>platArr(p).includes('instagram')).length;
+  const li = published.filter(p=>platArr(p).includes('linkedin')).length;
+  const tk = published.filter(p=>platArr(p).includes('tiktok')).length;
+  const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const done = data.tasks.filter(t=>t.status==='fait');
   const totalMin = done.reduce((s,t)=>s+parseTime(t.time),0);
   const bgs = ['var(--mint)','var(--rose)','var(--sky)','var(--butter)','var(--lilac)','var(--peach)'];
@@ -2403,6 +2417,8 @@ function renderGlobal(){
     {big: published.length, lbl:'publis publiées'},
     {big: ig, lbl:'Instagram'},
     {big: li, lbl:'LinkedIn'},
+    {big: tk, lbl:'TikTok'},
+    {big: yt, lbl:'YouTube'},
     {big: done.length, lbl:'tâches faites'},
     {big: fmtMin(totalMin), lbl:'de travail'},
     {big: data.ideas.filter(i=>i.status!=='tournee').length, lbl:'idées en stock'}
@@ -2970,7 +2986,6 @@ async function cloudLoad(){
 const _persistLocal = persist;
 persist = function(){ _persistLocal(); cloudSaveSoon(); };
 cloudLoad();
-
 
 </script>
 </body>
