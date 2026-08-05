@@ -1152,6 +1152,10 @@ if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
 if(typeof data.office !== 'object' || !data.office) data.office = {};
 if(typeof data.leave !== 'object' || !data.leave) data.leave = {};
 if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
+data.tags.forEach(t=>{
+  if(t.name === 'Reel') t.name = 'Vidéo';
+  if(t.name === 'Article') t.name = 'Format long';
+});
 
 function snapshot(){
   const light = JSON.parse(JSON.stringify(data));
