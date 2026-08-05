@@ -228,6 +228,8 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(93,77,120,.25);vertical-align:0;margin-right:2px;flex:none}
 .pdot.ig{background:#FF9EC6}
 .pdot.li{background:#7FB8FF}
+.pdot.tiktok{background:#2E2E2E}
+.pdot.youtube{background:#FF6B6B}
 .pdot.both{background:linear-gradient(135deg,#FF9EC6,#7FB8FF)}
 .pill.who-luna{background:linear-gradient(135deg,var(--butter),var(--peach))}
 
@@ -250,6 +252,8 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pill{font-size:11px;font-weight:800;padding:5px 11px;border-radius:12px;box-shadow:inset 1px 1px 3px rgba(255,255,255,.6),1px 2px 4px rgba(93,77,120,.12);color:var(--ink)}
 .pill.ig{background:linear-gradient(135deg,#FFD3C2,var(--rose))}
 .pill.li{background:linear-gradient(135deg,var(--sky),#C9E4FF)}
+.pill.tiktok{background:linear-gradient(135deg,#2E2E2E,#5A5A5A);color:#fff}
+.pill.youtube{background:linear-gradient(135deg,#FF6B6B,#FFADAD)}
 .pill.both{background:linear-gradient(135deg,var(--butter),var(--peach))}
 .pill.st-idee{background:#EFEAF9;color:var(--muted)}
 .pill.st-afaire{background:var(--butter)}
@@ -603,12 +607,14 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
             <div class="lg-row"><span class="pcell leave">🏖️ Congés</span></div>
             <div class="lg-row" style="font-size:11px">À régler dans l'Agenda</div>
           </div>
-          <div class="legend-box">
-            <h4>Plateformes</h4>
-            <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
-            <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
-            <div class="lg-row"><span class="pdot both"></span> Les deux</div>
-          </div>
+         <div class="legend-box">
+  <h4>Plateformes</h4>
+  <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
+  <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
+  <div class="lg-row"><span class="pdot tiktok"></span> TikTok</div>
+  <div class="lg-row"><span class="pdot youtube"></span> YouTube</div>
+  <div class="lg-row"><span class="pdot both"></span> Les deux</div>
+</div>
         </aside>
       </div>
     </div>
@@ -888,11 +894,13 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <div class="grid-2">
         <div><label>Date</label><input type="date" id="p-date"></div>
         <div><label>Plateforme</label>
-          <select id="p-platform">
-            <option value="instagram">Instagram</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="both">Insta + LinkedIn</option>
-          </select>
+        <select id="p-platform">
+  <option value="instagram">Instagram</option>
+  <option value="linkedin">LinkedIn</option>
+  <option value="tiktok">TikTok</option>
+  <option value="youtube">YouTube</option>
+  <option value="both">Insta + LinkedIn</option>
+</select>
         </div>
       </div>
       <div class="grid-2">
@@ -1082,7 +1090,7 @@ const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','aoû
 const STATUS_LABEL = {idee:'💡 Idée', afaire:'📝 À faire', programme:'⏰ Programmé', publie:'✅ Publié'};
 const TSTATUS_LABEL = {afaire:'📝 À faire', encours:'🔄 En cours', fait:'✅ Fait'};
 const PRIO_LABEL = {haute:'🔥 Haute', moyenne:'🌤️ Moyenne', basse:'🍃 Basse'};
-const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', both:'✨ Les deux'};
+const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', tiktok:'🎵 TikTok', youtube:'▶️ YouTube', both:'✨ Les deux'};
 const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade', luna:'🪄 Luna'};
 const ISTATUS_LABEL = {idee:'💭 En vrac', validee:'⭐ Validée', tournee:'🎬 Tournée'};
 const PEOPLE = [
@@ -1279,7 +1287,7 @@ function renderPlanningDay(){
   const list = document.getElementById('dayPostList');
   list.innerHTML = posts.length ? posts.map(p=>{
     const t = tagById(p.tagId);
-    const platClass = p.platform==='instagram'?'ig':p.platform==='linkedin'?'li':'both';
+    const platClass = ({instagram:'ig',linkedin:'li',tiktok:'tiktok',youtube:'youtube',both:'both'}[p.platform]||'both');
     return `<div class="post-row" onclick="openPostModal('${p.id}')">
       ${p.img?`<img class="thumb" src="${p.img}" alt="">`:''}
       <span class="post-title">${esc(p.title)}</span>
