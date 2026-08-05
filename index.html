@@ -892,14 +892,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <input type="text" id="p-title" placeholder="ex: Reel — 3 astuces taux immo">
       <div class="grid-2">
         <div><label>Date</label><input type="date" id="p-date"></div>
-        <div><label>Plateforme</label>
-        <select id="p-platform">
-  <option value="instagram">Instagram</option>
-  <option value="linkedin">LinkedIn</option>
-  <option value="tiktok">TikTok</option>
-  <option value="youtube">YouTube</option>
-  <option value="both">Insta + LinkedIn</option>
-</select>
+       <div><label>Plateforme(s)</label>
+          <div class="cast-picks" id="platPicks"></div>
         </div>
       </div>
       <div class="grid-2">
@@ -1089,7 +1083,15 @@ const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','aoû
 const STATUS_LABEL = {idee:'💡 Idée', afaire:'📝 À faire', programme:'⏰ Programmé', publie:'✅ Publié'};
 const TSTATUS_LABEL = {afaire:'📝 À faire', encours:'🔄 En cours', fait:'✅ Fait'};
 const PRIO_LABEL = {haute:'🔥 Haute', moyenne:'🌤️ Moyenne', basse:'🍃 Basse'};
-const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', tiktok:'🎵 TikTok', youtube:'▶️ YouTube', both:'✨ Les deux'};
+const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', tiktok:'🎵 TikTok', youtube:'▶️ YouTube'};
+const PLAT_DOT = {instagram:'ig', linkedin:'li', tiktok:'tiktok', youtube:'youtube'};
+const PLAT_ORDER = ['instagram','linkedin','tiktok','youtube'];
+function platArr(p){
+  if(Array.isArray(p.platforms)) return p.platforms;
+  if(p.platform==='both') return ['instagram','linkedin'];
+  if(p.platform) return [p.platform];
+  return [];
+}
 const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade', luna:'🪄 Luna'};
 const ISTATUS_LABEL = {idee:'💭 En vrac', validee:'⭐ Validée', tournee:'🎬 Tournée'};
 const PEOPLE = [
@@ -1105,6 +1107,7 @@ const PEOPLE = [
 ];
 const personById = id => PEOPLE.find(p=>p.id===id);
 let castSel = [];
+  let platSel = [];
 
 const DEFAULTS = {
   posts: [], tasks: [], ideas: [],
@@ -1327,7 +1330,7 @@ function renderCalendar(){
     const chips = dayPosts.slice(0,3).map(p=>{
       const t = tagById(p.tagId);
       const check = (p.status==='publie' || p.status==='programme') ? '✓ ' : '';
-      const pd = p.platform==='instagram' ? 'ig' : p.platform==='linkedin' ? 'li' : 'both';
+    const plats = platArr(p);
       return `<span class="chip cs-${p.status}" style="background:${t?t.color:'#ddd'}" title="${STATUS_LABEL[p.status]} · ${PLAT_LABEL[p.platform]}" onclick="event.stopPropagation();openPostModal('${p.id}')"><span class="pdot ${pd}"></span> ${check}${esc(p.title)}</span>`;
     }).join('') + (dayPosts.length>3 ? `<span class="chip" style="background:#EFEAF9">+${dayPosts.length-3}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
@@ -1410,7 +1413,7 @@ function showPostView(id){
   const p = data.posts.find(x=>x.id===id); if(!p) return;
   const t = tagById(p.tagId);
   const pd = p.platform==='instagram' ? 'ig' : p.platform==='linkedin' ? 'li' : 'both';
-  const PLAT_TEXT = {instagram:'Instagram', linkedin:'LinkedIn', both:'Instagram + LinkedIn'};
+  const PLAT_TEXT = {instagram:'Instagram', linkedin:'LinkedIn', tiktok:'TikTok', youtube:'YouTube'};
   const STATUS_TEXT = {idee:'Idée', afaire:'À créer', programme:'Programmé', publie:'Publié'};
   const STATUS_BG = {idee:'#EFEAF9', afaire:'var(--butter)', programme:'var(--sky)', publie:'var(--mint)'};
   const AUTHOR_TEXT = {valentine:'Valentine', jade:'Jade', luna:'Luna (freelance)'};
@@ -1425,7 +1428,7 @@ function showPostView(id){
       <div class="pv-title">${esc(p.title)}</div>
     </div>
     <div class="pv-grid">
-      <div class="pv-field"><div class="l">Plateforme</div><div class="v"><span class="pdot ${pd}"></span>${PLAT_TEXT[p.platform]}</div></div>
+      <div class="pv-field"><div class="l">Plateforme(s)</div><div class="v">${plats.length ? plats.map(pl=>`<span class="pdot ${PLAT_DOT[pl]}"></span>${PLAT_TEXT[pl]}`).join(' &nbsp; ') : vide}</div></div>
       <div class="pv-field"><div class="l">Tag</div><div class="v">${t?`<span class="cdot" style="background:${t.color}"></span>${esc(t.name)}`:vide}</div></div>
       <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${STATUS_BG[p.status]}">${(p.status==='publie'||p.status==='programme')?'✓ ':''}${STATUS_TEXT[p.status]}</span></div></div>
       <div class="pv-field"><div class="l">Validation Dimitri</div><div class="v">${validTxt}</div></div>
@@ -1454,7 +1457,8 @@ function showPostEdit(id=null, dateStr=null, prefill=null){
     document.getElementById('modalTitle').textContent = 'Modifier la publication';
     document.getElementById('p-title').value = p.title;
     document.getElementById('p-date').value = p.date;
-    document.getElementById('p-platform').value = p.platform;
+   platSel = platArr(p);
+    renderPlatPicks();
     sel.value = p.tagId;
     document.getElementById('p-status').value = p.status;
     document.getElementById('p-notes').value = p.notes || '';
@@ -1472,7 +1476,8 @@ function showPostEdit(id=null, dateStr=null, prefill=null){
     document.getElementById('p-author').value = '';
     document.getElementById('p-valid').value = '';
     document.getElementById('p-date').value = dateStr || new Date().toISOString().slice(0,10);
-    document.getElementById('p-platform').value = 'instagram';
+    platSel = ['instagram'];
+    renderPlatPicks();
     document.getElementById('p-status').value = prefill ? 'afaire' : 'idee';
     if(prefill){
       document.getElementById('p-title').value = prefill.title || '';
@@ -1496,7 +1501,7 @@ function savePost(){
   if(!title || !date){ toast('Il manque un titre ou une date 👀'); return; }
   const post = {
     id: editingId || uid(), title, date,
-    platform: document.getElementById('p-platform').value,
+   platforms: [...platSel],
     tagId: document.getElementById('p-tag').value,
     status: document.getElementById('p-status').value,
     notes: document.getElementById('p-notes').value,
@@ -2075,6 +2080,16 @@ function deleteIdea(){
   persist(); closeOverlays(); renderIdeas(); toast('Envoyé à la corbeille 🛡️');
 }
 
+function renderPlatPicks(){
+  document.getElementById('platPicks').innerHTML = PLAT_ORDER.map(p=>
+    `<button type="button" class="${platSel.includes(p)?'sel':''}" onclick="togglePlat('${p}')">${PLAT_LABEL[p]}</button>`).join('');
+}
+function togglePlat(p){
+  platSel = platSel.includes(p) ? platSel.filter(x=>x!==p) : [...platSel, p];
+  renderPlatPicks();
+}
+
+  
 /* ================== BILAN ================== */
 function renderBilan(){
   document.getElementById('bilanTitle').textContent = fmtMonth(current);
