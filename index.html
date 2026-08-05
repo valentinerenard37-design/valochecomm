@@ -226,10 +226,10 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .chip.cs-idee{opacity:.5;border:1.6px dashed rgba(93,77,120,.5);box-shadow:none}
 .chip.cs-afaire{border:1.6px dashed rgba(93,77,120,.45);box-shadow:none}
 .pdot{display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.95);box-shadow:0 1px 3px rgba(93,77,120,.25);vertical-align:0;margin-right:2px;flex:none}
-.pdot.ig{background:#FF6F9E}
-.pdot.li{background:#4E90FF}
-.pdot.tiktok{background:#34C2A8}
-.pdot.youtube{background:#FF8A3D}
+.pdot.ig{background:#F2A6CE}
+.pdot.li{background:#9FC2F0}
+.pdot.tiktok{background:#7FD9BD}
+.pdot.youtube{background:#F5C177}
 
 /* ---------- Panneau latéral calendrier ---------- */
 .cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:20px;align-items:start}
@@ -248,10 +248,10 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .post-title{font-weight:800;flex:1;min-width:140px;overflow-wrap:anywhere}
 .kcard .t{font-weight:800;font-size:14px;margin-bottom:7px;overflow-wrap:anywhere}
 .pill{font-size:11px;font-weight:800;padding:5px 11px;border-radius:12px;box-shadow:inset 1px 1px 3px rgba(255,255,255,.6),1px 2px 4px rgba(93,77,120,.12);color:var(--ink)}
-.pill.ig{background:linear-gradient(135deg,#FF8FB8,#FF6F9E);color:#fff}
-.pill.li{background:linear-gradient(135deg,#6FA8FF,#4E90FF);color:#fff}
-.pill.tiktok{background:linear-gradient(135deg,#57DBC3,#34C2A8);color:#fff}
-.pill.youtube{background:linear-gradient(135deg,#FFB020,#FF8A3D);color:#fff}
+.pill.ig{background:linear-gradient(135deg,#FBE1EE,#F2A6CE)}
+.pill.li{background:linear-gradient(135deg,#E3EDFC,#9FC2F0)}
+.pill.tiktok{background:linear-gradient(135deg,#DFF6EE,#7FD9BD)}
+.pill.youtube{background:linear-gradient(135deg,#FDECD3,#F5C177)}
 .pill.st-idee{background:#EFEAF9;color:var(--muted)}
 .pill.st-afaire{background:var(--butter)}
 .pill.st-encours{background:var(--sky)}
@@ -1100,6 +1100,13 @@ function platArr(p){
 function platDots(p){ return platArr(p).map(pl=>`<span class="pdot ${PLAT_DOT[pl]||''}"></span>`).join(''); }
 function platPills(p){ return platArr(p).map(pl=>`<span class="pill ${PLAT_DOT[pl]||''}">${PLAT_LABEL[pl]||pl}</span>`).join(''); }
 function platTitle(p){ return platArr(p).map(pl=>PLAT_LABEL[pl]||pl).join(' + '); }
+const PLAT_COLOR = {
+  instagram:'linear-gradient(135deg,#FBE1EE,#F2A6CE)',
+  linkedin:'linear-gradient(135deg,#E3EDFC,#9FC2F0)',
+  tiktok:'linear-gradient(135deg,#DFF6EE,#7FD9BD)',
+  youtube:'linear-gradient(135deg,#FDECD3,#F5C177)'
+};
+function platColor(p){ const arr = platArr(p); return arr.length ? (PLAT_COLOR[arr[0]] || 'linear-gradient(135deg,#E4DEF5,#CBBEF0)') : 'linear-gradient(135deg,#E4DEF5,#CBBEF0)'; }
 
 const WHO_LABEL = {valentine:'🌸 Valentine', jade:'🌿 Jade', luna:'🪄 Luna'};
 const ISTATUS_LABEL = {idee:'💭 En vrac', validee:'⭐ Validée', tournee:'🎬 Tournée'};
@@ -1337,7 +1344,7 @@ function renderCalendar(){
     const chips = dayPosts.slice(0,3).map(p=>{
       const t = tagById(p.tagId);
       const check = (p.status==='publie' || p.status==='programme') ? '✓ ' : '';
-      return `<span class="chip cs-${p.status}" style="background:${t?t.color:'#ddd'}" title="${STATUS_LABEL[p.status]} · ${platTitle(p)}" onclick="event.stopPropagation();openPostModal('${p.id}')">${platDots(p)} ${check}${esc(p.title)}</span>`;
+      return `<span class="chip cs-${p.status}" style="background:${platColor(p)}" title="${platTitle(p)} · ${t?esc(t.name):''} · ${STATUS_LABEL[p.status]}" onclick="event.stopPropagation();openPostModal('${p.id}')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${t?t.color:'#C9C2DC'};margin-right:4px;vertical-align:1px;box-shadow:0 1px 2px rgba(93,77,120,.3)"></span>${check}${esc(p.title)}</span>`;
     }).join('') + (dayPosts.length>3 ? `<span class="chip" style="background:#EFEAF9">+${dayPosts.length-3}</span>` : '');
     grid.insertAdjacentHTML('beforeend',
       `<div class="day ${dateStr===todayStr?'today':''}" onclick="openPostModal(null,'${dateStr}')" title="Ajouter une publi"><span class="num">${d}</span>${presenceBands(dateStr)}${chips}</div>`);
