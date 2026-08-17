@@ -230,6 +230,7 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pdot.li{background:#9FC2F0}
 .pdot.tiktok{background:#7FD9BD}
 .pdot.youtube{background:#F5C177}
+.pdot.fb{background:#8FB4F0}
 
 /* ---------- Panneau latéral calendrier ---------- */
 .cal-layout{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:20px;align-items:start}
@@ -252,6 +253,7 @@ nav button:focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
 .pill.li{background:linear-gradient(135deg,#E3EDFC,#9FC2F0)}
 .pill.tiktok{background:linear-gradient(135deg,#DFF6EE,#7FD9BD)}
 .pill.youtube{background:linear-gradient(135deg,#FDECD3,#F5C177)}
+.pill.fb{background:linear-gradient(135deg,#E4EDFC,#8FB4F0)}
 .pill.st-idee{background:#EFEAF9;color:var(--muted)}
 .pill.st-afaire{background:var(--butter)}
 .pill.st-encours{background:var(--sky)}
@@ -608,6 +610,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
             <h4>Plateformes</h4>
             <div class="lg-row"><span class="pdot ig"></span> Instagram</div>
             <div class="lg-row"><span class="pdot li"></span> LinkedIn</div>
+            <div class="lg-row"><span class="pdot fb"></span> Facebook</div>
             <div class="lg-row"><span class="pdot tiktok"></span> TikTok</div>
             <div class="lg-row"><span class="pdot youtube"></span> YouTube</div>
           </div>
@@ -893,6 +896,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
           <select id="p-platform">
             <option value="instagram">📸 Instagram</option>
             <option value="linkedin">💼 LinkedIn</option>
+            <option value="facebook">📘 Facebook</option>
             <option value="tiktok">🎵 TikTok</option>
             <option value="youtube">▶️ YouTube</option>
           </select>
@@ -1085,10 +1089,10 @@ const TSTATUS_LABEL = {afaire:'📝 À faire', encours:'🔄 En cours', fait:'�
 const PRIO_LABEL = {haute:'🔥 Haute', moyenne:'🌤️ Moyenne', basse:'🍃 Basse'};
 
 /* ---- Plateformes (multi-sélection) ---- */
-const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', tiktok:'🎵 TikTok', youtube:'▶️ YouTube'};
-const PLAT_TEXT  = {instagram:'Instagram', linkedin:'LinkedIn', tiktok:'TikTok', youtube:'YouTube'};
-const PLAT_DOT   = {instagram:'ig', linkedin:'li', tiktok:'tiktok', youtube:'youtube'};
-const PLAT_ORDER = ['instagram','linkedin','tiktok','youtube'];
+const PLAT_LABEL = {instagram:'📸 Insta', linkedin:'💼 LinkedIn', facebook:'📘 Facebook', tiktok:'🎵 TikTok', youtube:'▶️ YouTube'};
+const PLAT_TEXT  = {instagram:'Instagram', linkedin:'LinkedIn', facebook:'Facebook', tiktok:'TikTok', youtube:'YouTube'};
+const PLAT_DOT   = {instagram:'ig', linkedin:'li', facebook:'fb', tiktok:'tiktok', youtube:'youtube'};
+const PLAT_ORDER = ['instagram','linkedin','facebook','tiktok','youtube'];
 /* Renvoie toujours un tableau de plateformes pour une publi, quel que soit son format (ancien ou nouveau) */
 function platArr(p){
   if(!p) return [];
@@ -1103,6 +1107,7 @@ function platTitle(p){ return platArr(p).map(pl=>PLAT_LABEL[pl]||pl).join(' + ')
 const PLAT_COLOR = {
   instagram:'linear-gradient(135deg,#FBE1EE,#F2A6CE)',
   linkedin:'linear-gradient(135deg,#E3EDFC,#9FC2F0)',
+  facebook:'linear-gradient(135deg,#E4EDFC,#8FB4F0)',
   tiktok:'linear-gradient(135deg,#DFF6EE,#7FD9BD)',
   youtube:'linear-gradient(135deg,#FDECD3,#F5C177)'
 };
@@ -2100,6 +2105,7 @@ function renderBilan(){
   const published = posts.filter(p=>p.status==='publie');
   const ig = published.filter(p=>platArr(p).includes('instagram')).length;
   const li = published.filter(p=>platArr(p).includes('linkedin')).length;
+  const fb = published.filter(p=>platArr(p).includes('facebook')).length;
   const tk = published.filter(p=>platArr(p).includes('tiktok')).length;
   const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const rate = posts.length ? Math.round(published.length/posts.length*100) : 0;
@@ -2111,6 +2117,7 @@ function renderBilan(){
     {big: published.length, lbl:'publis publiées'},
     {big: ig, lbl:'Instagram'},
     {big: li, lbl:'LinkedIn'},
+    {big: fb, lbl:'Facebook'},
     {big: tk, lbl:'TikTok'},
     {big: yt, lbl:'YouTube'},
     {big: rate + '%', lbl:'du planning réalisé'},
@@ -2182,19 +2189,21 @@ function reportContext(){
   const published = posts.filter(p=>p.status==='publie');
   const ig = published.filter(p=>platArr(p).includes('instagram')).length;
   const li = published.filter(p=>platArr(p).includes('linkedin')).length;
+  const fb = published.filter(p=>platArr(p).includes('facebook')).length;
   const tk = published.filter(p=>platArr(p).includes('tiktok')).length;
   const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const monthTasks = data.tasks.filter(t=>t.status==='fait' && t.done && t.done.startsWith(k));
-  return {r, posts, published, ig, li, tk, yt, monthTasks};
+  return {r, posts, published, ig, li, fb, tk, yt, monthTasks};
 }
 function copyReport(){
-  const {r, posts, published, ig, li, tk, yt, monthTasks} = reportContext();
+  const {r, posts, published, ig, li, fb, tk, yt, monthTasks} = reportContext();
   const txt =
 `📊 COMPTE-RENDU COM' — ${fmtMonth(current).toUpperCase()}
 
 Publications : ${published.length} publiées / ${posts.length} prévues
 • Instagram : ${ig}
 • LinkedIn : ${li}
+• Facebook : ${fb}
 • TikTok : ${tk}
 • YouTube : ${yt}
 Vues globales : ${r.views || '—'}
@@ -2214,7 +2223,7 @@ ${r.improve || '—'}`;
   navigator.clipboard.writeText(txt).then(()=>toast('Compte-rendu copié 📋')).catch(()=>toast('Copie impossible, sélectionne à la main 🥲'));
 }
 function exportPDF(){
-  const {r, posts, published, ig, li, tk, yt, monthTasks} = reportContext();
+  const {r, posts, published, ig, li, fb, tk, yt, monthTasks} = reportContext();
   const taskRows = monthTasks.map(t=>{
     const ty = typeById(t.typeId);
     return `<tr><td>${esc(t.name)}</td><td>${WHO_LABEL[t.who].replace(/🌸 |🌿 /,'')}</td><td>${ty?esc(ty.name):'—'}</td><td>${t.done?fmtDate(t.done):'—'}</td><td>${esc(t.time)||'—'}</td><td>${esc(t.deliv)||'—'}</td></tr>`;
@@ -2231,6 +2240,7 @@ function exportPDF(){
       <div><b>${published.length}</b>publications</div>
       <div><b>${ig}</b>Instagram</div>
       <div><b>${li}</b>LinkedIn</div>
+      <div><b>${fb}</b>Facebook</div>
       <div><b>${tk}</b>TikTok</div>
       <div><b>${yt}</b>YouTube</div>
       <div><b>${r.views||'—'}</b>vues globales</div>
@@ -2409,6 +2419,7 @@ function renderGlobal(){
   const published = data.posts.filter(p=>p.status==='publie');
   const ig = published.filter(p=>platArr(p).includes('instagram')).length;
   const li = published.filter(p=>platArr(p).includes('linkedin')).length;
+  const fb = published.filter(p=>platArr(p).includes('facebook')).length;
   const tk = published.filter(p=>platArr(p).includes('tiktok')).length;
   const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const done = data.tasks.filter(t=>t.status==='fait');
@@ -2418,6 +2429,7 @@ function renderGlobal(){
     {big: published.length, lbl:'publis publiées'},
     {big: ig, lbl:'Instagram'},
     {big: li, lbl:'LinkedIn'},
+    {big: fb, lbl:'Facebook'},
     {big: tk, lbl:'TikTok'},
     {big: yt, lbl:'YouTube'},
     {big: done.length, lbl:'tâches faites'},
@@ -2926,7 +2938,22 @@ function renderNotes(){
 }
 
 /* ================== RENDER GLOBAL ================== */
-function renderAll(){ renderCalendar(); renderPostList(); renderPlanningDay(); renderTasks(); renderIdeas(); renderBilan(); renderTags(); renderAgenda(); renderGlobal(); renderSafe(); renderNotes(); }
+function renderAll(){
+  /* Chaque bloc est isolé : si l'un d'eux plante sur une donnée inattendue,
+     les autres continuent à se rafraîchir au lieu de rester figés à l'écran. */
+  const safe = (name, fn) => { try{ fn(); }catch(err){ console.warn('Erreur de rendu (' + name + ') :', err); } };
+  safe('calendrier', renderCalendar);
+  safe('liste des publis', renderPostList);
+  safe('vue jour planning', renderPlanningDay);
+  safe('tâches', renderTasks);
+  safe('idées', renderIdeas);
+  safe('bilan', renderBilan);
+  safe('tags', renderTags);
+  safe('agenda', renderAgenda);
+  safe('bilan global', renderGlobal);
+  safe('coffre-fort', renderSafe);
+  safe('notes', renderNotes);
+}
 switchPage('dashboard');
 
 
