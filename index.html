@@ -378,6 +378,16 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .idea-card.st-validee{background:linear-gradient(160deg,#FFF6DE,var(--surface-2))}
 .idea-card.st-tournee{background:linear-gradient(160deg,#E6F8EE,var(--surface-2))}
 
+/* ---------- Galerie & liens ---------- */
+.gal-card{border-radius:22px;overflow:hidden;box-shadow:var(--clay-soft);background:var(--surface-2);transition:transform .15s}
+.gal-card:hover{transform:translateY(-3px)}
+.gal-card .gimg{width:100%;height:150px;object-fit:cover;display:block;background:var(--surface);cursor:pointer}
+.gal-card .gnoimg{width:100%;height:150px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:800;font-size:13px;cursor:pointer;background:repeating-linear-gradient(45deg,var(--surface),var(--surface) 10px,var(--surface-2) 10px,var(--surface-2) 20px)}
+.gal-card .gbody{padding:12px 14px}
+.gal-card .gt{font-weight:800;font-size:14px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.gal-card .gd{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:8px}
+.gal-card .gfoot{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+
 /* ---------- Bilan ---------- */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:8px}
 .stat{border-radius:22px;padding:18px;text-align:center;box-shadow:var(--clay-soft)}
@@ -747,6 +757,23 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
   </section>
 
+  <!-- ================= GALERIE & LIENS ================= -->
+  <section id="view-galerie" class="view">
+    <div class="card">
+      <h2>🖼️ Galerie &amp; liens</h2>
+      <p class="section-hint">Tous les visuels et liens de publications au même endroit — clique sur une carte pour rouvrir sa fiche complète.</p>
+      <div class="filters">
+        <button class="fchip a active" data-gfilt="all" onclick="setGaleryFilter('all')">Tout</button>
+        <button class="fchip" data-gfilt="instagram" onclick="setGaleryFilter('instagram')">📸 Instagram</button>
+        <button class="fchip" data-gfilt="linkedin" onclick="setGaleryFilter('linkedin')">💼 LinkedIn</button>
+        <button class="fchip" data-gfilt="facebook" onclick="setGaleryFilter('facebook')">📘 Facebook</button>
+        <button class="fchip" data-gfilt="tiktok" onclick="setGaleryFilter('tiktok')">🎵 TikTok</button>
+        <button class="fchip" data-gfilt="youtube" onclick="setGaleryFilter('youtube')">▶️ YouTube</button>
+      </div>
+      <div class="idea-grid" id="galeryGrid"></div>
+    </div>
+  </section>
+
   <!-- ================= BILAN GLOBAL ================= -->
   <section id="view-bilan" class="view">
     <div class="card">
@@ -758,6 +785,11 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <h2>Publications par mois</h2>
       <p class="section-hint">Les 12 derniers mois — clique sur une barre pour ouvrir le bilan détaillé du mois.</p>
       <div id="monthChart"></div>
+    </div>
+    <div class="card">
+      <h2>📊 Performance par plateforme</h2>
+      <p class="section-hint">Vues cumulées par réseau, d'après les performances saisies sur chaque publication.</p>
+      <div id="platformChart"></div>
     </div>
     <div class="card">
       <h2>Abonnés &amp; vues</h2>
@@ -1231,11 +1263,11 @@ function postsOfMonth(){
 /* ================== NAVIGATION ================== */
 const PAGES = {
   dashboard: {title:'Mon tableau de bord', subs:[['taches','Journal de bord'],['clem','Clémentine 🍊'],['notes','Notes'],['bilan','Bilan']]},
-  contenu:   {title:'Création de contenu', subs:[['planning','Planning'],['idees','Idées'],['bilanmois','Bilan']]},
+  contenu:   {title:'Création de contenu', subs:[['planning','Planning'],['idees','Idées'],['galerie','Galerie & liens'],['bilanmois','Bilan']]},
   agenda:    {title:'Agenda', subs:[]},
   params:    {title:'Paramètres', subs:[['tags','Tags & types'],['coffre','Coffre-fort']]}
 };
-const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre'};
+const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', galerie:'view-galerie', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre'};
 let currentPage = 'dashboard', currentSub = 'taches';
 function switchPage(page, sub=null){
   currentPage = page;
@@ -2098,6 +2130,44 @@ function deleteIdea(){
   persist(); closeOverlays(); renderIdeas(); toast('Envoyé à la corbeille 🛡️');
 }
 
+/* ================== GALERIE & LIENS ================== */
+let galeryFilter = 'all';
+function setGaleryFilter(f){
+  galeryFilter = f;
+  document.querySelectorAll('[data-gfilt]').forEach(b=>b.classList.toggle('active', b.dataset.gfilt===f));
+  renderGalerie();
+}
+function renderGalerie(){
+  const grid = document.getElementById('galeryGrid');
+  if(!grid) return;
+  let posts = data.posts.filter(p=>p.img || p.link);
+  if(galeryFilter!=='all') posts = posts.filter(p=>platArr(p).includes(galeryFilter));
+  posts = [...posts].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!posts.length){
+    grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Aucun visuel ou lien pour l\'instant — ajoute une image ou un lien depuis une publication (dans Planning) 🌱</p>';
+    return;
+  }
+  grid.innerHTML = posts.map(p=>{
+    const t = tagById(p.tagId);
+    return `<div class="gal-card">
+      ${p.img
+        ? `<img class="gimg" src="${p.img}" alt="" onclick="openPostModal('${p.id}')">`
+        : `<div class="gnoimg" onclick="openPostModal('${p.id}')">Pas de visuel</div>`}
+      <div class="gbody">
+        <div class="gt" onclick="openPostModal('${p.id}')">${esc(p.title)}</div>
+        <div class="gd">${fmtDate(p.date)}</div>
+        <div class="gfoot">
+          ${platPills(p)}
+          ${t?`<span class="pill" style="background:${t.color}">${esc(t.name)}</span>`:''}
+          ${(+p.views)?`<span class="pill" style="background:var(--sky)">👀 ${(+p.views).toLocaleString('fr-FR')}</span>`:''}
+          ${(+p.likes)?`<span class="pill" style="background:var(--rose)">❤️ ${(+p.likes).toLocaleString('fr-FR')}</span>`:''}
+          ${p.link?`<a class="pill" style="background:linear-gradient(135deg,#FBE1EE,#F2A6CE)" href="${esc(p.link)}" target="_blank" onclick="event.stopPropagation()">🔗 Voir la publi ↗</a>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 /* ================== BILAN ================== */
 function renderBilan(){
   document.getElementById('bilanTitle').textContent = fmtMonth(current);
@@ -2112,6 +2182,9 @@ function renderBilan(){
   const k = monthKey(current);
   const monthTasks = data.tasks.filter(t=>t.status==='fait' && t.done && t.done.startsWith(k));
   const taskMin = monthTasks.reduce((s,t)=>s+parseTime(t.time),0);
+  const totalViews = published.reduce((s,p)=>s+(+p.views||0),0);
+  const totalLikes = published.reduce((s,p)=>s+(+p.likes||0),0);
+  const engRate = totalViews ? Math.round(totalLikes/totalViews*1000)/10 : 0;
   const bgs = ['var(--mint)','var(--sky)','var(--rose)','var(--butter)','var(--lilac)','var(--peach)'];
   const stats = [
     {big: published.length, lbl:'publis publiées'},
@@ -2122,7 +2195,10 @@ function renderBilan(){
     {big: yt, lbl:'YouTube'},
     {big: rate + '%', lbl:'du planning réalisé'},
     {big: monthTasks.length, lbl:'tâches terminées'},
-    {big: fmtMin(taskMin), lbl:'temps de travail'}
+    {big: fmtMin(taskMin), lbl:'temps de travail'},
+    {big: totalViews.toLocaleString('fr-FR'), lbl:'vues cumulées'},
+    {big: totalLikes.toLocaleString('fr-FR'), lbl:"j'aime cumulés"},
+    {big: engRate + '%', lbl:"taux d'engagement"}
   ];
   document.getElementById('autoStats').innerHTML = stats.map((s,i)=>
     `<div class="stat" style="background:linear-gradient(135deg,${bgs[i%bgs.length]},var(--surface-2))"><div class="big">${s.big}</div><div class="lbl">${s.lbl}</div></div>`).join('');
@@ -2144,19 +2220,23 @@ function renderBilan(){
     repart.innerHTML = `<label>Répartition par tag</label><div class="tag-bar">${bar}</div><div class="legend">${leg}</div>`;
   }
 
-  /* 🏆 Top publi du mois (par vues) */
+  /* 🏆 Top 5 publis du mois (par vues) */
   const ranked = posts.filter(p=>+p.views > 0 || +p.likes > 0).sort((a,b)=>(+b.views||0)-(+a.views||0) || (+b.likes||0)-(+a.likes||0));
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
   const topEl = document.getElementById('topPost');
   if(topEl){
     topEl.innerHTML = ranked.length ? `
-      <label>🏆 Top du mois</label>
-      <div class="post-row" style="background:linear-gradient(135deg,#FFF6DE,var(--surface-2))" onclick="openPostModal('${ranked[0].id}')">
-        <span style="font-size:22px">🥇</span>
-        <span class="post-title">${esc(ranked[0].title)}</span>
-        ${+ranked[0].views?`<span class="pill" style="background:var(--sky)">👀 ${(+ranked[0].views).toLocaleString('fr-FR')}</span>`:''}
-        ${+ranked[0].likes?`<span class="pill" style="background:var(--rose)">❤️ ${(+ranked[0].likes).toLocaleString('fr-FR')}</span>`:''}
-        ${ranked[0].author?`<span class="pill who-${ranked[0].author}">${WHO_LABEL[ranked[0].author]||ranked[0].author}</span>`:''}
-      </div>` : '';
+      <label>🏆 Top publications du mois</label>
+      ${ranked.slice(0,5).map((p,i)=>`
+      <div class="post-row" style="background:linear-gradient(135deg,#FFF6DE,var(--surface-2))" onclick="openPostModal('${p.id}')">
+        <span style="font-size:20px">${medals[i]}</span>
+        ${p.img?`<img class="thumb" src="${p.img}" alt="">`:''}
+        <span class="post-title">${esc(p.title)}</span>
+        ${+p.views?`<span class="pill" style="background:var(--sky)">👀 ${(+p.views).toLocaleString('fr-FR')}</span>`:''}
+        ${+p.likes?`<span class="pill" style="background:var(--rose)">❤️ ${(+p.likes).toLocaleString('fr-FR')}</span>`:''}
+        ${p.author?`<span class="pill who-${p.author}">${WHO_LABEL[p.author]||p.author}</span>`:''}
+        ${p.link?`<a class="pill" style="background:linear-gradient(135deg,#FBE1EE,#F2A6CE)" href="${esc(p.link)}" target="_blank" onclick="event.stopPropagation()">🔗</a>`:''}
+      </div>`).join('')}` : '';
   }
 
   const r = data.reports[k] || {};
@@ -2424,6 +2504,9 @@ function renderGlobal(){
   const yt = published.filter(p=>platArr(p).includes('youtube')).length;
   const done = data.tasks.filter(t=>t.status==='fait');
   const totalMin = done.reduce((s,t)=>s+parseTime(t.time),0);
+  const totalViewsAll = published.reduce((s,p)=>s+(+p.views||0),0);
+  const totalLikesAll = published.reduce((s,p)=>s+(+p.likes||0),0);
+  const engRateAll = totalViewsAll ? Math.round(totalLikesAll/totalViewsAll*1000)/10 : 0;
   const bgs = ['var(--mint)','var(--rose)','var(--sky)','var(--butter)','var(--lilac)','var(--peach)'];
   const stats = [
     {big: published.length, lbl:'publis publiées'},
@@ -2434,7 +2517,10 @@ function renderGlobal(){
     {big: yt, lbl:'YouTube'},
     {big: done.length, lbl:'tâches faites'},
     {big: fmtMin(totalMin), lbl:'de travail'},
-    {big: data.ideas.filter(i=>i.status!=='tournee').length, lbl:'idées en stock'}
+    {big: data.ideas.filter(i=>i.status!=='tournee').length, lbl:'idées en stock'},
+    {big: totalViewsAll.toLocaleString('fr-FR'), lbl:'vues cumulées'},
+    {big: totalLikesAll.toLocaleString('fr-FR'), lbl:"j'aime cumulés"},
+    {big: engRateAll + '%', lbl:"taux d'engagement"}
   ];
   document.getElementById('globalStats').innerHTML = stats.map((s,i)=>
     `<div class="stat" style="background:linear-gradient(135deg,${bgs[i%bgs.length]},var(--surface-2))"><div class="big">${s.big}</div><div class="lbl">${s.lbl}</div></div>`).join('');
@@ -2454,6 +2540,23 @@ function renderGlobal(){
       <span class="bar-track"><span class="bar-fill" style="width:${counts[i]/max*100}%"></span></span>
       <span class="bar-val">${counts[i]||''}</span>
     </button>`).join('');
+
+  /* Performance par plateforme (vues cumulées, toutes publis publiées) */
+  const platStats = PLAT_ORDER.map(pl=>({
+    pl, label: PLAT_TEXT[pl],
+    views: published.filter(p=>platArr(p).includes(pl)).reduce((s,p)=>s+(+p.views||0),0),
+    likes: published.filter(p=>platArr(p).includes(pl)).reduce((s,p)=>s+(+p.likes||0),0)
+  }));
+  const maxV = Math.max(1, ...platStats.map(s=>s.views));
+  const pcEl = document.getElementById('platformChart');
+  if(pcEl){
+    pcEl.innerHTML = platStats.some(s=>s.views||s.likes) ? platStats.map(s=>`
+      <div class="bar-row" style="cursor:default">
+        <span class="bar-lbl">${s.label}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:${s.views/maxV*100}%"></span></span>
+        <span class="bar-val" style="width:auto;min-width:70px;text-align:right">${s.views.toLocaleString('fr-FR')} 👀</span>
+      </div>`).join('') : '<p class="empty-msg">Renseigne les vues sur tes publications publiées (dans chaque fiche) pour voir apparaître ce graphique 📊</p>';
+  }
 
   /* Abonnés & vues d'après les bilans */
   const reps = Object.entries(data.reports)
@@ -2947,6 +3050,7 @@ function renderAll(){
   safe('vue jour planning', renderPlanningDay);
   safe('tâches', renderTasks);
   safe('idées', renderIdeas);
+  safe('galerie', renderGalerie);
   safe('bilan', renderBilan);
   safe('tags', renderTags);
   safe('agenda', renderAgenda);
