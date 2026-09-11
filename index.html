@@ -903,8 +903,10 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <!-- ================= ÉVÉNEMENTIEL : RÉTROPLANNING ================= -->
   <section id="view-evtretro" class="view">
     <div class="card" id="retroCard">
-      <h2>🗓️ Rétroplanning</h2>
+      <h2>🗓️ Rétroplanning <button class="btn sky small" style="margin-left:auto" onclick="toggleRetroCatManager()" id="rcatToggleBtn">🏷️ Gérer les catégories</button></h2>
       <p class="section-hint">Toutes les étapes à ne pas manquer avant le jour J, comptées à rebours ⏳</p>
+      <div class="filters" id="retroCatFilters"></div>
+      <div id="retroCatManager" style="display:none;margin-bottom:16px"></div>
       <div id="retroBody"></div>
     </div>
   </section>
@@ -1202,32 +1204,35 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 <!-- ========== MODAL ÉTAPE RÉTROPLANNING ========== -->
 <div class="overlay" id="retroOverlay">
   <div class="modal">
-    <h3 id="retroModalTitle">Modifier l'étape</h3>
-    <label>Étape</label>
-    <input type="text" id="rt-name" placeholder="ex: Réserver le traiteur">
-    <div class="grid-2">
-      <div><label>Date limite</label><input type="date" id="rt-date"></div>
-      <div><label>Priorité</label>
-        <select id="rt-priority">
-          <option value="">— Aucune —</option>
-          <option value="haute">🔥 Haute</option>
-          <option value="moyenne">🌤️ Moyenne</option>
-          <option value="basse">🍃 Basse</option>
-        </select>
+    <div id="retroView" style="display:none"></div>
+    <div id="retroEdit">
+      <h3 id="retroModalTitle">Modifier l'étape</h3>
+      <label>Étape</label>
+      <input type="text" id="rt-name" placeholder="ex: Réserver le traiteur">
+      <div class="grid-2">
+        <div><label>Catégorie</label><select id="rt-cat"></select></div>
+        <div><label>Date limite</label><input type="date" id="rt-date"></div>
       </div>
-    </div>
-    <label>Statut</label>
-    <select id="rt-status">
-      <option value="afaire">📝 À faire</option>
-      <option value="encours">🔄 En cours</option>
-      <option value="fait">✅ Fait</option>
-    </select>
-    <label>Note</label>
-    <textarea id="rt-note" placeholder="Détails, contact, ce qui reste à faire…"></textarea>
-    <div class="modal-actions">
-      <button class="btn danger" id="deleteRetroBtn" style="display:none" onclick="deleteRetroTask()">🗑️ Corbeille</button>
-      <button class="btn" onclick="closeOverlays()">Annuler</button>
-      <button class="btn primary" onclick="saveRetroTask()">💾 Enregistrer</button>
+      <label>Priorité</label>
+      <select id="rt-priority">
+        <option value="">— Aucune —</option>
+        <option value="haute">🔥 Haute</option>
+        <option value="moyenne">🌤️ Moyenne</option>
+        <option value="basse">🍃 Basse</option>
+      </select>
+      <label>Statut</label>
+      <select id="rt-status">
+        <option value="afaire">📝 À faire</option>
+        <option value="encours">🔄 En cours</option>
+        <option value="fait">✅ Fait</option>
+      </select>
+      <label>Note</label>
+      <textarea id="rt-note" placeholder="Détails, contact, ce qui reste à faire…"></textarea>
+      <div class="modal-actions">
+        <button class="btn danger" id="deleteRetroBtn" style="display:none" onclick="deleteRetroTask()">🗑️ Corbeille</button>
+        <button class="btn" id="cancelRetroEditBtn" onclick="cancelRetroEdit()">Annuler</button>
+        <button class="btn primary" onclick="saveRetroTask()">💾 Enregistrer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1235,42 +1240,46 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 <!-- ========== MODAL PRESTATAIRE ========== -->
 <div class="overlay" id="vendorOverlay">
   <div class="modal">
-    <h3 id="vendorModalTitle">Nouveau prestataire</h3>
-    <label>Nom</label>
-    <input type="text" id="v-name" placeholder="ex: Traiteur Les Saveurs d'Orléans">
-    <div class="grid-2">
-      <div><label>Catégorie</label><select id="v-cat"></select></div>
-      <div><label>Statut</label>
-        <select id="v-status">
-          <option value="contacte">📞 Contacté</option>
-          <option value="attente">⏳ En attente</option>
-          <option value="devis">📄 Devis reçu</option>
-          <option value="confirme">✅ Confirmé</option>
-          <option value="refuse">❌ Refusé / abandonné</option>
-        </select>
+    <div id="vendorView" style="display:none"></div>
+    <div id="vendorEdit">
+      <h3 id="vendorModalTitle">Nouveau prestataire</h3>
+      <label>Nom</label>
+      <input type="text" id="v-name" placeholder="ex: Traiteur Les Saveurs d'Orléans">
+      <div class="grid-2">
+        <div><label>Catégorie</label><select id="v-cat"></select></div>
+        <div><label>Statut</label>
+          <select id="v-status">
+            <option value="contacte">📞 Contacté</option>
+            <option value="attente">⏳ En attente</option>
+            <option value="devis">📄 Devis reçu</option>
+            <option value="confirme">✅ Confirmé</option>
+            <option value="refuse">❌ Refusé / abandonné</option>
+          </select>
+        </div>
       </div>
-    </div>
-    <div class="grid-2">
-      <div><label>Contact</label><input type="text" id="v-contact" placeholder="Nom du contact"></div>
-      <div><label>Téléphone</label><input type="text" id="v-phone" placeholder="06…"></div>
-    </div>
-    <div class="grid-2">
-      <div><label>Email</label><input type="text" id="v-email" placeholder="contact@…"></div>
-      <div><label>Prix</label><input type="text" id="v-price" placeholder="ex: 1200€ ou 35€/pers"></div>
-    </div>
-    <label>La carte / l'offre</label>
-    <textarea id="v-offer" placeholder="Menu proposé, formules, prestations incluses…"></textarea>
-    <label>Notes</label>
-    <textarea id="v-notes" placeholder="Ressenti, disponibilités, points d'attention…"></textarea>
-    <label>Lien (site, devis…)</label>
-    <input type="url" id="v-link" placeholder="https://…">
-    <label>Plaquette (PDF)</label>
-    <input type="file" id="v-pdf" accept="application/pdf" onchange="handleVendorPdfUpload(event)">
-    <div id="v-pdf-preview" style="margin-top:8px"></div>
-    <div class="modal-actions">
-      <button class="btn danger" id="deleteVendorBtn" style="display:none" onclick="deleteVendor()">🗑️ Corbeille</button>
-      <button class="btn" onclick="closeOverlays()">Annuler</button>
-      <button class="btn primary" onclick="saveVendor()">💾 Enregistrer</button>
+      <div class="grid-2">
+        <div><label>Contact</label><input type="text" id="v-contact" placeholder="Nom du contact"></div>
+        <div><label>Téléphone</label><input type="text" id="v-phone" placeholder="06…"></div>
+      </div>
+      <div class="grid-2">
+        <div><label>Email</label><input type="text" id="v-email" placeholder="contact@…"></div>
+        <div><label>Prix</label><input type="text" id="v-price" placeholder="ex: 1200€ ou 35€/pers"></div>
+      </div>
+      <label>La carte / l'offre</label>
+      <textarea id="v-offer" placeholder="Menu proposé, formules, prestations incluses…"></textarea>
+      <label>Notes</label>
+      <textarea id="v-notes" placeholder="Ressenti, disponibilités, points d'attention…"></textarea>
+      <label>Lien (site, devis…)</label>
+      <input type="url" id="v-link" placeholder="https://…">
+      <label>📄 Plaquette (PDF)</label>
+      <input type="file" id="v-pdf" accept="application/pdf" hidden onchange="handleVendorPdfUpload(event)">
+      <button class="btn small" type="button" onclick="document.getElementById('v-pdf').click()">Choisir un PDF</button>
+      <div id="v-pdf-preview" style="margin-top:8px"></div>
+      <div class="modal-actions">
+        <button class="btn danger" id="deleteVendorBtn" style="display:none" onclick="deleteVendor()">🗑️ Corbeille</button>
+        <button class="btn" id="cancelVendorEditBtn" onclick="cancelVendorEdit()">Annuler</button>
+        <button class="btn primary" onclick="saveVendor()">💾 Enregistrer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1354,6 +1363,14 @@ const DEFAULTS = {
   trash: [],
   evtProjects: [],
   evtTasks: [],
+  retroCats: [
+    {id:'rc1', name:'Logistique', color:'#A9D3FF'},
+    {id:'rc2', name:'Musique & Ambiance', color:'#CBB9F5'},
+    {id:'rc3', name:'Matériel', color:'#FFE29A'},
+    {id:'rc4', name:'Communication', color:'#FFC2DC'},
+    {id:'rc5', name:'Prestataires', color:'#A8E6C9'},
+    {id:'rc6', name:'Administratif', color:'#FFB9A3'}
+  ],
   vendors: [],
   vendorCats: [
     {id:'vc1', name:'Traiteur', color:'#FFB9A3'},
@@ -1366,7 +1383,7 @@ const DEFAULTS = {
   currentEvtProject: null
 };
 let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
-for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
 if(data.currentEvtProject === undefined) data.currentEvtProject = null;
 if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
 if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
@@ -2565,7 +2582,7 @@ function removeType(id){
 }
 
 /* ================== COFFRE-FORT ================== */
-const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire'};
+const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire', retrocat:'🏷️ Catégorie rétroplanning'};
 function renderSafe(){
   const tl = document.getElementById('trashList');
   tl.innerHTML = data.trash.length ? data.trash.map((x,i)=>
@@ -2593,7 +2610,7 @@ function restoreBackup(kind, i){
   if(!confirm(`Revenir à la version du ${new Date(b.at).toLocaleString('fr-FR')} (${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches) ? Ton état actuel sera d'abord sauvegardé, aucun risque.`)) return;
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
-  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats']) if(!Array.isArray(data[k])) data[k] = [];
+  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats']) if(!Array.isArray(data[k])) data[k] = [];
   if(data.currentEvtProject === undefined) data.currentEvtProject = null;
   for(const k of ['reports','dayplans','remote','office','leave']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
   persist(); renderAll(); toast('Version restaurée 🕰️');
@@ -2612,7 +2629,7 @@ function mergeData(d){
   const norm = s => (s||'').trim().toLowerCase();
   /* tags & types : dédoublonnés par nom, en gardant la correspondance d'id */
   const idMap = {};
-  for(const [key, list] of [['tags', d.tags||[]], ['taskTypes', d.taskTypes||[]], ['vendorCats', d.vendorCats||[]]]){
+  for(const [key, list] of [['tags', d.tags||[]], ['taskTypes', d.taskTypes||[]], ['vendorCats', d.vendorCats||[]], ['retroCats', d.retroCats||[]]]){
     list.forEach(item=>{
       const match = data[key].find(x=>norm(x.name)===norm(item.name));
       if(match){ idMap[item.id] = match.id; }
@@ -2657,7 +2674,7 @@ function importData(e){
         const word = prompt('⚠️ REMPLACEMENT TOTAL : tes données actuelles seront écrasées par le fichier.\n\nPour confirmer, tape REMPLACER en majuscules (sinon rien ne sera touché) :');
         if(word !== 'REMPLACER'){ toast('Import annulé, rien n\'a changé 🛡️'); e.target.value=''; return; }
         data = Object.assign({}, DEFAULTS, d);
-        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
         if(data.currentEvtProject === undefined) data.currentEvtProject = null;
         if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
         if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
@@ -3233,6 +3250,8 @@ function renderNotes(){
 const VSTATUS_LABEL = {contacte:'📞 Contacté', attente:'⏳ En attente', devis:'📄 Devis reçu', confirme:'✅ Confirmé', refuse:'❌ Refusé'};
 const VSTATUS_BG = {contacte:'#EFEAF9', attente:'var(--butter)', devis:'var(--sky)', confirme:'var(--mint)', refuse:'var(--rose)'};
 let vendorCatFilter = 'all';
+let retroCatFilter = 'all';
+let selectedRetroCatColor = PALETTE[1];
 let editingEvtProjId = null, editingRetroId = null, editingVendorId = null;
 let selectedVendorCatColor = PALETTE[2];
 let currentVendorPdf = {data:null, name:null};
@@ -3330,27 +3349,74 @@ function deleteEvtProject(){
 }
 
 /* ---- Rétroplanning ---- */
+function retroCatById(id){ return data.retroCats.find(c=>c.id===id); }
+function setRetroCatFilter(id){ retroCatFilter = id; renderRetro(); }
+function toggleRetroCatManager(){
+  const box = document.getElementById('retroCatManager');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  document.getElementById('rcatToggleBtn').classList.toggle('active', !open);
+  if(!open) renderRetroCatManager();
+}
+function renderRetroCatManager(){
+  const box = document.getElementById('retroCatManager');
+  if(!box || box.style.display==='none') return;
+  box.innerHTML = `<div class="card" style="box-shadow:var(--clay-in);background:var(--surface-2)">
+    ${data.retroCats.map(c=>`<div class="tag-row"><span class="swatch" style="background:${c.color}"></span><span class="name">${esc(c.name)}</span>
+      <button class="btn danger small" onclick="removeRetroCat('${c.id}')">Corbeille</button></div>`).join('') || '<p class="empty-msg">Aucune catégorie</p>'}
+    <label>Nouvelle catégorie</label>
+    <input type="text" id="newRetroCatName" placeholder="ex: Musique, Déco, Papiers administratifs…">
+    <label>Couleur</label>
+    <div class="color-picks" id="rcatColorPicks"></div>
+    <div class="modal-actions"><button class="btn primary" onclick="addRetroCat()">+ Ajouter la catégorie</button></div>
+  </div>`;
+  document.getElementById('rcatColorPicks').innerHTML = PALETTE.map(c=>
+    `<button style="background:${c}" class="${c===selectedRetroCatColor?'sel':''}" onclick="selectedRetroCatColor='${c}';renderRetroCatManager()" aria-label="Couleur ${c}"></button>`).join('');
+}
+function addRetroCat(){
+  const name = document.getElementById('newRetroCatName').value.trim();
+  if(!name){ toast('Donne un nom à la catégorie 🏷️'); return; }
+  data.retroCats.push({id:uid(), name, color:selectedRetroCatColor});
+  persist(); renderRetroCatManager(); renderRetro(); toast('Catégorie ajoutée 🎨');
+}
+function removeRetroCat(id){
+  const c = data.retroCats.find(x=>x.id===id); if(!c) return;
+  if(data.evtTasks.some(t=>t.catId===id) && !confirm(`La catégorie « ${c.name} » est utilisée par des étapes. L'envoyer à la corbeille quand même ?`)) return;
+  data.trash.unshift({kind:'retrocat', label:c.name, deletedAt:new Date().toISOString(), item:c});
+  data.retroCats = data.retroCats.filter(x=>x.id!==id);
+  if(retroCatFilter===id) retroCatFilter = 'all';
+  persist(); renderRetroCatManager(); renderRetro(); toast('Catégorie envoyée à la corbeille 🛡️');
+}
 function renderRetro(){
   const body = document.getElementById('retroBody');
-  if(!body) return;
+  const filtersEl = document.getElementById('retroCatFilters');
+  if(!body || !filtersEl) return;
   const p = getEvtProject();
+  filtersEl.innerHTML = `<button class="fchip ${retroCatFilter==='all'?'active':''}" onclick="setRetroCatFilter('all')">Toutes catégories</button>`
+    + data.retroCats.map(c=>`<button class="fchip ${retroCatFilter===c.id?'active':''}" style="${retroCatFilter===c.id?'background:'+c.color:''}" onclick="setRetroCatFilter('${c.id}')">${esc(c.name)}</button>`).join('');
   if(!p){ body.innerHTML = `<p class="empty-msg">Crée d'abord un événement en haut de page pour démarrer son rétroplanning 🎉</p>`; return; }
+  const catOptions = data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   body.innerHTML = `<div class="composer">
       <input type="date" id="rp-date" style="flex:none;width:150px">
+      <select id="rp-cat" class="fselect" style="flex:none;width:170px">${catOptions}</select>
       <input type="text" id="rp-text" placeholder="Nouvelle étape à ne pas oublier…" onkeydown="if(event.key==='Enter')addRetroTask()">
       <button class="btn primary" onclick="addRetroTask()">+ Ajouter</button>
     </div>
     <div class="retro-line" id="retroList"></div>`;
-  const tasks = data.evtTasks.filter(t=>t.projectId===p.id).slice().sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+  let tasks = data.evtTasks.filter(t=>t.projectId===p.id);
+  if(retroCatFilter!=='all') tasks = tasks.filter(t=>t.catId===retroCatFilter);
+  tasks = tasks.slice().sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
   const list = document.getElementById('retroList');
-  if(!tasks.length){ list.innerHTML = `<p class="empty-msg">Aucune étape pour l'instant — ajoute la première ci-dessus 🌱</p>`; return; }
+  if(!tasks.length){ list.innerHTML = `<p class="empty-msg">Aucune étape ici pour l'instant — ajoute la première ci-dessus 🌱</p>`; return; }
   list.innerHTML = tasks.map(t=>{
     const n = daysUntil(t.dueDate);
     const late = t.status!=='fait' && n!==null && n<0;
+    const c = retroCatById(t.catId);
     return `<div class="retro-item st-${t.status} ${late?'late':''}">
       <div class="retro-card" onclick="openRetroModal('${t.id}')">
         <button class="day-check ${t.status==='fait'?'on':''}" onclick="event.stopPropagation();toggleRetroDone('${t.id}')" aria-label="Cocher">${t.status==='fait'?'✓':''}</button>
         <span class="retro-name">${esc(t.name)}</span>
+        ${c?`<span class="pill" style="background:${c.color}"><span class="cdot" style="background:rgba(255,255,255,.6)"></span>${esc(c.name)}</span>`:''}
         ${t.priority?`<span class="pill pr-${t.priority}">${PRIO_LABEL[t.priority]}</span>`:''}
         <span class="pill st-${t.status}">${TSTATUS_LABEL[t.status]}</span>
         ${countdownChip(t.dueDate, t.status==='fait')}
@@ -3363,7 +3429,8 @@ function addRetroTask(){
   const p = getEvtProject(); if(!p) return;
   const text = document.getElementById('rp-text').value.trim();
   if(!text){ toast("Écris le nom de l'étape ✍️"); return; }
-  data.evtTasks.push({id:uid(), projectId:p.id, name:text, dueDate:document.getElementById('rp-date').value, status:'afaire', priority:'', note:''});
+  const catSel = document.getElementById('rp-cat');
+  data.evtTasks.push({id:uid(), projectId:p.id, name:text, catId: catSel ? catSel.value : '', dueDate:document.getElementById('rp-date').value, status:'afaire', priority:'', note:''});
   document.getElementById('rp-text').value = ''; document.getElementById('rp-date').value = '';
   persist(); renderRetro(); toast('Étape ajoutée au rétroplanning 🗓️');
 }
@@ -3380,31 +3447,87 @@ function quickDelRetro(id){
   data.evtTasks = data.evtTasks.filter(x=>x.id!==id);
   persist(); renderRetro(); toast('Étape envoyée à la corbeille 🛡️');
 }
-function openRetroModal(id){
+function openRetroModal(id=null){
   editingRetroId = id;
-  const t = data.evtTasks.find(x=>x.id===id); if(!t) return;
-  document.getElementById('retroModalTitle').textContent = "Modifier l'étape";
-  document.getElementById('rt-name').value = t.name;
-  document.getElementById('rt-date').value = t.dueDate || '';
-  document.getElementById('rt-priority').value = t.priority || '';
-  document.getElementById('rt-status').value = t.status;
-  document.getElementById('rt-note').value = t.note || '';
-  document.getElementById('deleteRetroBtn').style.display = 'inline-block';
+  if(id){ showRetroView(id); }
+  else{ showRetroEdit(null); }
   document.getElementById('retroOverlay').classList.add('open');
+}
+function showRetroView(id){
+  const t = data.evtTasks.find(x=>x.id===id); if(!t) return;
+  const c = retroCatById(t.catId);
+  const n = daysUntil(t.dueDate);
+  const late = t.status!=='fait' && n!==null && n<0;
+  const vide = '<span class="pv-empty">—</span>';
+  document.getElementById('retroView').innerHTML = `
+    <div class="pv-head">
+      <div class="pv-date"><div class="d">${t.dueDate?t.dueDate.slice(8,10):'—'}</div><div class="m">${t.dueDate?MONTHS[+t.dueDate.slice(5,7)-1].slice(0,4)+'.':'Sans date'}</div></div>
+      <div class="pv-title">${esc(t.name)}</div>
+    </div>
+    <div class="pv-grid">
+      <div class="pv-field"><div class="l">Catégorie</div><div class="v">${c?`<span class="cdot" style="background:${c.color}"></span>${esc(c.name)}`:vide}</div></div>
+      <div class="pv-field"><div class="l">Priorité</div><div class="v">${t.priority?`<span class="pill pr-${t.priority}">${PRIO_LABEL[t.priority]}</span>`:vide}</div></div>
+      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill st-${t.status}">${TSTATUS_LABEL[t.status]}</span></div></div>
+      <div class="pv-field"><div class="l">Échéance</div><div class="v">${countdownChip(t.dueDate, t.status==='fait')}${late?' <span class="pill" style="background:var(--rose)">⚠️ En retard</span>':''}</div></div>
+      <div class="pv-field full"><div class="l">Note</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:180px;overflow-y:auto">${t.note?esc(t.note):vide}</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" onclick="deleteRetroTask()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Fermer</button>
+      <button class="btn primary" onclick="showRetroEdit('${t.id}')">✏️ Modifier</button>
+    </div>`;
+  document.getElementById('retroView').style.display = 'block';
+  document.getElementById('retroEdit').style.display = 'none';
+}
+function showRetroEdit(id=null){
+  editingRetroId = id;
+  const sel = document.getElementById('rt-cat');
+  sel.innerHTML = '<option value="">— Aucune —</option>' + data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const del = document.getElementById('deleteRetroBtn');
+  if(id){
+    const t = data.evtTasks.find(x=>x.id===id); if(!t) return;
+    document.getElementById('retroModalTitle').textContent = "Modifier l'étape";
+    document.getElementById('rt-name').value = t.name;
+    sel.value = t.catId || '';
+    document.getElementById('rt-date').value = t.dueDate || '';
+    document.getElementById('rt-priority').value = t.priority || '';
+    document.getElementById('rt-status').value = t.status;
+    document.getElementById('rt-note').value = t.note || '';
+    del.style.display = 'inline-block';
+  } else {
+    document.getElementById('retroModalTitle').textContent = 'Nouvelle étape';
+    ['rt-name','rt-date','rt-note'].forEach(i=>document.getElementById(i).value='');
+    sel.value = retroCatFilter!=='all' ? retroCatFilter : '';
+    document.getElementById('rt-priority').value = '';
+    document.getElementById('rt-status').value = 'afaire';
+    del.style.display = 'none';
+  }
+  document.getElementById('retroView').style.display = 'none';
+  document.getElementById('retroEdit').style.display = 'block';
   document.getElementById('rt-name').focus();
 }
+function cancelRetroEdit(){
+  if(editingRetroId){ showRetroView(editingRetroId); }
+  else closeOverlays();
+}
 function saveRetroTask(){
-  const t = data.evtTasks.find(x=>x.id===editingRetroId); if(!t) return;
   const name = document.getElementById('rt-name').value.trim();
   if(!name){ toast("Le nom de l'étape est vide 👀"); return; }
+  const isNew = !editingRetroId;
+  const p = getEvtProject();
+  let t = isNew ? {id:uid(), projectId: p ? p.id : null} : data.evtTasks.find(x=>x.id===editingRetroId);
+  if(!t) return;
   const wasFait = t.status==='fait';
   t.name = name;
+  t.catId = document.getElementById('rt-cat').value;
   t.dueDate = document.getElementById('rt-date').value;
   t.priority = document.getElementById('rt-priority').value;
   t.status = document.getElementById('rt-status').value;
   t.note = document.getElementById('rt-note').value;
+  if(isNew) data.evtTasks.push(t);
   if(t.status==='fait' && !wasFait) confetti();
-  persist(); closeOverlays(); renderRetro(); toast('Étape enregistrée 💾');
+  persist(); renderRetro(); toast('Étape enregistrée 💾');
+  editingRetroId = t.id; showRetroView(t.id);
 }
 function deleteRetroTask(){
   const t = data.evtTasks.find(x=>x.id===editingRetroId); if(!t) return;
@@ -3487,6 +3610,41 @@ function toggleVendorCompare(id){
 }
 function openVendorModal(id=null){
   editingVendorId = id;
+  if(id){ showVendorView(id); }
+  else{ showVendorEdit(null); }
+  document.getElementById('vendorOverlay').classList.add('open');
+}
+function showVendorView(id){
+  const v = data.vendors.find(x=>x.id===id); if(!v) return;
+  const c = data.vendorCats.find(x=>x.id===v.catId);
+  const vide = '<span class="pv-empty">—</span>';
+  document.getElementById('vendorView').innerHTML = `
+    <div class="pv-head">
+      <div class="pv-date" style="font-size:26px">🤝</div>
+      <div class="pv-title">${esc(v.name)}</div>
+    </div>
+    <div class="pv-grid">
+      <div class="pv-field"><div class="l">Catégorie</div><div class="v">${c?`<span class="cdot" style="background:${c.color}"></span>${esc(c.name)}`:vide}</div></div>
+      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${VSTATUS_BG[v.status]}">${VSTATUS_LABEL[v.status]}</span></div></div>
+      <div class="pv-field"><div class="l">Contact</div><div class="v">${v.contact?esc(v.contact):vide}</div></div>
+      <div class="pv-field"><div class="l">Prix</div><div class="v">${v.price?esc(v.price):vide}</div></div>
+      <div class="pv-field"><div class="l">Téléphone</div><div class="v">${v.phone?esc(v.phone):vide}</div></div>
+      <div class="pv-field"><div class="l">Email</div><div class="v">${v.email?esc(v.email):vide}</div></div>
+      <div class="pv-field full"><div class="l">La carte / l'offre</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:150px;overflow-y:auto">${v.offer?esc(v.offer):vide}</div></div>
+      <div class="pv-field full"><div class="l">Notes</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:150px;overflow-y:auto">${v.notes?esc(v.notes):vide}</div></div>
+      <div class="pv-field"><div class="l">Lien</div><div class="v">${v.link?`<a class="btn small sky" href="${esc(v.link)}" target="_blank" style="text-decoration:none">Voir ↗</a>`:vide}</div></div>
+      <div class="pv-field"><div class="l">Plaquette</div><div class="v">${v.pdfData?`<a class="btn small sky" href="${v.pdfData}" download="${esc(v.pdfName||'plaquette.pdf')}" target="_blank" style="text-decoration:none">📄 Ouvrir</a>`:vide}</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" onclick="deleteVendor()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Fermer</button>
+      <button class="btn primary" onclick="showVendorEdit('${v.id}')">✏️ Modifier</button>
+    </div>`;
+  document.getElementById('vendorView').style.display = 'block';
+  document.getElementById('vendorEdit').style.display = 'none';
+}
+function showVendorEdit(id=null){
+  editingVendorId = id;
   const sel = document.getElementById('v-cat');
   sel.innerHTML = data.vendorCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   const del = document.getElementById('deleteVendorBtn');
@@ -3515,8 +3673,13 @@ function openVendorModal(id=null){
   }
   document.getElementById('v-pdf').value = '';
   renderVendorPdfPreview();
-  document.getElementById('vendorOverlay').classList.add('open');
+  document.getElementById('vendorView').style.display = 'none';
+  document.getElementById('vendorEdit').style.display = 'block';
   document.getElementById('v-name').focus();
+}
+function cancelVendorEdit(){
+  if(editingVendorId){ showVendorView(editingVendorId); }
+  else closeOverlays();
 }
 function handleVendorPdfUpload(e){
   const file = e.target.files[0];
@@ -3565,7 +3728,8 @@ function saveVendor(){
   };
   if(editingVendorId) data.vendors = data.vendors.map(v=>v.id===editingVendorId?vendor:v);
   else data.vendors.push(vendor);
-  persist(); closeOverlays(); renderVendors(); toast('Prestataire enregistré 🤝');
+  persist(); renderVendors(); toast('Prestataire enregistré 🤝');
+  editingVendorId = vendor.id; showVendorView(vendor.id);
 }
 function deleteVendor(){
   const v = data.vendors.find(x=>x.id===editingVendorId); if(!v) return;
@@ -3606,6 +3770,7 @@ function exportVendorsPDF(){
 function renderEvtAll(){
   renderEvtProjectBar();
   renderRetro();
+  renderRetroCatManager();
   renderVendors();
   renderVendorCatManager();
 }
@@ -3670,7 +3835,7 @@ async function cloudLoad(){
     if(Array.isArray(rows) && rows[0] && rows[0].payload){
       const d = rows[0].payload;
       data = Object.assign({}, DEFAULTS, d);
-      for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats'])
+      for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats'])
         if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
       if(data.currentEvtProject === undefined) data.currentEvtProject = null;
       for(const k of ['reports','dayplans','remote','office','leave'])
