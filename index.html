@@ -490,6 +490,42 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .cast-picks button.sel{color:var(--ink);box-shadow:var(--clay-in);transform:scale(1.03)}
 .cast-mini{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:10px;background:var(--surface);box-shadow:var(--clay-in);color:var(--muted)}
 
+/* ---------- Événementiel : barre projet ---------- */
+.evt-pill{font-family:'Fredoka',sans-serif;font-weight:500;font-size:14px;border:none;cursor:pointer;color:var(--ink);background:var(--surface-2);border-radius:16px;padding:10px 16px;box-shadow:var(--clay-soft);transition:transform .12s;white-space:nowrap}
+.evt-pill:hover{transform:translateY(-2px)}
+.evt-pill.on{background:linear-gradient(135deg,var(--rose),#FFD9E8);box-shadow:var(--clay-in)}
+.countdown{font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;border-radius:16px;padding:9px 16px;box-shadow:var(--clay-in);background:linear-gradient(135deg,var(--mint),#D9F5E7);white-space:nowrap}
+.countdown.late{background:linear-gradient(135deg,var(--rose),#FFD3E0)}
+.countdown.today{background:linear-gradient(135deg,var(--butter),#FFF0C2)}
+
+/* ---------- Rétroplanning ---------- */
+.retro-line{position:relative;padding-left:30px;margin-top:10px}
+.retro-line::before{content:'';position:absolute;left:9px;top:8px;bottom:8px;width:3px;border-radius:3px;background:linear-gradient(var(--lilac),var(--rose))}
+.retro-item{position:relative;margin-bottom:12px}
+.retro-item::before{content:'';position:absolute;left:-30px;top:16px;width:15px;height:15px;border-radius:50%;background:var(--surface);box-shadow:var(--clay-soft);border:3px solid var(--lilac)}
+.retro-item.st-fait::before{border-color:var(--mint);background:var(--mint)}
+.retro-item.late::before{border-color:#E58BB4}
+.retro-card{background:var(--surface-2);border-radius:18px;padding:13px 16px;box-shadow:var(--clay-soft);display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;transition:transform .12s}
+.retro-card:hover{transform:translateY(-2px)}
+.retro-item.st-fait .retro-name{text-decoration:line-through;color:var(--muted)}
+.retro-name{font-weight:800;flex:1;min-width:140px}
+.cd-chip{font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;border-radius:12px;padding:6px 11px;box-shadow:var(--clay-in);background:var(--surface);white-space:nowrap;flex:none}
+.cd-chip.late{background:linear-gradient(135deg,var(--rose),#FFD3E0)}
+.cd-chip.today{background:linear-gradient(135deg,var(--butter),#FFF0C2)}
+.cd-chip.done{background:linear-gradient(135deg,var(--mint),#D9F5E7)}
+
+/* ---------- Prestataires ---------- */
+.vendor-card{border-radius:22px;padding:18px;box-shadow:var(--clay-soft);cursor:pointer;transition:transform .15s;position:relative;background:var(--surface-2)}
+.vendor-card:hover{transform:translateY(-3px)}
+.vendor-card .vcat{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.vendor-card .vcat .cdot{width:10px;height:10px;border-radius:50%;flex:none}
+.vendor-card .t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;margin-bottom:6px;padding-right:24px}
+.vendor-card .price{font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;color:var(--ink);margin-bottom:6px}
+.vendor-card .offer{font-size:12.5px;font-weight:600;color:var(--muted);line-height:1.5;margin-bottom:10px;max-height:56px;overflow:hidden}
+.vendor-card .foot{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.vendor-compare{position:absolute;top:14px;right:14px;width:24px;height:24px;border-radius:8px;border:none;cursor:pointer;background:var(--surface);box-shadow:var(--clay-soft);font-size:12px;color:var(--muted);display:grid;place-items:center}
+.vendor-compare.on{background:linear-gradient(135deg,var(--mint),#CFF5E2);color:var(--ink);box-shadow:var(--clay-in)}
+
 /* ---------- Confettis ---------- */
 .confetti{position:fixed;top:-14px;width:11px;height:11px;border-radius:4px;pointer-events:none;z-index:200;animation:confall linear forwards}
 @keyframes confall{
@@ -549,6 +585,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <button onclick="switchPage('dashboard')"><span class="ndot" style="background:var(--mint)"></span>Mon tableau de bord</button>
       <button onclick="switchPage('contenu')"><span class="ndot" style="background:var(--sky)"></span>Création de contenu</button>
       <button onclick="switchPage('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda</button>
+      <button onclick="switchPage('evenement')"><span class="ndot" style="background:var(--rose)"></span>Événementiel</button>
       <button onclick="switchPage('params')"><span class="ndot" style="background:var(--lilac)"></span>Paramètres</button>
     </div>
     <div class="data-btns">
@@ -563,6 +600,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     <div class="page-title fredoka" id="pageTitle"></div>
     <nav id="subNav" style="margin-bottom:0"></nav>
   </div>
+
+  <div class="card" id="evtProjectBar" style="display:none;padding:18px 22px;margin-bottom:22px"></div>
 
   <!-- ================= PLANNING ================= -->
   <section id="view-planning" class="view active">
@@ -861,6 +900,40 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
   </section>
 
+  <!-- ================= ÉVÉNEMENTIEL : RÉTROPLANNING ================= -->
+  <section id="view-evtretro" class="view">
+    <div class="card" id="retroCard">
+      <h2>🗓️ Rétroplanning</h2>
+      <p class="section-hint">Toutes les étapes à ne pas manquer avant le jour J, comptées à rebours ⏳</p>
+      <div id="retroBody"></div>
+    </div>
+  </section>
+
+  <!-- ================= ÉVÉNEMENTIEL : PRESTATAIRES ================= -->
+  <section id="view-evtprestataires" class="view">
+    <div class="card">
+      <h2>🤝 Prestataires <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn sky small" onclick="exportVendorsPDF()">🖨️ Comparatif PDF</button>
+        <button class="btn primary small" onclick="openVendorModal()">+ Nouveau prestataire</button>
+      </span></h2>
+      <p class="section-hint">Coche 🔖 sur au moins deux prestataires pour comparer précisément ceux-là dans le PDF — sinon le comparatif reprend toute la sélection filtrée à l'écran.</p>
+      <div class="filters" id="vendorCatFilters"></div>
+      <div class="filters">
+        <select id="vendorStatusFilter" class="fselect" onchange="renderVendors()">
+          <option value="all">Tous les statuts</option>
+          <option value="contacte">📞 Contacté</option>
+          <option value="attente">⏳ En attente</option>
+          <option value="devis">📄 Devis reçu</option>
+          <option value="confirme">✅ Confirmé</option>
+          <option value="refuse">❌ Refusé / abandonné</option>
+        </select>
+        <button class="fchip" onclick="toggleVendorCatManager()" id="vcatToggleBtn">🏷️ Gérer les catégories</button>
+      </div>
+      <div id="vendorCatManager" style="display:none;margin-bottom:16px"></div>
+      <div class="idea-grid" id="vendorGrid"></div>
+    </div>
+  </section>
+
   <!-- ================= TAGS ================= -->
   <section id="view-tags" class="view">
     <div class="card">
@@ -1104,6 +1177,101 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   </div>
 </div>
 
+<!-- ========== MODAL ÉVÉNEMENT (projet) ========== -->
+<div class="overlay" id="evtProjOverlay">
+  <div class="modal">
+    <h3 id="evtProjModalTitle">Nouvel événement</h3>
+    <label>Nom de l'événement</label>
+    <input type="text" id="ep-name" placeholder="ex: Soirée portes ouvertes Aeconomia">
+    <div class="grid-2">
+      <div><label>Date</label><input type="date" id="ep-date"></div>
+      <div><label>Lieu</label><input type="text" id="ep-location" placeholder="ex: Agence d'Orléans"></div>
+    </div>
+    <label>Budget prévisionnel</label>
+    <input type="text" id="ep-budget" placeholder="ex: 3000€">
+    <label>Notes</label>
+    <textarea id="ep-notes" placeholder="Objectif, invités, contraintes…"></textarea>
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteEvtProjBtn" style="display:none" onclick="deleteEvtProject()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Annuler</button>
+      <button class="btn primary" onclick="saveEvtProject()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL ÉTAPE RÉTROPLANNING ========== -->
+<div class="overlay" id="retroOverlay">
+  <div class="modal">
+    <h3 id="retroModalTitle">Modifier l'étape</h3>
+    <label>Étape</label>
+    <input type="text" id="rt-name" placeholder="ex: Réserver le traiteur">
+    <div class="grid-2">
+      <div><label>Date limite</label><input type="date" id="rt-date"></div>
+      <div><label>Priorité</label>
+        <select id="rt-priority">
+          <option value="">— Aucune —</option>
+          <option value="haute">🔥 Haute</option>
+          <option value="moyenne">🌤️ Moyenne</option>
+          <option value="basse">🍃 Basse</option>
+        </select>
+      </div>
+    </div>
+    <label>Statut</label>
+    <select id="rt-status">
+      <option value="afaire">📝 À faire</option>
+      <option value="encours">🔄 En cours</option>
+      <option value="fait">✅ Fait</option>
+    </select>
+    <label>Note</label>
+    <textarea id="rt-note" placeholder="Détails, contact, ce qui reste à faire…"></textarea>
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteRetroBtn" style="display:none" onclick="deleteRetroTask()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Annuler</button>
+      <button class="btn primary" onclick="saveRetroTask()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODAL PRESTATAIRE ========== -->
+<div class="overlay" id="vendorOverlay">
+  <div class="modal">
+    <h3 id="vendorModalTitle">Nouveau prestataire</h3>
+    <label>Nom</label>
+    <input type="text" id="v-name" placeholder="ex: Traiteur Les Saveurs d'Orléans">
+    <div class="grid-2">
+      <div><label>Catégorie</label><select id="v-cat"></select></div>
+      <div><label>Statut</label>
+        <select id="v-status">
+          <option value="contacte">📞 Contacté</option>
+          <option value="attente">⏳ En attente</option>
+          <option value="devis">📄 Devis reçu</option>
+          <option value="confirme">✅ Confirmé</option>
+          <option value="refuse">❌ Refusé / abandonné</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div><label>Contact</label><input type="text" id="v-contact" placeholder="Nom du contact"></div>
+      <div><label>Téléphone</label><input type="text" id="v-phone" placeholder="06…"></div>
+    </div>
+    <div class="grid-2">
+      <div><label>Email</label><input type="text" id="v-email" placeholder="contact@…"></div>
+      <div><label>Prix</label><input type="text" id="v-price" placeholder="ex: 1200€ ou 35€/pers"></div>
+    </div>
+    <label>La carte / l'offre</label>
+    <textarea id="v-offer" placeholder="Menu proposé, formules, prestations incluses…"></textarea>
+    <label>Notes</label>
+    <textarea id="v-notes" placeholder="Ressenti, disponibilités, points d'attention…"></textarea>
+    <label>Lien (site, devis…)</label>
+    <input type="url" id="v-link" placeholder="https://…">
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteVendorBtn" style="display:none" onclick="deleteVendor()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Annuler</button>
+      <button class="btn primary" onclick="saveVendor()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
@@ -1180,10 +1348,23 @@ const DEFAULTS = {
   office: {},
   leave: {},
   notes: [],
-  trash: []
+  trash: [],
+  evtProjects: [],
+  evtTasks: [],
+  vendors: [],
+  vendorCats: [
+    {id:'vc1', name:'Traiteur', color:'#FFB9A3'},
+    {id:'vc2', name:'Lieu', color:'#A9D3FF'},
+    {id:'vc3', name:'Buffet', color:'#FFE29A'},
+    {id:'vc4', name:'DJ / Musique', color:'#CBB9F5'},
+    {id:'vc5', name:'Photographe', color:'#A8E6C9'},
+    {id:'vc6', name:'Décoration', color:'#FFC2DC'}
+  ],
+  currentEvtProject: null
 };
 let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
-for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+if(data.currentEvtProject === undefined) data.currentEvtProject = null;
 if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
 if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
 if(typeof data.office !== 'object' || !data.office) data.office = {};
@@ -1265,9 +1446,10 @@ const PAGES = {
   dashboard: {title:'Mon tableau de bord', subs:[['taches','Journal de bord'],['clem','Clémentine 🍊'],['notes','Notes'],['bilan','Bilan']]},
   contenu:   {title:'Création de contenu', subs:[['planning','Planning'],['idees','Idées'],['galerie','Galerie & liens'],['bilanmois','Bilan']]},
   agenda:    {title:'Agenda', subs:[]},
+  evenement: {title:'Événementiel', subs:[['retro','Rétroplanning'],['prestataires','Prestataires']]},
   params:    {title:'Paramètres', subs:[['tags','Tags & types'],['coffre','Coffre-fort']]}
 };
-const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', galerie:'view-galerie', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre'};
+const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', galerie:'view-galerie', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre', retro:'view-evtretro', prestataires:'view-evtprestataires'};
 let currentPage = 'dashboard', currentSub = 'taches';
 function switchPage(page, sub=null){
   currentPage = page;
@@ -1282,6 +1464,7 @@ function switchPage(page, sub=null){
   const sectionId = currentSub ? SUB_SECTION[currentSub] : 'view-'+page;
   document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
   document.getElementById(sectionId).classList.add('active');
+  document.getElementById('evtProjectBar').style.display = (page==='evenement') ? 'block' : 'none';
   if(currentSub==='planning') setPlanTab('cal');
   if(currentSub==='bilanmois') setPlanTab('bilan');
   setFlowerMenu(false);
@@ -2379,7 +2562,7 @@ function removeType(id){
 }
 
 /* ================== COFFRE-FORT ================== */
-const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note'};
+const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire'};
 function renderSafe(){
   const tl = document.getElementById('trashList');
   tl.innerHTML = data.trash.length ? data.trash.map((x,i)=>
@@ -2407,7 +2590,8 @@ function restoreBackup(kind, i){
   if(!confirm(`Revenir à la version du ${new Date(b.at).toLocaleString('fr-FR')} (${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches) ? Ton état actuel sera d'abord sauvegardé, aucun risque.`)) return;
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
-  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes']) if(!Array.isArray(data[k])) data[k] = [];
+  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats']) if(!Array.isArray(data[k])) data[k] = [];
+  if(data.currentEvtProject === undefined) data.currentEvtProject = null;
   for(const k of ['reports','dayplans','remote','office','leave']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
   persist(); renderAll(); toast('Version restaurée 🕰️');
 }
@@ -2425,7 +2609,7 @@ function mergeData(d){
   const norm = s => (s||'').trim().toLowerCase();
   /* tags & types : dédoublonnés par nom, en gardant la correspondance d'id */
   const idMap = {};
-  for(const [key, list] of [['tags', d.tags||[]], ['taskTypes', d.taskTypes||[]]]){
+  for(const [key, list] of [['tags', d.tags||[]], ['taskTypes', d.taskTypes||[]], ['vendorCats', d.vendorCats||[]]]){
     list.forEach(item=>{
       const match = data[key].find(x=>norm(x.name)===norm(item.name));
       if(match){ idMap[item.id] = match.id; }
@@ -2433,11 +2617,12 @@ function mergeData(d){
     });
   }
   let added = 0;
-  for(const key of ['posts','tasks','ideas','events','notes','trash']){
+  for(const key of ['posts','tasks','ideas','events','notes','trash','evtProjects','evtTasks','vendors']){
     (d[key]||[]).forEach(item=>{
       if(!data[key].some(x=>x.id===item.id)){
         if(item.tagId && idMap[item.tagId]) item.tagId = idMap[item.tagId];
         if(item.typeId && idMap[item.typeId]) item.typeId = idMap[item.typeId];
+        if(item.catId && idMap[item.catId]) item.catId = idMap[item.catId];
         data[key].push(item); added++;
       }
     });
@@ -2469,7 +2654,8 @@ function importData(e){
         const word = prompt('⚠️ REMPLACEMENT TOTAL : tes données actuelles seront écrasées par le fichier.\n\nPour confirmer, tape REMPLACER en majuscules (sinon rien ne sera touché) :');
         if(word !== 'REMPLACER'){ toast('Import annulé, rien n\'a changé 🛡️'); e.target.value=''; return; }
         data = Object.assign({}, DEFAULTS, d);
-        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+        if(data.currentEvtProject === undefined) data.currentEvtProject = null;
         if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
         if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
         persist(); renderAll(); toast('Données remplacées (l\'ancien état est dans les copies de sécurité) ✅');
@@ -3040,6 +3226,354 @@ function renderNotes(){
   });
 }
 
+/* ================== ÉVÉNEMENTIEL ================== */
+const VSTATUS_LABEL = {contacte:'📞 Contacté', attente:'⏳ En attente', devis:'📄 Devis reçu', confirme:'✅ Confirmé', refuse:'❌ Refusé'};
+const VSTATUS_BG = {contacte:'#EFEAF9', attente:'var(--butter)', devis:'var(--sky)', confirme:'var(--mint)', refuse:'var(--rose)'};
+let vendorCatFilter = 'all';
+let editingEvtProjId = null, editingRetroId = null, editingVendorId = null;
+let selectedVendorCatColor = PALETTE[2];
+
+function getEvtProject(){ return data.evtProjects.find(p=>p.id===data.currentEvtProject) || null; }
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr+'T00:00:00');
+  return Math.round((d-today)/86400000);
+}
+function countdownChip(dateStr, done){
+  if(!dateStr) return '<span class="cd-chip">Pas de date</span>';
+  const n = daysUntil(dateStr);
+  if(done) return `<span class="cd-chip done">✓ ${fmtDate(dateStr)}</span>`;
+  if(n<0) return `<span class="cd-chip late">⚠️ En retard (${fmtDate(dateStr)})</span>`;
+  if(n===0) return `<span class="cd-chip today">🔥 Aujourd'hui</span>`;
+  return `<span class="cd-chip">J-${n}</span>`;
+}
+
+/* ---- Barre projet ---- */
+function renderEvtProjectBar(){
+  const bar = document.getElementById('evtProjectBar');
+  if(!bar) return;
+  const projs = data.evtProjects;
+  if((!data.currentEvtProject || !projs.some(p=>p.id===data.currentEvtProject)) && projs.length) data.currentEvtProject = projs[0].id;
+  const p = getEvtProject();
+  const pills = projs.map(pr=>`<button class="evt-pill ${pr.id===data.currentEvtProject?'on':''}" onclick="selectEvtProject('${pr.id}')">🎉 ${esc(pr.name)}</button>`).join('');
+  let info = '';
+  if(p){
+    const n = daysUntil(p.date);
+    const cdClass = n===null ? '' : n<0 ? 'late' : n===0 ? 'today' : '';
+    const cdText = !p.date ? 'Aucune date fixée' : n<0 ? 'Événement passé' : n===0 ? "C'est aujourd'hui ! 🎉" : 'J-' + n + ' avant le jour J';
+    const nTasksLeft = data.evtTasks.filter(t=>t.projectId===p.id && t.status!=='fait').length;
+    const nConfirmed = data.vendors.filter(v=>v.projectId===p.id && v.status==='confirme').length;
+    const nVendors = data.vendors.filter(v=>v.projectId===p.id).length;
+    info = `<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px">
+      <span class="countdown ${cdClass}">${cdText}</span>
+      ${p.location?`<span class="pill" style="background:#EFEAF9">📍 ${esc(p.location)}</span>`:''}
+      ${p.budget?`<span class="pill" style="background:var(--butter)">💰 ${esc(p.budget)}</span>`:''}
+      <span class="pill" style="background:var(--sky)">📝 ${nTasksLeft} étape${nTasksLeft>1?'s':''} restante${nTasksLeft>1?'s':''}</span>
+      <span class="pill" style="background:var(--mint)">🤝 ${nConfirmed}/${nVendors} prestataire${nVendors>1?'s':''} confirmé${nConfirmed>1?'s':''}</span>
+      <button class="btn small" style="margin-left:auto" onclick="openEvtProjectModal('${p.id}')">✏️ Modifier l'événement</button>
+    </div>`;
+  }
+  bar.innerHTML = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${pills || '<span style="color:var(--muted);font-weight:700;font-size:13px">Aucun événement enregistré</span>'}</div>
+      <button class="btn primary small" style="margin-left:auto" onclick="openEvtProjectModal()">+ Nouvel événement</button>
+    </div>${info}`;
+}
+function selectEvtProject(id){ data.currentEvtProject = id; persist(); renderEvtAll(); }
+function openEvtProjectModal(id=null){
+  editingEvtProjId = id;
+  const del = document.getElementById('deleteEvtProjBtn');
+  if(id){
+    const p = data.evtProjects.find(x=>x.id===id); if(!p) return;
+    document.getElementById('evtProjModalTitle').textContent = "Modifier l'événement";
+    document.getElementById('ep-name').value = p.name;
+    document.getElementById('ep-date').value = p.date || '';
+    document.getElementById('ep-location').value = p.location || '';
+    document.getElementById('ep-budget').value = p.budget || '';
+    document.getElementById('ep-notes').value = p.notes || '';
+    del.style.display = 'inline-block';
+  } else {
+    document.getElementById('evtProjModalTitle').textContent = 'Nouvel événement';
+    ['ep-name','ep-date','ep-location','ep-budget','ep-notes'].forEach(i=>document.getElementById(i).value='');
+    del.style.display = 'none';
+  }
+  document.getElementById('evtProjOverlay').classList.add('open');
+  document.getElementById('ep-name').focus();
+}
+function saveEvtProject(){
+  const name = document.getElementById('ep-name').value.trim();
+  if(!name){ toast('Donne un nom à ton événement 🎉'); return; }
+  const proj = {
+    id: editingEvtProjId || uid(), name,
+    date: document.getElementById('ep-date').value,
+    location: document.getElementById('ep-location').value.trim(),
+    budget: document.getElementById('ep-budget').value.trim(),
+    notes: document.getElementById('ep-notes').value
+  };
+  if(editingEvtProjId) data.evtProjects = data.evtProjects.map(p=>p.id===editingEvtProjId?proj:p);
+  else { data.evtProjects.push(proj); data.currentEvtProject = proj.id; }
+  persist(); closeOverlays(); renderEvtAll(); toast('Événement enregistré 🎉');
+}
+function deleteEvtProject(){
+  const p = data.evtProjects.find(x=>x.id===editingEvtProjId); if(!p) return;
+  if(!confirm(`Supprimer « ${p.name} » ? Ses étapes et prestataires liés seront aussi envoyés à la corbeille.`)) return;
+  data.trash.unshift({kind:'evtproject', label:p.name, deletedAt:new Date().toISOString(), item:{project:p, tasks:data.evtTasks.filter(t=>t.projectId===p.id), vendors:data.vendors.filter(v=>v.projectId===p.id)}});
+  data.evtTasks = data.evtTasks.filter(t=>t.projectId!==p.id);
+  data.vendors = data.vendors.filter(v=>v.projectId!==p.id);
+  data.evtProjects = data.evtProjects.filter(x=>x.id!==p.id);
+  if(data.currentEvtProject===p.id) data.currentEvtProject = data.evtProjects.length ? data.evtProjects[0].id : null;
+  persist(); closeOverlays(); renderEvtAll(); toast('Événement envoyé à la corbeille 🛡️');
+}
+
+/* ---- Rétroplanning ---- */
+function renderRetro(){
+  const body = document.getElementById('retroBody');
+  if(!body) return;
+  const p = getEvtProject();
+  if(!p){ body.innerHTML = `<p class="empty-msg">Crée d'abord un événement en haut de page pour démarrer son rétroplanning 🎉</p>`; return; }
+  body.innerHTML = `<div class="composer">
+      <input type="date" id="rp-date" style="flex:none;width:150px">
+      <input type="text" id="rp-text" placeholder="Nouvelle étape à ne pas oublier…" onkeydown="if(event.key==='Enter')addRetroTask()">
+      <button class="btn primary" onclick="addRetroTask()">+ Ajouter</button>
+    </div>
+    <div class="retro-line" id="retroList"></div>`;
+  const tasks = data.evtTasks.filter(t=>t.projectId===p.id).slice().sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999'));
+  const list = document.getElementById('retroList');
+  if(!tasks.length){ list.innerHTML = `<p class="empty-msg">Aucune étape pour l'instant — ajoute la première ci-dessus 🌱</p>`; return; }
+  list.innerHTML = tasks.map(t=>{
+    const n = daysUntil(t.dueDate);
+    const late = t.status!=='fait' && n!==null && n<0;
+    return `<div class="retro-item st-${t.status} ${late?'late':''}">
+      <div class="retro-card" onclick="openRetroModal('${t.id}')">
+        <button class="day-check ${t.status==='fait'?'on':''}" onclick="event.stopPropagation();toggleRetroDone('${t.id}')" aria-label="Cocher">${t.status==='fait'?'✓':''}</button>
+        <span class="retro-name">${esc(t.name)}</span>
+        ${t.priority?`<span class="pill pr-${t.priority}">${PRIO_LABEL[t.priority]}</span>`:''}
+        <span class="pill st-${t.status}">${TSTATUS_LABEL[t.status]}</span>
+        ${countdownChip(t.dueDate, t.status==='fait')}
+        <button class="tiny-del" onclick="event.stopPropagation();quickDelRetro('${t.id}')" aria-label="Retirer">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addRetroTask(){
+  const p = getEvtProject(); if(!p) return;
+  const text = document.getElementById('rp-text').value.trim();
+  if(!text){ toast("Écris le nom de l'étape ✍️"); return; }
+  data.evtTasks.push({id:uid(), projectId:p.id, name:text, dueDate:document.getElementById('rp-date').value, status:'afaire', priority:'', note:''});
+  document.getElementById('rp-text').value = ''; document.getElementById('rp-date').value = '';
+  persist(); renderRetro(); toast('Étape ajoutée au rétroplanning 🗓️');
+}
+function toggleRetroDone(id){
+  const t = data.evtTasks.find(x=>x.id===id); if(!t) return;
+  const was = t.status==='fait';
+  t.status = was ? 'afaire' : 'fait';
+  if(!was) confetti();
+  persist(); renderRetro();
+}
+function quickDelRetro(id){
+  const t = data.evtTasks.find(x=>x.id===id); if(!t) return;
+  data.trash.unshift({kind:'evttask', label:t.name, deletedAt:new Date().toISOString(), item:t});
+  data.evtTasks = data.evtTasks.filter(x=>x.id!==id);
+  persist(); renderRetro(); toast('Étape envoyée à la corbeille 🛡️');
+}
+function openRetroModal(id){
+  editingRetroId = id;
+  const t = data.evtTasks.find(x=>x.id===id); if(!t) return;
+  document.getElementById('retroModalTitle').textContent = "Modifier l'étape";
+  document.getElementById('rt-name').value = t.name;
+  document.getElementById('rt-date').value = t.dueDate || '';
+  document.getElementById('rt-priority').value = t.priority || '';
+  document.getElementById('rt-status').value = t.status;
+  document.getElementById('rt-note').value = t.note || '';
+  document.getElementById('deleteRetroBtn').style.display = 'inline-block';
+  document.getElementById('retroOverlay').classList.add('open');
+  document.getElementById('rt-name').focus();
+}
+function saveRetroTask(){
+  const t = data.evtTasks.find(x=>x.id===editingRetroId); if(!t) return;
+  const name = document.getElementById('rt-name').value.trim();
+  if(!name){ toast("Le nom de l'étape est vide 👀"); return; }
+  const wasFait = t.status==='fait';
+  t.name = name;
+  t.dueDate = document.getElementById('rt-date').value;
+  t.priority = document.getElementById('rt-priority').value;
+  t.status = document.getElementById('rt-status').value;
+  t.note = document.getElementById('rt-note').value;
+  if(t.status==='fait' && !wasFait) confetti();
+  persist(); closeOverlays(); renderRetro(); toast('Étape enregistrée 💾');
+}
+function deleteRetroTask(){
+  const t = data.evtTasks.find(x=>x.id===editingRetroId); if(!t) return;
+  data.trash.unshift({kind:'evttask', label:t.name, deletedAt:new Date().toISOString(), item:t});
+  data.evtTasks = data.evtTasks.filter(x=>x.id!==editingRetroId);
+  persist(); closeOverlays(); renderRetro(); toast('Étape envoyée à la corbeille 🛡️');
+}
+
+/* ---- Prestataires ---- */
+function setVendorCatFilter(id){ vendorCatFilter = id; renderVendors(); }
+function toggleVendorCatManager(){
+  const box = document.getElementById('vendorCatManager');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  document.getElementById('vcatToggleBtn').classList.toggle('active', !open);
+  if(!open) renderVendorCatManager();
+}
+function renderVendorCatManager(){
+  const box = document.getElementById('vendorCatManager');
+  if(!box || box.style.display==='none') return;
+  box.innerHTML = `<div class="card" style="box-shadow:var(--clay-in);background:var(--surface-2)">
+    ${data.vendorCats.map(c=>`<div class="tag-row"><span class="swatch" style="background:${c.color}"></span><span class="name">${esc(c.name)}</span>
+      <button class="btn danger small" onclick="removeVendorCat('${c.id}')">Corbeille</button></div>`).join('') || '<p class="empty-msg">Aucune catégorie</p>'}
+    <label>Nouvelle catégorie</label>
+    <input type="text" id="newVendorCatName" placeholder="ex: Buffet, Location de salle, Fleuriste…">
+    <label>Couleur</label>
+    <div class="color-picks" id="vcatColorPicks"></div>
+    <div class="modal-actions"><button class="btn primary" onclick="addVendorCat()">+ Ajouter la catégorie</button></div>
+  </div>`;
+  document.getElementById('vcatColorPicks').innerHTML = PALETTE.map(c=>
+    `<button style="background:${c}" class="${c===selectedVendorCatColor?'sel':''}" onclick="selectedVendorCatColor='${c}';renderVendorCatManager()" aria-label="Couleur ${c}"></button>`).join('');
+}
+function addVendorCat(){
+  const name = document.getElementById('newVendorCatName').value.trim();
+  if(!name){ toast('Donne un nom à la catégorie 🏷️'); return; }
+  data.vendorCats.push({id:uid(), name, color:selectedVendorCatColor});
+  persist(); renderVendorCatManager(); renderVendors(); toast('Catégorie ajoutée 🎨');
+}
+function removeVendorCat(id){
+  const c = data.vendorCats.find(x=>x.id===id); if(!c) return;
+  if(data.vendors.some(v=>v.catId===id) && !confirm(`La catégorie « ${c.name} » est utilisée par des prestataires. L'envoyer à la corbeille quand même ?`)) return;
+  data.trash.unshift({kind:'vendorcat', label:c.name, deletedAt:new Date().toISOString(), item:c});
+  data.vendorCats = data.vendorCats.filter(x=>x.id!==id);
+  if(vendorCatFilter===id) vendorCatFilter = 'all';
+  persist(); renderVendorCatManager(); renderVendors(); toast('Catégorie envoyée à la corbeille 🛡️');
+}
+function renderVendors(){
+  const grid = document.getElementById('vendorGrid');
+  const filtersEl = document.getElementById('vendorCatFilters');
+  if(!grid || !filtersEl) return;
+  filtersEl.innerHTML = `<button class="fchip ${vendorCatFilter==='all'?'active':''}" onclick="setVendorCatFilter('all')">Toutes catégories</button>`
+    + data.vendorCats.map(c=>`<button class="fchip ${vendorCatFilter===c.id?'active':''}" style="${vendorCatFilter===c.id?'background:'+c.color:''}" onclick="setVendorCatFilter('${c.id}')">${esc(c.name)}</button>`).join('');
+  const p = getEvtProject();
+  if(!p){ grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Crée d'abord un événement en haut de page 🎉</p>`; return; }
+  let vs = data.vendors.filter(v=>v.projectId===p.id);
+  if(vendorCatFilter!=='all') vs = vs.filter(v=>v.catId===vendorCatFilter);
+  const sf = document.getElementById('vendorStatusFilter').value;
+  if(sf && sf!=='all') vs = vs.filter(v=>v.status===sf);
+  if(!vs.length){ grid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1">Aucun prestataire ici pour l'instant — ajoute le premier 🌱</p>`; return; }
+  grid.innerHTML = vs.map(v=>{
+    const c = data.vendorCats.find(x=>x.id===v.catId);
+    return `<div class="vendor-card" onclick="openVendorModal('${v.id}')">
+      <button class="vendor-compare ${v.compare?'on':''}" onclick="event.stopPropagation();toggleVendorCompare('${v.id}')" title="Sélectionner pour le comparatif">🔖</button>
+      <div class="vcat"><span class="cdot" style="background:${c?c.color:'#ddd'}"></span>${c?esc(c.name):'Sans catégorie'}</div>
+      <div class="t">${esc(v.name)}</div>
+      ${v.price?`<div class="price">${esc(v.price)}</div>`:''}
+      ${v.offer?`<div class="offer">${esc(v.offer)}</div>`:''}
+      <div class="foot">
+        <span class="pill" style="background:${VSTATUS_BG[v.status]}">${VSTATUS_LABEL[v.status]}</span>
+        ${v.contact?`<span class="pill" style="background:#EFEAF9">👤 ${esc(v.contact)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleVendorCompare(id){
+  const v = data.vendors.find(x=>x.id===id); if(!v) return;
+  v.compare = !v.compare;
+  persist(); renderVendors();
+}
+function openVendorModal(id=null){
+  editingVendorId = id;
+  const sel = document.getElementById('v-cat');
+  sel.innerHTML = data.vendorCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const del = document.getElementById('deleteVendorBtn');
+  if(id){
+    const v = data.vendors.find(x=>x.id===id); if(!v) return;
+    document.getElementById('vendorModalTitle').textContent = 'Modifier le prestataire';
+    document.getElementById('v-name').value = v.name;
+    sel.value = v.catId;
+    document.getElementById('v-status').value = v.status;
+    document.getElementById('v-contact').value = v.contact || '';
+    document.getElementById('v-phone').value = v.phone || '';
+    document.getElementById('v-email').value = v.email || '';
+    document.getElementById('v-price').value = v.price || '';
+    document.getElementById('v-offer').value = v.offer || '';
+    document.getElementById('v-notes').value = v.notes || '';
+    document.getElementById('v-link').value = v.link || '';
+    del.style.display = 'inline-block';
+  } else {
+    if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
+    document.getElementById('vendorModalTitle').textContent = 'Nouveau prestataire';
+    ['v-name','v-contact','v-phone','v-email','v-price','v-offer','v-notes','v-link'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('v-status').value = 'contacte';
+    del.style.display = 'none';
+  }
+  document.getElementById('vendorOverlay').classList.add('open');
+  document.getElementById('v-name').focus();
+}
+function saveVendor(){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const name = document.getElementById('v-name').value.trim();
+  if(!name){ toast('Donne un nom au prestataire 👀'); return; }
+  const old = editingVendorId ? data.vendors.find(x=>x.id===editingVendorId) : null;
+  const vendor = {
+    id: editingVendorId || uid(), projectId: old ? old.projectId : p.id, name,
+    catId: document.getElementById('v-cat').value,
+    status: document.getElementById('v-status').value,
+    contact: document.getElementById('v-contact').value.trim(),
+    phone: document.getElementById('v-phone').value.trim(),
+    email: document.getElementById('v-email').value.trim(),
+    price: document.getElementById('v-price').value.trim(),
+    offer: document.getElementById('v-offer').value,
+    notes: document.getElementById('v-notes').value,
+    link: document.getElementById('v-link').value.trim(),
+    compare: old ? old.compare : false
+  };
+  if(editingVendorId) data.vendors = data.vendors.map(v=>v.id===editingVendorId?vendor:v);
+  else data.vendors.push(vendor);
+  persist(); closeOverlays(); renderVendors(); toast('Prestataire enregistré 🤝');
+}
+function deleteVendor(){
+  const v = data.vendors.find(x=>x.id===editingVendorId); if(!v) return;
+  data.trash.unshift({kind:'vendor', label:v.name, deletedAt:new Date().toISOString(), item:v});
+  data.vendors = data.vendors.filter(x=>x.id!==editingVendorId);
+  persist(); closeOverlays(); renderVendors(); toast('Prestataire envoyé à la corbeille 🛡️');
+}
+function exportVendorsPDF(){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  let vs = data.vendors.filter(v=>v.projectId===p.id);
+  const selected = vs.filter(v=>v.compare);
+  if(selected.length>=2) vs = selected;
+  else{
+    if(vendorCatFilter!=='all') vs = vs.filter(v=>v.catId===vendorCatFilter);
+    const sf = document.getElementById('vendorStatusFilter').value;
+    if(sf && sf!=='all') vs = vs.filter(v=>v.status===sf);
+  }
+  if(!vs.length){ toast('Aucun prestataire à comparer ici 🌱'); return; }
+  const rows = vs.map(v=>{
+    const c = data.vendorCats.find(x=>x.id===v.catId);
+    return `<tr>
+      <td><strong>${esc(v.name)}</strong></td>
+      <td>${c?esc(c.name):'—'}</td>
+      <td>${esc(v.contact)||'—'}${v.phone?'<br>'+esc(v.phone):''}${v.email?'<br>'+esc(v.email):''}</td>
+      <td><strong>${esc(v.price)||'—'}</strong></td>
+      <td>${esc(v.offer)||'—'}</td>
+      <td>${VSTATUS_LABEL[v.status].replace(/📞 |⏳ |📄 |✅ |❌ /,'')}</td>
+      <td>${esc(v.notes)||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h1>Comparatif prestataires — ${esc(p.name)}</h1>
+    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}${p.date?' · Jour J : '+fmtDate(p.date):''}</p>
+    <table><tr><th>Prestataire</th><th>Catégorie</th><th>Contact</th><th>Prix</th><th>Offre / la carte</th><th>Statut</th><th>Notes</th></tr>${rows}</table>`;
+  window.print();
+}
+
+function renderEvtAll(){
+  renderEvtProjectBar();
+  renderRetro();
+  renderVendors();
+  renderVendorCatManager();
+}
+
 /* ================== RENDER GLOBAL ================== */
 function renderAll(){
   /* Chaque bloc est isolé : si l'un d'eux plante sur une donnée inattendue,
@@ -3057,6 +3591,7 @@ function renderAll(){
   safe('bilan global', renderGlobal);
   safe('coffre-fort', renderSafe);
   safe('notes', renderNotes);
+  safe('événementiel', renderEvtAll);
 }
 switchPage('dashboard');
 
@@ -3099,8 +3634,9 @@ async function cloudLoad(){
     if(Array.isArray(rows) && rows[0] && rows[0].payload){
       const d = rows[0].payload;
       data = Object.assign({}, DEFAULTS, d);
-      for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes'])
+      for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats'])
         if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+      if(data.currentEvtProject === undefined) data.currentEvtProject = null;
       for(const k of ['reports','dayplans','remote','office','leave'])
         if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
       store.set('studioEdito', data);
