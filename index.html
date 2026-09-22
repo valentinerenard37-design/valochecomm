@@ -753,6 +753,8 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
         <button class="active" data-tview="liste" onclick="setTView('liste')">📋 Liste</button>
         <button data-tview="kanban" onclick="setTView('kanban')">🗂️ Kanban</button>
         <button data-tview="personnes" onclick="setTView('personnes')">👥 Par personne</button>
+        <button data-tview="echeance" onclick="setTView('echeance')">⏰ Par échéance</button>
+        <button data-tview="type" onclick="setTView('type')">🎨 Par type</button>
       </div>
 
       <div class="filters">
@@ -1477,7 +1479,7 @@ const PAGES = {
 };
 const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', galerie:'view-galerie', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre', retro:'view-evtretro', prestataires:'view-evtprestataires'};
 let currentPage = 'dashboard', currentSub = 'taches';
-function switchPage(page, sub=null){
+function switchPage(page, sub=null, skipSave){
   currentPage = page;
   const cfg = PAGES[page];
   currentSub = sub || (cfg.subs.length ? cfg.subs[0][0] : null);
@@ -1494,6 +1496,7 @@ function switchPage(page, sub=null){
   if(currentSub==='planning') setPlanTab('cal');
   if(currentSub==='bilanmois') setPlanTab('bilan');
   setFlowerMenu(false);
+  if(!skipSave) store.set('studioEditoLastPage', {page: currentPage, sub: currentSub});
   renderAll();
 }
 /* Alias de compatibilité pour les anciens appels */
@@ -1892,6 +1895,57 @@ function renderTasks(){
           </div>`).join('') || '<p class="empty-msg" style="padding:12px;font-size:12px">Vide ✨</p>'}
       </div>`;
     }).join('') + `</div>`;
+  }
+  else if(tView==='echeance'){
+    const now = new Date(); now.setHours(0,0,0,0);
+    const startWeek = new Date(now); startWeek.setDate(now.getDate() - ((now.getDay()+6)%7));
+    const endWeek = new Date(startWeek); endWeek.setDate(startWeek.getDate()+6);
+    const buckets = [
+      {id:'late', label:'⚠️ En retard', items:[]},
+      {id:'today', label:"🔥 Aujourd'hui", items:[]},
+      {id:'week', label:'📅 Cette semaine', items:[]},
+      {id:'later', label:'🗓️ Plus tard', items:[]},
+      {id:'none', label:'☁️ Sans échéance', items:[]},
+      {id:'done', label:'✅ Faites', items:[]}
+    ];
+    const byId = Object.fromEntries(buckets.map(b=>[b.id,b]));
+    ts.forEach(t=>{
+      if(t.status==='fait'){ byId.done.items.push(t); return; }
+      if(!t.dueDate){ byId.none.items.push(t); return; }
+      const n = daysUntil(t.dueDate);
+      if(n<0) byId.late.items.push(t);
+      else if(n===0) byId.today.items.push(t);
+      else if(n<=6) byId.week.items.push(t);
+      else byId.later.items.push(t);
+    });
+    area.innerHTML = buckets.filter(b=>b.items.length).map(b=>`
+      <div style="margin-bottom:22px">
+        <label style="margin-top:0">${b.label} (${b.items.length})</label>
+        ${b.items.map(t=>`<div class="post-row" onclick="openTaskModal('${t.id}')">
+          ${t.img?`<img class="thumb" src="${t.img}" alt="">`:''}
+          <span class="post-title">${esc(t.name)}</span>
+          ${taskPills(t)}
+        </div>`).join('')}
+      </div>`).join('') || '<p class="empty-msg">Rien à afficher ici 🌱</p>';
+  }
+  else if(tView==='type'){
+    const groups = {};
+    ts.forEach(t=>{ const k = t.typeId || 'none'; (groups[k] = groups[k] || []).push(t); });
+    const order = [...data.taskTypes.map(t=>t.id), 'none'];
+    area.innerHTML = order.filter(k=>groups[k] && groups[k].length).map(k=>{
+      const ty = typeById(k);
+      const items = groups[k];
+      return `<div style="margin-bottom:22px">
+        <label style="margin-top:0;display:flex;align-items:center;gap:8px">
+          ${ty?`<span class="ndot" style="background:${ty.color}"></span>`:''}${ty?esc(ty.name):'Sans type'} (${items.length})
+        </label>
+        ${items.map(t=>`<div class="post-row" onclick="openTaskModal('${t.id}')">
+          ${t.img?`<img class="thumb" src="${t.img}" alt="">`:''}
+          <span class="post-title">${esc(t.name)}</span>
+          ${taskPills(t, true)}
+        </div>`).join('')}
+      </div>`;
+    }).join('') || '<p class="empty-msg">Rien à afficher ici 🌱</p>';
   }
   else { /* par personne */
     const people = [['valentine','🌸','Valentine','Chargée de communication','v']];
@@ -3810,7 +3864,14 @@ function renderAll(){
   safe('notes', renderNotes);
   safe('événementiel', renderEvtAll);
 }
-switchPage('dashboard');
+(function initialPage(){
+  const last = store.get('studioEditoLastPage');
+  if(last && PAGES[last.page]){
+    switchPage(last.page, last.sub, true);
+  } else {
+    switchPage('dashboard', null, true);
+  }
+})();
 
 
   /* ================== SYNCHRO EN LIGNE (Supabase) ================== */
@@ -3841,6 +3902,9 @@ async function cloudSave(){
   }
 }
 
+/* Synchro cloud = FUSION uniquement (jamais un remplacement). Ainsi un souci
+   réseau ou une ancienne copie côté serveur ne peut plus jamais effacer ce
+   que tu viens d'ajouter en local : au pire, rien n'est importé du cloud. */
 async function cloudLoad(){
   if(!cloudOK()) return;
   try{
@@ -3850,15 +3914,10 @@ async function cloudLoad(){
     const rows = await res.json();
     if(Array.isArray(rows) && rows[0] && rows[0].payload){
       const d = rows[0].payload;
-      data = Object.assign({}, DEFAULTS, d);
-      for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats'])
-        if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
-      if(data.currentEvtProject === undefined) data.currentEvtProject = null;
-      for(const k of ['reports','dayplans','remote','office','leave'])
-        if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
+      const added = mergeData(d);
       store.set('studioEdito', data);
       renderAll();
-      toast('☁️ Données synchronisées');
+      if(added) toast('☁️ ' + added + ' élément(s) synchronisé(s) depuis le cloud');
     } else {
       cloudSave(); /* premier envoi : on pousse ce qu'il y a sur cet ordi */
     }
