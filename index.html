@@ -584,6 +584,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <button onclick="switchPage('contenu')"><span class="ndot" style="background:var(--sky)"></span>Création de contenu</button>
       <button onclick="switchPage('agenda')"><span class="ndot" style="background:var(--peach)"></span>Agenda</button>
       <button onclick="switchPage('evenement')"><span class="ndot" style="background:var(--rose)"></span>Événementiel</button>
+      <button onclick="switchPage('projets')"><span class="ndot" style="background:var(--butter)"></span>Projets</button>
       <button onclick="switchPage('params')"><span class="ndot" style="background:var(--lilac)"></span>Paramètres</button>
     </div>
     <div class="data-btns">
@@ -930,6 +931,21 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       </div>
       <div id="vendorCatManager" style="display:none;margin-bottom:16px"></div>
       <div class="idea-grid" id="vendorGrid"></div>
+    </div>
+  </section>
+
+  <!-- ================= PROJETS ================= -->
+  <section id="view-projets" class="view">
+    <div class="card">
+      <h2>📦 Projets <button class="btn primary small" style="margin-left:auto" onclick="openProjectModal()">+ Nouveau projet</button></h2>
+      <p class="section-hint">Box gourmandes, coffrets, offres spéciales… photos, tarifs par site, options d'envoi et étapes à cocher pour mener chaque projet à terme.</p>
+      <div class="filters">
+        <button class="fchip a active" data-pstatus="all" onclick="setProjectFilter('all')">Tous</button>
+        <button class="fchip" data-pstatus="idee" onclick="setProjectFilter('idee')">💭 En réflexion</button>
+        <button class="fchip" data-pstatus="encours" onclick="setProjectFilter('encours')">🔄 En cours</button>
+        <button class="fchip" data-pstatus="termine" onclick="setProjectFilter('termine')">✅ Terminé</button>
+      </div>
+      <div class="idea-grid" id="projectGrid"></div>
     </div>
   </section>
 
@@ -1280,6 +1296,57 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   </div>
 </div>
 
+<!-- ========== MODAL PROJET ========== -->
+<div class="overlay" id="projectOverlay">
+  <div class="modal" style="max-width:640px">
+    <div id="projectView" style="display:none"></div>
+    <div id="projectEdit">
+      <h3 id="projectModalTitle">Nouveau projet</h3>
+      <label>Nom du projet</label>
+      <input type="text" id="pj-name" placeholder="ex: Box gourmande de Noël">
+      <label>Description</label>
+      <textarea id="pj-desc" placeholder="Concept, contenu de la box, cible…"></textarea>
+      <label>Statut</label>
+      <select id="pj-status">
+        <option value="idee">💭 En réflexion</option>
+        <option value="encours">🔄 En cours</option>
+        <option value="termine">✅ Terminé</option>
+      </select>
+
+      <label>📸 Photos</label>
+      <input type="file" id="pj-imgfile" accept="image/*" multiple hidden onchange="attachProjectImages(event)">
+      <button class="btn small" type="button" onclick="document.getElementById('pj-imgfile').click()">Ajouter des photos</button>
+      <div id="pj-imgprev" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+
+      <label>💰 Tarifs par site <span style="font-weight:400;color:var(--muted);font-size:12px">(une ligne par site — format "Site : Prix")</span></label>
+      <textarea id="pj-prices" placeholder="Tours : 25€
+Orléans : 27€
+Blois : 24€"></textarea>
+
+      <label>🚚 Options d'envoi / retrait <span style="font-weight:400;color:var(--muted);font-size:12px">(une ligne par option — format "Option : Prix")</span></label>
+      <textarea id="pj-ship" placeholder="Retrait en agence : Gratuit
+Livraison locale : 5€
+Envoi Colissimo : 8,50€"></textarea>
+
+      <label>✅ Étapes à cocher</label>
+      <div class="composer" style="margin-bottom:10px">
+        <input type="text" id="pj-step-input" placeholder="ex: Commander les emballages…" onkeydown="if(event.key==='Enter'){event.preventDefault();addDraftProjStep();}" style="flex:1">
+        <button class="btn small primary" type="button" onclick="addDraftProjStep()">+ Ajouter</button>
+      </div>
+      <div id="pj-steps-list"></div>
+
+      <label>Notes</label>
+      <textarea id="pj-notes" placeholder="Idées, contacts fournisseurs, points de vigilance…"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn danger" id="deleteProjectBtn" style="display:none" onclick="deleteProject()">🗑️ Corbeille</button>
+        <button class="btn" id="cancelProjectEditBtn" onclick="cancelProjectEdit()">Annuler</button>
+        <button class="btn primary" onclick="saveProject()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
@@ -1375,10 +1442,11 @@ const DEFAULTS = {
     {id:'vc5', name:'Photographe', color:'#A8E6C9'},
     {id:'vc6', name:'Décoration', color:'#FFC2DC'}
   ],
+  projects: [],
   currentEvtProject: null
 };
 let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
-for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
 if(data.currentEvtProject === undefined) data.currentEvtProject = null;
 if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
 if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
@@ -1475,6 +1543,7 @@ const PAGES = {
   contenu:   {title:'Création de contenu', subs:[['planning','Planning'],['idees','Idées'],['galerie','Galerie & liens'],['bilanmois','Bilan']]},
   agenda:    {title:'Agenda', subs:[]},
   evenement: {title:'Événementiel', subs:[['retro','Rétroplanning'],['prestataires','Prestataires']]},
+  projets:   {title:'Projets', subs:[]},
   params:    {title:'Paramètres', subs:[['tags','Tags & types'],['coffre','Coffre-fort']]}
 };
 const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', galerie:'view-galerie', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre', retro:'view-evtretro', prestataires:'view-evtprestataires'};
@@ -2649,7 +2718,7 @@ function removeType(id){
 }
 
 /* ================== COFFRE-FORT ================== */
-const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire', retrocat:'🏷️ Catégorie rétroplanning'};
+const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire', retrocat:'🏷️ Catégorie rétroplanning', project:'📦 Projet'};
 function renderSafe(){
   const tl = document.getElementById('trashList');
   tl.innerHTML = data.trash.length ? data.trash.map((x,i)=>
@@ -2677,7 +2746,7 @@ function restoreBackup(kind, i){
   if(!confirm(`Revenir à la version du ${new Date(b.at).toLocaleString('fr-FR')} (${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches) ? Ton état actuel sera d'abord sauvegardé, aucun risque.`)) return;
   snapshot();
   data = JSON.parse(JSON.stringify(b.data));
-  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats']) if(!Array.isArray(data[k])) data[k] = [];
+  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects']) if(!Array.isArray(data[k])) data[k] = [];
   if(data.currentEvtProject === undefined) data.currentEvtProject = null;
   for(const k of ['reports','dayplans','remote','office','leave']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
   persist(); renderAll(); toast('Version restaurée 🕰️');
@@ -2704,7 +2773,7 @@ function mergeData(d){
     });
   }
   let added = 0;
-  for(const key of ['posts','tasks','ideas','events','notes','trash','evtProjects','evtTasks','vendors']){
+  for(const key of ['posts','tasks','ideas','events','notes','trash','evtProjects','evtTasks','vendors','projects']){
     (d[key]||[]).forEach(item=>{
       if(!data[key].some(x=>x.id===item.id)){
         if(item.tagId && idMap[item.tagId]) item.tagId = idMap[item.tagId];
@@ -2741,7 +2810,7 @@ function importData(e){
         const word = prompt('⚠️ REMPLACEMENT TOTAL : tes données actuelles seront écrasées par le fichier.\n\nPour confirmer, tape REMPLACER en majuscules (sinon rien ne sera touché) :');
         if(word !== 'REMPLACER'){ toast('Import annulé, rien n\'a changé 🛡️'); e.target.value=''; return; }
         data = Object.assign({}, DEFAULTS, d);
-        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
         if(data.currentEvtProject === undefined) data.currentEvtProject = null;
         if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
         if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
@@ -3845,6 +3914,224 @@ function renderEvtAll(){
   renderVendorCatManager();
 }
 
+/* ================== PROJETS ================== */
+let projectFilter = 'all';
+let editingProjectId = null;
+let pendingProjImages = [];
+let draftProjSteps = [];
+function setProjectFilter(f){
+  projectFilter = f;
+  document.querySelectorAll('[data-pstatus]').forEach(b=>b.classList.toggle('active', b.dataset.pstatus===f));
+  renderProjects();
+}
+function parseLines(text){
+  return (text||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+    const idx = l.indexOf(':');
+    if(idx===-1) return {a:l, b:''};
+    return {a:l.slice(0,idx).trim(), b:l.slice(idx+1).trim()};
+  });
+}
+function linesFromRows(rows){ return (rows||[]).map(r=>r.a + (r.b?' : '+r.b:'')).join('\n'); }
+const PST_LABEL = {idee:'💭 En réflexion', encours:'🔄 En cours', termine:'✅ Terminé'};
+const PST_BG = {idee:'#EFEAF9', encours:'var(--sky)', termine:'var(--mint)'};
+function renderProjects(){
+  const grid = document.getElementById('projectGrid');
+  if(!grid) return;
+  let projects = [...data.projects];
+  if(projectFilter!=='all') projects = projects.filter(p=>p.status===projectFilter);
+  if(!projects.length){ grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1">Aucun projet ici pour l\'instant — lance le premier avec le bouton vert 📦</p>'; return; }
+  grid.innerHTML = projects.map(p=>{
+    const doneN = (p.steps||[]).filter(s=>s.done).length;
+    const total = (p.steps||[]).length;
+    const img = (p.images||[])[0];
+    return `<div class="idea-card" onclick="openProjectModal('${p.id}')">
+      ${img?`<img src="${img}" alt="" style="width:100%;height:140px;object-fit:cover;border-radius:14px;margin-bottom:10px">`:''}
+      <span class="status-corner" title="${PST_LABEL[p.status]}">${PST_LABEL[p.status].slice(0,2).trim()}</span>
+      <div class="t">${esc(p.name)}</div>
+      ${p.desc?`<div class="d">${esc(p.desc)}</div>`:''}
+      <div class="foot">
+        <span class="pill mini" style="background:${PST_BG[p.status]}">${PST_LABEL[p.status]}</span>
+        ${total?`<span class="pill mini" style="background:#EFEAF9">${doneN}/${total} étapes</span>`:''}
+        ${(p.priceRows||[]).length?`<span class="pill mini" style="background:var(--butter)">${p.priceRows.length} tarif${p.priceRows.length>1?'s':''}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function openProjectModal(id=null){
+  editingProjectId = id;
+  if(id){ showProjectView(id); } else { showProjectEdit(null); }
+  document.getElementById('projectOverlay').classList.add('open');
+}
+function showProjectView(id){
+  const p = data.projects.find(x=>x.id===id); if(!p) return;
+  const vide = '<span class="pv-empty">—</span>';
+  const doneN = (p.steps||[]).filter(s=>s.done).length;
+  const total = (p.steps||[]).length;
+  const imgs = (p.images||[]).map(src=>`<img src="${src}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:12px;box-shadow:var(--clay-soft)">`).join('');
+  const priceTable = (p.priceRows||[]).length ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
+      <tr style="text-align:left"><th style="padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase">Site</th><th style="padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase">Prix</th></tr>
+      ${p.priceRows.map(r=>`<tr><td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${esc(r.a)}</td><td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${esc(r.b)||'—'}</td></tr>`).join('')}
+    </table>` : vide;
+  const shipList = (p.shipRows||[]).length ? p.shipRows.map(r=>`<span class="pill" style="background:#EFEAF9">${esc(r.a)}${r.b?' · '+esc(r.b):''}</span>`).join(' ') : vide;
+  const stepsHtml = total ? `<div style="margin-top:6px">
+      <div class="bar-track" style="margin-bottom:8px"><div class="bar-fill" style="width:${Math.round(doneN/total*100)}%"></div></div>
+      ${(p.steps||[]).map(s=>`<div class="day-item sm ${s.done?'done':''}" style="cursor:pointer" onclick="toggleProjStepView('${p.id}','${s.id}')">
+        <button class="day-check ${s.done?'on':''}">${s.done?'✓':''}</button>
+        <span class="txt">${esc(s.name)}</span>
+      </div>`).join('')}
+    </div>` : vide;
+  document.getElementById('projectView').innerHTML = `
+    <div class="pv-head">
+      <div class="pv-date" style="font-size:26px">📦</div>
+      <div class="pv-title">${esc(p.name)}</div>
+    </div>
+    <div class="pv-grid">
+      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${PST_BG[p.status]}">${PST_LABEL[p.status]}</span></div></div>
+      <div class="pv-field"><div class="l">Avancement</div><div class="v">${total?`${doneN}/${total} étapes`:vide}</div></div>
+      <div class="pv-field full"><div class="l">Description</div><div class="v" style="white-space:pre-wrap;font-weight:700">${p.desc?esc(p.desc):vide}</div></div>
+      <div class="pv-field full"><div class="l">📸 Photos</div><div class="v" style="gap:8px">${imgs || vide}</div></div>
+      <div class="pv-field full"><div class="l">💰 Tarifs par site</div><div class="v" style="display:block">${priceTable}</div></div>
+      <div class="pv-field full"><div class="l">🚚 Options d'envoi</div><div class="v">${shipList}</div></div>
+      <div class="pv-field full"><div class="l">✅ Étapes</div><div class="v" style="display:block">${stepsHtml}</div></div>
+      <div class="pv-field full"><div class="l">Notes</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:150px;overflow-y:auto">${p.notes?esc(p.notes):vide}</div></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" onclick="deleteProject()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Fermer</button>
+      <button class="btn primary" onclick="showProjectEdit('${p.id}')">✏️ Modifier</button>
+    </div>`;
+  document.getElementById('projectView').style.display = 'block';
+  document.getElementById('projectEdit').style.display = 'none';
+}
+function toggleProjStepView(pid, sid){
+  const p = data.projects.find(x=>x.id===pid); if(!p) return;
+  const s = (p.steps||[]).find(x=>x.id===sid); if(!s) return;
+  s.done = !s.done;
+  if(s.done) confetti();
+  persist(); showProjectView(pid); renderProjects();
+}
+function showProjectEdit(id=null){
+  editingProjectId = id;
+  const del = document.getElementById('deleteProjectBtn');
+  if(id){
+    const p = data.projects.find(x=>x.id===id); if(!p) return;
+    document.getElementById('projectModalTitle').textContent = 'Modifier le projet';
+    document.getElementById('pj-name').value = p.name;
+    document.getElementById('pj-desc').value = p.desc || '';
+    document.getElementById('pj-status').value = p.status;
+    document.getElementById('pj-prices').value = linesFromRows(p.priceRows);
+    document.getElementById('pj-ship').value = linesFromRows(p.shipRows);
+    document.getElementById('pj-notes').value = p.notes || '';
+    pendingProjImages = [...(p.images||[])];
+    draftProjSteps = JSON.parse(JSON.stringify(p.steps||[]));
+    del.style.display = 'inline-block';
+  } else {
+    document.getElementById('projectModalTitle').textContent = 'Nouveau projet';
+    ['pj-name','pj-desc','pj-prices','pj-ship','pj-notes'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('pj-status').value = 'idee';
+    pendingProjImages = [];
+    draftProjSteps = [];
+    del.style.display = 'none';
+  }
+  renderProjImgPrev();
+  renderDraftProjSteps();
+  document.getElementById('projectView').style.display = 'none';
+  document.getElementById('projectEdit').style.display = 'block';
+  document.getElementById('pj-name').focus();
+}
+function cancelProjectEdit(){
+  if(editingProjectId){ showProjectView(editingProjectId); }
+  else closeOverlays();
+}
+function attachProjectImages(e){
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  let remaining = files.length;
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const MAX = 900;
+        const scale = Math.min(1, MAX/Math.max(img.width, img.height));
+        const cv = document.createElement('canvas');
+        cv.width = Math.round(img.width*scale);
+        cv.height = Math.round(img.height*scale);
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        pendingProjImages.push(cv.toDataURL('image/jpeg', .82));
+        renderProjImgPrev();
+        remaining--;
+        if(remaining===0) toast('Photo(s) ajoutée(s) 🖼️');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+function removeProjImg(i){ pendingProjImages.splice(i,1); renderProjImgPrev(); }
+function renderProjImgPrev(){
+  const box = document.getElementById('pj-imgprev');
+  if(!box) return;
+  box.innerHTML = pendingProjImages.map((src,i)=>`
+    <div class="img-prev-wrap" style="margin-top:0">
+      <img class="img-prev" src="${src}" style="max-height:90px;max-width:90px" alt="">
+      <button type="button" class="img-remove" onclick="removeProjImg(${i})" aria-label="Retirer">✕</button>
+    </div>`).join('');
+}
+function addDraftProjStep(){
+  const input = document.getElementById('pj-step-input');
+  const name = input.value.trim();
+  if(!name) return;
+  draftProjSteps.push({id:uid(), name, done:false});
+  input.value = '';
+  renderDraftProjSteps();
+}
+function toggleDraftProjStep(id){
+  const s = draftProjSteps.find(x=>x.id===id); if(!s) return;
+  s.done = !s.done;
+  renderDraftProjSteps();
+}
+function delDraftProjStep(id){
+  draftProjSteps = draftProjSteps.filter(x=>x.id!==id);
+  renderDraftProjSteps();
+}
+function renderDraftProjSteps(){
+  const box = document.getElementById('pj-steps-list');
+  if(!box) return;
+  box.innerHTML = draftProjSteps.length ? draftProjSteps.map(s=>`
+    <div class="day-item sm ${s.done?'done':''}">
+      <button class="day-check ${s.done?'on':''}" onclick="toggleDraftProjStep('${s.id}')" aria-label="Cocher">${s.done?'✓':''}</button>
+      <span class="txt">${esc(s.name)}</span>
+      <button class="tiny-del" onclick="delDraftProjStep('${s.id}')" aria-label="Retirer">✕</button>
+    </div>`).join('') : '<p class="empty-msg" style="padding:8px;font-size:12.5px">Aucune étape pour l\'instant</p>';
+}
+function saveProject(){
+  const name = document.getElementById('pj-name').value.trim();
+  if(!name){ toast('Donne un nom à ton projet 📦'); return; }
+  const project = {
+    id: editingProjectId || uid(),
+    name,
+    desc: document.getElementById('pj-desc').value,
+    status: document.getElementById('pj-status').value,
+    images: [...pendingProjImages],
+    priceRows: parseLines(document.getElementById('pj-prices').value),
+    shipRows: parseLines(document.getElementById('pj-ship').value),
+    steps: JSON.parse(JSON.stringify(draftProjSteps)),
+    notes: document.getElementById('pj-notes').value
+  };
+  if(editingProjectId) data.projects = data.projects.map(p=>p.id===editingProjectId?project:p);
+  else data.projects.push(project);
+  persist(); renderProjects(); toast('Projet enregistré 📦');
+  editingProjectId = project.id; showProjectView(project.id);
+}
+function deleteProject(){
+  const p = data.projects.find(x=>x.id===editingProjectId); if(!p) return;
+  data.trash.unshift({kind:'project', label:p.name, deletedAt:new Date().toISOString(), item:p});
+  data.projects = data.projects.filter(x=>x.id!==editingProjectId);
+  persist(); closeOverlays(); renderProjects(); toast('Projet envoyé à la corbeille 🛡️');
+}
+
 /* ================== RENDER GLOBAL ================== */
 function renderAll(){
   /* Chaque bloc est isolé : si l'un d'eux plante sur une donnée inattendue,
@@ -3863,6 +4150,7 @@ function renderAll(){
   safe('coffre-fort', renderSafe);
   safe('notes', renderNotes);
   safe('événementiel', renderEvtAll);
+  safe('projets', renderProjects);
 }
 (function initialPage(){
   const last = store.get('studioEditoLastPage');
