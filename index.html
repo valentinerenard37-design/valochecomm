@@ -1318,10 +1318,9 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <button class="btn small" type="button" onclick="document.getElementById('pj-imgfile').click()">Ajouter des photos</button>
       <div id="pj-imgprev" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
 
-      <label>💰 Tarifs par site <span style="font-weight:400;color:var(--muted);font-size:12px">(une ligne par site — format "Site : Prix")</span></label>
-      <textarea id="pj-prices" placeholder="Tours : 25€
-Orléans : 27€
-Blois : 24€"></textarea>
+      <label>💰 Comparatif entre sites web <span style="font-weight:400;color:var(--muted);font-size:12px">(le tien, un concurrent, une marketplace… une ligne par site web, autant de colonnes que tu veux : prix, lien, frais de port, délai…)</span></label>
+      <div id="pj-compare-wrap" style="overflow-x:auto;border-radius:16px"></div>
+      <button class="btn small" type="button" style="margin-top:10px" onclick="addCompareRow()">+ Ajouter un site web</button>
 
       <label>🚚 Options d'envoi / retrait <span style="font-weight:400;color:var(--muted);font-size:12px">(une ligne par option — format "Option : Prix")</span></label>
       <textarea id="pj-ship" placeholder="Retrait en agence : Gratuit
@@ -1512,6 +1511,7 @@ const fmtMonth = d => MONTHS[d.getMonth()] + ' ' + d.getFullYear();
 const tagById = id => data.tags.find(t => t.id === id);
 const typeById = id => data.taskTypes.find(t => t.id === id);
 function esc(s){ const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
 function fmtDate(s){ if(!s) return ''; const [y,m,d] = s.split('-'); return d + ' ' + MONTHS[+m-1].slice(0,4) + '. ' + y; }
 function isUrl(s){ return /^https?:\/\//i.test(s || ''); }
 function parseTime(s){
@@ -3952,7 +3952,7 @@ function renderProjects(){
       <div class="foot">
         <span class="pill mini" style="background:${PST_BG[p.status]}">${PST_LABEL[p.status]}</span>
         ${total?`<span class="pill mini" style="background:#EFEAF9">${doneN}/${total} étapes</span>`:''}
-        ${(p.priceRows||[]).length?`<span class="pill mini" style="background:var(--butter)">${p.priceRows.length} tarif${p.priceRows.length>1?'s':''}</span>`:''}
+        ${(p.compareRows||[]).length?`<span class="pill mini" style="background:var(--butter)">${p.compareRows.length} site${p.compareRows.length>1?'s':''} web comparé${p.compareRows.length>1?'s':''}</span>`:''}
       </div>
     </div>`;
   }).join('');
@@ -3968,9 +3968,30 @@ function showProjectView(id){
   const doneN = (p.steps||[]).filter(s=>s.done).length;
   const total = (p.steps||[]).length;
   const imgs = (p.images||[]).map(src=>`<img src="${src}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:12px;box-shadow:var(--clay-soft)">`).join('');
-  const priceTable = (p.priceRows||[]).length ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
-      <tr style="text-align:left"><th style="padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase">Site</th><th style="padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase">Prix</th></tr>
-      ${p.priceRows.map(r=>`<tr><td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${esc(r.a)}</td><td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${esc(r.b)||'—'}</td></tr>`).join('')}
+  const cCols = p.compareCols || [];
+  const cRows = p.compareRows || [];
+  let cheapestRowId = null;
+  const priceColIdx = cCols.findIndex(c=>/prix/i.test(c.label));
+  if(priceColIdx>-1){
+    let min = Infinity;
+    cRows.forEach(r=>{
+      const v = parsePriceNum(r.cells[cCols[priceColIdx].id]);
+      if(v!==null && v<min){ min=v; cheapestRowId=r.id; }
+    });
+  }
+  const priceTable = (cCols.length && cRows.length) ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
+      <tr style="text-align:left">
+        <th style="padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase">Site web</th>
+        ${cCols.map(c=>`<th style="padding:6px 8px;font-size:11px;color:var(--muted);text-transform:uppercase">${esc(c.label)}</th>`).join('')}
+      </tr>
+      ${cRows.map(r=>`<tr style="${r.id===cheapestRowId?'background:linear-gradient(135deg,var(--mint),transparent)':''}">
+        <td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${esc(r.site)||'—'}${r.id===cheapestRowId?' 💰 moins cher':''}</td>
+        ${cCols.map(c=>{
+          const val = r.cells[c.id] || '';
+          const isLink = /lien|url|site\s*web/i.test(c.label) && /^https?:\/\//i.test(val);
+          return `<td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${isLink?`<a href="${esc(val)}" target="_blank" style="color:var(--ink)">Voir ↗</a>`:(esc(val)||'—')}</td>`;
+        }).join('')}
+      </tr>`).join('')}
     </table>` : vide;
   const shipList = (p.shipRows||[]).length ? p.shipRows.map(r=>`<span class="pill" style="background:#EFEAF9">${esc(r.a)}${r.b?' · '+esc(r.b):''}</span>`).join(' ') : vide;
   const stepsHtml = total ? `<div style="margin-top:6px">
@@ -3990,7 +4011,7 @@ function showProjectView(id){
       <div class="pv-field"><div class="l">Avancement</div><div class="v">${total?`${doneN}/${total} étapes`:vide}</div></div>
       <div class="pv-field full"><div class="l">Description</div><div class="v" style="white-space:pre-wrap;font-weight:700">${p.desc?esc(p.desc):vide}</div></div>
       <div class="pv-field full"><div class="l">📸 Photos</div><div class="v" style="gap:8px">${imgs || vide}</div></div>
-      <div class="pv-field full"><div class="l">💰 Tarifs par site</div><div class="v" style="display:block">${priceTable}</div></div>
+      <div class="pv-field full"><div class="l">💰 Comparatif entre sites web</div><div class="v" style="display:block">${priceTable}</div></div>
       <div class="pv-field full"><div class="l">🚚 Options d'envoi</div><div class="v">${shipList}</div></div>
       <div class="pv-field full"><div class="l">✅ Étapes</div><div class="v" style="display:block">${stepsHtml}</div></div>
       <div class="pv-field full"><div class="l">Notes</div><div class="v" style="white-space:pre-wrap;font-weight:700;max-height:150px;overflow-y:auto">${p.notes?esc(p.notes):vide}</div></div>
@@ -4019,22 +4040,26 @@ function showProjectEdit(id=null){
     document.getElementById('pj-name').value = p.name;
     document.getElementById('pj-desc').value = p.desc || '';
     document.getElementById('pj-status').value = p.status;
-    document.getElementById('pj-prices').value = linesFromRows(p.priceRows);
     document.getElementById('pj-ship').value = linesFromRows(p.shipRows);
     document.getElementById('pj-notes').value = p.notes || '';
     pendingProjImages = [...(p.images||[])];
     draftProjSteps = JSON.parse(JSON.stringify(p.steps||[]));
+    draftCompareCols = JSON.parse(JSON.stringify(p.compareCols||[]));
+    draftCompareRows = JSON.parse(JSON.stringify(p.compareRows||[]));
+    if(!draftCompareCols.length && !draftCompareRows.length) newCompareDraft();
     del.style.display = 'inline-block';
   } else {
     document.getElementById('projectModalTitle').textContent = 'Nouveau projet';
-    ['pj-name','pj-desc','pj-prices','pj-ship','pj-notes'].forEach(i=>document.getElementById(i).value='');
+    ['pj-name','pj-desc','pj-ship','pj-notes'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('pj-status').value = 'idee';
     pendingProjImages = [];
     draftProjSteps = [];
+    newCompareDraft();
     del.style.display = 'none';
   }
   renderProjImgPrev();
   renderDraftProjSteps();
+  renderCompareTable();
   document.getElementById('projectView').style.display = 'none';
   document.getElementById('projectEdit').style.display = 'block';
   document.getElementById('pj-name').focus();
@@ -4106,6 +4131,75 @@ function renderDraftProjSteps(){
       <button class="tiny-del" onclick="delDraftProjStep('${s.id}')" aria-label="Retirer">✕</button>
     </div>`).join('') : '<p class="empty-msg" style="padding:8px;font-size:12.5px">Aucune étape pour l\'instant</p>';
 }
+let draftCompareCols = [];
+let draftCompareRows = [];
+function newCompareDraft(){
+  draftCompareCols = [{id:uid(),label:'Prix'},{id:uid(),label:'Lien'},{id:uid(),label:'Frais de port'}];
+  draftCompareRows = ['Notre site', 'Concurrent'].map(site=>({id:uid(), site, cells:{}}));
+}
+function parsePriceNum(s){
+  if(!s) return null;
+  const m = String(s).replace(',','.').match(/[\d.]+/);
+  return m ? parseFloat(m[0]) : null;
+}
+function addCompareCol(){
+  const label = prompt('Nom de la nouvelle colonne (ex: Stock, Délai, Remise…) :');
+  if(!label || !label.trim()) return;
+  draftCompareCols.push({id:uid(), label:label.trim()});
+  renderCompareTable();
+}
+function removeCompareCol(id){
+  if(!confirm('Supprimer cette colonne pour tous les sites ?')) return;
+  draftCompareCols = draftCompareCols.filter(c=>c.id!==id);
+  draftCompareRows.forEach(r=>{ delete r.cells[id]; });
+  renderCompareTable();
+}
+function updateColLabel(id, val){
+  const c = draftCompareCols.find(x=>x.id===id); if(c) c.label = val;
+}
+function addCompareRow(){
+  draftCompareRows.push({id:uid(), site:'', cells:{}});
+  renderCompareTable();
+  const rows = document.querySelectorAll('#pj-compare-wrap tbody tr');
+  const lastRow = rows[rows.length-1];
+  const firstInput = lastRow ? lastRow.querySelector('input') : null;
+  if(firstInput) firstInput.focus();
+}
+function removeCompareRow(id){
+  draftCompareRows = draftCompareRows.filter(r=>r.id!==id);
+  renderCompareTable();
+}
+function updateRowSite(id, val){
+  const r = draftCompareRows.find(x=>x.id===id); if(r) r.site = val;
+}
+function updateCell(rowId, colId, val){
+  const r = draftCompareRows.find(x=>x.id===rowId); if(!r) return;
+  r.cells[colId] = val;
+}
+function renderCompareTable(){
+  const wrap = document.getElementById('pj-compare-wrap');
+  if(!wrap) return;
+  if(!draftCompareCols.length && !draftCompareRows.length){
+    wrap.innerHTML = '<p class="empty-msg" style="padding:8px;font-size:12.5px">Aucun site pour l\'instant — clique sur « + Ajouter un site »</p>';
+    return;
+  }
+  const head = `<tr>
+    <th style="text-align:left;padding:6px 4px;font-size:11px;color:var(--muted);text-transform:uppercase;min-width:130px">Site web</th>
+    ${draftCompareCols.map(c=>`<th style="padding:4px;min-width:130px">
+        <div style="display:flex;gap:4px;align-items:center">
+          <input type="text" value="${escAttr(c.label)}" oninput="updateColLabel('${c.id}', this.value)" style="font-size:12px;padding:8px 10px;box-shadow:var(--clay-in);border-radius:10px">
+          <button type="button" class="tiny-del" onclick="removeCompareCol('${c.id}')" title="Supprimer la colonne" aria-label="Supprimer la colonne">✕</button>
+        </div>
+      </th>`).join('')}
+    <th style="padding:4px 8px;vertical-align:bottom"><button type="button" class="btn small" onclick="addCompareCol()">+ Colonne</button></th>
+  </tr>`;
+  const body = draftCompareRows.map(r=>`<tr>
+      <td style="padding:4px"><input type="text" value="${escAttr(r.site)}" placeholder="ex: notre site, Amazon, concurrent X…" oninput="updateRowSite('${r.id}', this.value)" style="font-size:13px;font-weight:800;padding:8px 10px;box-shadow:var(--clay-in);border-radius:10px"></td>
+      ${draftCompareCols.map(c=>`<td style="padding:4px"><input type="text" value="${escAttr(r.cells[c.id]||'')}" oninput="updateCell('${r.id}','${c.id}', this.value)" style="font-size:13px;padding:8px 10px;box-shadow:var(--clay-in);border-radius:10px"></td>`).join('')}
+      <td style="padding:4px"><button type="button" class="tiny-del" onclick="removeCompareRow('${r.id}')" title="Supprimer ce site" aria-label="Supprimer ce site">✕</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:520px">${head}<tbody>${body}</tbody></table>`;
+}
 function saveProject(){
   const name = document.getElementById('pj-name').value.trim();
   if(!name){ toast('Donne un nom à ton projet 📦'); return; }
@@ -4115,7 +4209,8 @@ function saveProject(){
     desc: document.getElementById('pj-desc').value,
     status: document.getElementById('pj-status').value,
     images: [...pendingProjImages],
-    priceRows: parseLines(document.getElementById('pj-prices').value),
+    compareCols: JSON.parse(JSON.stringify(draftCompareCols)),
+    compareRows: JSON.parse(JSON.stringify(draftCompareRows)),
     shipRows: parseLines(document.getElementById('pj-ship').value),
     steps: JSON.parse(JSON.stringify(draftProjSteps)),
     notes: document.getElementById('pj-notes').value
