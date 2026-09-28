@@ -52,7 +52,9 @@ header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-betw
 @keyframes squish{0%,100%{border-radius:46% 54% 55% 45%/50% 42% 58% 50%}50%{border-radius:55% 45% 44% 56%/44% 56% 44% 56%}}
 .logo h1{font-size:26px;font-weight:600}
 .logo p{font-size:13px;color:var(--muted);font-weight:700}
-.data-btns{display:flex;gap:10px;flex-wrap:wrap}
+.data-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.save-status{font-family:'Fredoka',sans-serif;font-weight:500;font-size:12.5px;padding:7px 12px;border-radius:14px;background:linear-gradient(135deg,var(--mint),#D9F5E7);box-shadow:var(--clay-in);color:var(--ink);white-space:nowrap}
+.save-status.bad{background:linear-gradient(135deg,var(--rose),#FFD3E0)}
 
 /* Menu fleur */
 .flower-menu{
@@ -526,6 +528,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 
 /* ---------- Confettis ---------- */
 .confetti{position:fixed;top:-14px;width:11px;height:11px;border-radius:4px;pointer-events:none;z-index:200;animation:confall linear forwards}
+.confetti-piece{position:fixed;top:-14px;pointer-events:none;z-index:200}
 @keyframes confall{
   0%{transform:translateY(0) rotate(0deg) scale(1);opacity:1}
   100%{transform:translateY(105vh) rotate(720deg) scale(.7);opacity:0}
@@ -588,6 +591,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
       <button onclick="switchPage('params')"><span class="ndot" style="background:var(--lilac)"></span>Paramètres</button>
     </div>
     <div class="data-btns">
+      <span class="save-status" id="saveStatus" role="status" aria-live="polite">⏳ Chargement…</span>
       <button class="btn small" onclick="switchView('coffre')">🛡️ Coffre-fort</button>
       <button class="btn small" onclick="exportData()">⬇️ Exporter</button>
       <button class="btn small" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
@@ -682,7 +686,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 
     <div class="card">
       <h2>📈 Chiffres des réseaux</h2>
-      <p class="section-hint">À reporter depuis Instagram (@aeconomia.courtage) et LinkedIn — une fois par mois.</p>
+      <p class="section-hint">À reporter depuis Instagram (@aeconomia.courtage) et LinkedIn — une fois par mois. Enregistré automatiquement pendant que tu tapes.</p>
       <div class="grid-3">
         <div><label>Vues globales</label><input type="number" id="r-views" placeholder="ex: 12400"></div>
         <div><label>Abonnés Instagram</label><input type="number" id="r-figIg" placeholder="ex: 890"></div>
@@ -991,7 +995,7 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
     <div class="card">
       <h2>🕰️ Copies de sécurité automatiques</h2>
-      <p class="section-hint">Les 12 dernières versions différentes (sans les visuels). Restaurer = revenir en arrière — une copie de l'état actuel est prise avant, aucun risque.</p>
+      <p class="section-hint">Les 12 dernières versions différentes (sans les visuels ni les PDF, qui sont récupérés automatiquement à la restauration). Restaurer = revenir en arrière — une copie de l'état actuel est prise avant, aucun risque.</p>
       <div id="backupList"></div>
     </div>
     <div class="card">
@@ -1350,12 +1354,86 @@ Envoi Colissimo : 8,50€"></textarea>
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================== STOCKAGE SÉCURISÉ ================== */
-const mem = {};
+/* ================== STOCKAGE SÉCURISÉ (IndexedDB) ==================
+   Avant : tout était rangé dans le localStorage, limité à ~5 Mo pour tout le site.
+   Avec les visuels, les PDF de prestataires et les 42 copies de sécurité, la limite
+   était vite atteinte : l'enregistrement échouait EN SILENCE et tout ce qui avait été
+   ajouté ensuite disparaissait à l'actualisation.
+   Maintenant : tout est rangé dans IndexedDB (plusieurs centaines de Mo disponibles),
+   avec migration automatique des anciennes données du localStorage. */
+const STORE_KEYS = ['studioEdito','studioEditoBackups','studioEditoDaily','studioEditoLastPage'];
+const cache = {};
+let idb = null;
+function idbOpen(){
+  return new Promise((res, rej)=>{
+    if(!('indexedDB' in window)) return rej(new Error('IndexedDB indisponible'));
+    const r = indexedDB.open('studioEditoDB', 1);
+    r.onupgradeneeded = ()=>{ if(!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv'); };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+    r.onblocked = ()=>rej(new Error('IndexedDB bloquée'));
+  });
+}
+function idbGet(k){
+  return new Promise((res, rej)=>{
+    const q = idb.transaction('kv','readonly').objectStore('kv').get(k);
+    q.onsuccess = ()=>res(q.result);
+    q.onerror = ()=>rej(q.error);
+  });
+}
+function idbPut(k, v){
+  return new Promise((res, rej)=>{
+    const tx = idb.transaction('kv','readwrite');
+    tx.objectStore('kv').put(v, k); /* la valeur est copiée immédiatement, à l'appel */
+    tx.oncomplete = ()=>res();
+    tx.onerror = ()=>rej(tx.error);
+    tx.onabort = ()=>rej(tx.error);
+  });
+}
+function lsGet(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return null; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
 const store = {
-  get(k){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }catch(e){ return mem[k] || null; } },
-  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ mem[k] = v; if(!store._warned){ store._warned = true; setTimeout(()=>toast('⚠️ Stockage presque plein : exporte ton JSON et retire quelques visuels'), 200); } } }
+  get(k){ return cache[k] === undefined ? null : cache[k]; },
+  set(k, v){
+    cache[k] = v;
+    if(idb){
+      idbPut(k, v)
+        .then(()=>{ if(k==='studioEdito') setSaveStatus(true); })
+        .catch(err=>{ console.error('Enregistrement impossible :', err); if(k==='studioEdito') setSaveStatus(false); });
+    } else {
+      const ok = lsSet(k, v);
+      if(k==='studioEdito') setSaveStatus(ok);
+    }
+  }
 };
+function setSaveStatus(ok){
+  const el = document.getElementById('saveStatus');
+  if(el){
+    el.textContent = ok ? '✓ Enregistré' : '⚠️ Non enregistré';
+    el.classList.toggle('bad', !ok);
+    el.title = ok ? 'Tout est sauvegardé sur cet appareil' : "L'enregistrement a échoué : exporte ton JSON par sécurité";
+  }
+  if(!ok && !setSaveStatus._warned){
+    setSaveStatus._warned = true;
+    toast('⚠️ Enregistrement impossible — clique sur « Exporter » pour ne rien perdre');
+  }
+  if(ok) setSaveStatus._warned = false;
+}
+async function bootStorage(){
+  try{ idb = await idbOpen(); }catch(e){ console.warn(e); idb = null; }
+  for(const k of STORE_KEYS){
+    let v = null;
+    if(idb){ try{ v = await idbGet(k); }catch(e){ v = null; } }
+    if(v === undefined || v === null){
+      v = lsGet(k); /* migration depuis l'ancien stockage */
+      if(v !== null && idb){ try{ await idbPut(k, v); }catch(e){} }
+    }
+    cache[k] = (v === undefined) ? null : v;
+  }
+  /* demande au navigateur de ne jamais effacer ces données tout seul */
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+}
+
 const PALETTE = ['#FFB9A3','#A8E6C9','#A9D3FF','#FFE29A','#FFC2DC','#CBB9F5','#B8EDE3','#F5CBA7'];
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const STATUS_LABEL = {idee:'💡 Idée', afaire:'📝 À faire', programme:'⏰ Programmé', publie:'✅ Publié'};
@@ -1444,36 +1522,46 @@ const DEFAULTS = {
   projects: [],
   currentEvtProject: null
 };
-let data = Object.assign({}, DEFAULTS, store.get('studioEdito') || {});
-for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
-if(data.currentEvtProject === undefined) data.currentEvtProject = null;
-if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
-if(typeof data.remote !== 'object' || !data.remote) data.remote = {};
-if(typeof data.office !== 'object' || !data.office) data.office = {};
-if(typeof data.leave !== 'object' || !data.leave) data.leave = {};
-if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
-data.tags.forEach(t=>{
-  if(t.name === 'Reel') t.name = 'Vidéo';
-  if(t.name === 'Article') t.name = 'Format long';
-});
-data.tasks.forEach(t=>{ if(t.who==='jade') t.who='valentine'; });
-data.posts.forEach(p=>{ if(p.author==='jade') p.author='valentine'; });
-data.ideas.forEach(i=>{ if(i.by==='jade') i.by='valentine'; });
-data.dayplans && Object.values(data.dayplans).forEach(list=>{ (list||[]).forEach(it=>{ if(it.who==='jade') it.who='valentine'; }); });
-[data.remote, data.office, data.leave].forEach(store=>{
-  if(!store) return;
-  Object.keys(store).forEach(k=>{
-    if(store[k] && store[k].includes('jade')){
-      store[k] = store[k].filter(w=>w!=='jade');
-      if(!store[k].includes('valentine')) store[k].push('valentine');
-    }
+const ARRAY_KEYS = ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects'];
+const OBJ_KEYS = ['reports','dayplans','remote','office','leave'];
+/* Remet d'aplomb n'importe quelle donnée (locale, cloud, import, copie de sécurité) */
+function normalizeData(raw){
+  const d = Object.assign({}, JSON.parse(JSON.stringify(DEFAULTS)), raw || {});
+  for(const k of ARRAY_KEYS) if(!Array.isArray(d[k])) d[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
+  for(const k of OBJ_KEYS) if(typeof d[k] !== 'object' || !d[k] || Array.isArray(d[k])) d[k] = {};
+  if(d.currentEvtProject === undefined) d.currentEvtProject = null;
+  d.tags.forEach(t=>{
+    if(t.name === 'Reel') t.name = 'Vidéo';
+    if(t.name === 'Article') t.name = 'Format long';
   });
-});
+  d.tasks.forEach(t=>{ if(t.who==='jade') t.who='valentine'; });
+  d.posts.forEach(p=>{ if(p.author==='jade') p.author='valentine'; });
+  d.ideas.forEach(i=>{ if(i.by==='jade') i.by='valentine'; });
+  Object.values(d.dayplans).forEach(list=>{ (list||[]).forEach(it=>{ if(it.who==='jade') it.who='valentine'; }); });
+  [d.remote, d.office, d.leave].forEach(st=>{
+    Object.keys(st).forEach(k=>{
+      if(Array.isArray(st[k]) && st[k].includes('jade')){
+        st[k] = st[k].filter(w=>w!=='jade');
+        if(!st[k].includes('valentine')) st[k].push('valentine');
+      }
+    });
+  });
+  return d;
+}
+let data = normalizeData(null); /* remplacé par les vraies données au démarrage (voir boot tout en bas) */
 
-function snapshot(){
-  const light = JSON.parse(JSON.stringify(data));
+/* Copie "légère" pour les sauvegardes : sans visuels ni PDF (ils sont récupérés à la restauration) */
+function lightCopy(src){
+  const light = JSON.parse(JSON.stringify(src));
+  delete light._savedAt;
   (light.posts||[]).forEach(p=>{ if(p.img) p.img=''; });
   (light.tasks||[]).forEach(t=>{ if(t.img) t.img=''; });
+  (light.projects||[]).forEach(p=>{ if(p.images) p.images=[]; });
+  (light.vendors||[]).forEach(v=>{ if(v.pdfData) v.pdfData=null; });
+  return light;
+}
+function snapshot(){
+  const light = lightCopy(data);
   const s = JSON.stringify(light);
   const backups = store.get('studioEditoBackups') || [];
   /* on n'empile pas deux fois le même état (les rechargements de page ne poussent plus les bonnes copies dehors) */
@@ -1483,7 +1571,7 @@ function snapshot(){
   }
   /* point de repère quotidien : on garde la version LA PLUS RICHE de chaque jour, 30 jours */
   const size = d => (d.posts||[]).length + (d.tasks||[]).length + (d.ideas||[]).length + (d.events||[]).length + (d.notes||[]).length;
-  const daily = store.get('studioEditoDaily') || {};
+  const daily = Object.assign({}, store.get('studioEditoDaily') || {});
   const key = new Date().toISOString().slice(0,10);
   if(!daily[key] || size(light) >= size(daily[key].data)) daily[key] = {at: new Date().toISOString(), data: light};
   const keep = {};
@@ -1492,11 +1580,11 @@ function snapshot(){
 }
 let snapTimer = null;
 function persist(){
+  data._savedAt = new Date().toISOString();
   store.set('studioEdito', data);
   clearTimeout(snapTimer);
   snapTimer = setTimeout(snapshot, 1500); /* copie de sécurité auto, groupée */
 }
-snapshot(); /* copie au démarrage */
 
 /* ================== ÉTAT UI ================== */
 let current = new Date();
@@ -1530,7 +1618,7 @@ function fmtMin(min){
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._to); t._to = setTimeout(()=>t.classList.remove('show'), 2200);
+  clearTimeout(t._to); t._to = setTimeout(()=>t.classList.remove('show'), 2600);
 }
 function postsOfMonth(){
   const k = monthKey(current);
@@ -2509,6 +2597,7 @@ function renderGalerie(){
 
 /* ================== BILAN ================== */
 function renderBilan(){
+  flushReport(); /* on enregistre ce qui était en cours de frappe avant de changer de mois */
   document.getElementById('bilanTitle').textContent = fmtMonth(current);
   const posts = postsOfMonth();
   const published = posts.filter(p=>p.status==='publie');
@@ -2587,8 +2676,8 @@ function renderBilan(){
   document.getElementById('r-flopped').value = r.flopped ?? '';
   document.getElementById('r-improve').value = r.improve ?? '';
 }
-function saveReport(notify){
-  data.reports[monthKey(current)] = {
+function saveReport(notify, key){
+  data.reports[key || monthKey(current)] = {
     views: document.getElementById('r-views').value,
     figIg: document.getElementById('r-figIg').value,
     figLi: document.getElementById('r-figLi').value,
@@ -2600,7 +2689,20 @@ function saveReport(notify){
   persist();
   if(notify) toast('Bilan enregistré 💾');
 }
+/* Sauvegarde automatique du bilan pendant la frappe (avant, il fallait cliquer sur « Enregistrer ») */
+const REPORT_FIELDS = ['r-views','r-figIg','r-figLi','r-engage','r-worked','r-flopped','r-improve'];
+let reportTimer = null, reportKey = null;
+function reportInput(){
+  reportKey = monthKey(current);
+  clearTimeout(reportTimer);
+  reportTimer = setTimeout(flushReport, 500);
+}
+function flushReport(){
+  clearTimeout(reportTimer); reportTimer = null;
+  if(reportKey){ const k = reportKey; reportKey = null; saveReport(false, k); }
+}
 function reportContext(){
+  flushReport();
   saveReport(false);
   const k = monthKey(current);
   const r = data.reports[k];
@@ -2645,7 +2747,7 @@ function exportPDF(){
   const {r, posts, published, ig, li, fb, tk, yt, monthTasks} = reportContext();
   const taskRows = monthTasks.map(t=>{
     const ty = typeById(t.typeId);
-    return `<tr><td>${esc(t.name)}</td><td>${WHO_LABEL[t.who].replace(/🌸 |🌿 /,'')}</td><td>${ty?esc(ty.name):'—'}</td><td>${t.done?fmtDate(t.done):'—'}</td><td>${esc(t.time)||'—'}</td><td>${esc(t.deliv)||'—'}</td></tr>`;
+    return `<tr><td>${esc(t.name)}</td><td>${(WHO_LABEL[t.who]||t.who||'').replace(/🌸 |🌿 /,'')}</td><td>${ty?esc(ty.name):'—'}</td><td>${t.done?fmtDate(t.done):'—'}</td><td>${esc(t.time)||'—'}</td><td>${esc(t.deliv)||'—'}</td></tr>`;
   }).join('');
   const postRows = published.map(p=>{
     const t = tagById(p.tagId);
@@ -2740,20 +2842,65 @@ function renderSafe(){
     ? dks.map(k=>row(daily[k], `restoreBackup('daily','${k}')`)).join('')
     : '<p class="empty-msg" style="padding:10px;font-size:13px">Le meilleur état de chaque journée sera gardé ici pendant 30 jours 📅</p>';
 }
+/* (manquait complètement avant : le bouton « Restaurer » ne faisait rien) */
+function restoreTrash(i){
+  const x = data.trash[i]; if(!x) return;
+  const it = x.item;
+  const push = (key, obj) => { if(obj && !data[key].some(o=>o.id===obj.id)) data[key].push(obj); };
+  switch(x.kind){
+    case 'post': push('posts', it); break;
+    case 'task': push('tasks', it); break;
+    case 'idea': push('ideas', it); break;
+    case 'tag': push('tags', it); break;
+    case 'type': push('taskTypes', it); break;
+    case 'evt': push('events', it); break;
+    case 'note': push('notes', it); break;
+    case 'jour': (data.dayplans[it.date] = data.dayplans[it.date] || []).push(it.entry); break;
+    case 'evtproject':
+      push('evtProjects', it.project);
+      (it.tasks||[]).forEach(t=>push('evtTasks', t));
+      (it.vendors||[]).forEach(v=>push('vendors', v));
+      data.currentEvtProject = it.project.id;
+      break;
+    case 'evttask': push('evtTasks', it); break;
+    case 'vendor': push('vendors', it); break;
+    case 'vendorcat': push('vendorCats', it); break;
+    case 'retrocat': push('retroCats', it); break;
+    case 'project': push('projects', it); break;
+    default: toast('Impossible de restaurer cet élément 😬'); return;
+  }
+  data.trash.splice(i, 1);
+  persist(); renderAll(); toast('Restauré ✨');
+}
+function emptyTrash(){
+  if(!data.trash.length){ toast('La corbeille est déjà vide ✨'); return; }
+  if(!confirm(`Vider définitivement la corbeille (${data.trash.length} élément(s)) ? Une copie de sécurité est prise juste avant.`)) return;
+  snapshot();
+  data.trash = [];
+  persist(); renderAll(); toast('Corbeille vidée 🧹');
+}
 function restoreBackup(kind, i){
   const b = kind==='daily' ? (store.get('studioEditoDaily')||{})[i] : (store.get('studioEditoBackups')||[])[i];
   if(!b) return;
   if(!confirm(`Revenir à la version du ${new Date(b.at).toLocaleString('fr-FR')} (${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches) ? Ton état actuel sera d'abord sauvegardé, aucun risque.`)) return;
   snapshot();
-  data = JSON.parse(JSON.stringify(b.data));
-  for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects']) if(!Array.isArray(data[k])) data[k] = [];
-  if(data.currentEvtProject === undefined) data.currentEvtProject = null;
-  for(const k of ['reports','dayplans','remote','office','leave']) if(typeof data[k] !== 'object' || !data[k]) data[k] = {};
+  const nd = normalizeData(JSON.parse(JSON.stringify(b.data)));
+  /* les copies ne contiennent pas les visuels/PDF : on les reprend de l'état actuel quand c'est le même élément */
+  const empty = v => !v || (Array.isArray(v) && !v.length);
+  const reattach = (key, field) => nd[key].forEach(it=>{
+    if(empty(it[field])){
+      const c = (data[key]||[]).find(x=>x.id===it.id);
+      if(c && !empty(c[field])) it[field] = c[field];
+    }
+  });
+  reattach('posts','img'); reattach('tasks','img'); reattach('projects','images'); reattach('vendors','pdfData');
+  data = nd;
   persist(); renderAll(); toast('Version restaurée 🕰️');
 }
 
 /* ================== EXPORT / IMPORT ================== */
 function exportData(){
+  flushReport();
   const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2775,7 +2922,7 @@ function mergeData(d){
   let added = 0;
   for(const key of ['posts','tasks','ideas','events','notes','trash','evtProjects','evtTasks','vendors','projects']){
     (d[key]||[]).forEach(item=>{
-      if(!data[key].some(x=>x.id===item.id)){
+      if(key==='trash' ? !data.trash.some(x=>x.deletedAt===item.deletedAt && x.label===item.label) : !data[key].some(x=>x.id===item.id)){
         if(item.tagId && idMap[item.tagId]) item.tagId = idMap[item.tagId];
         if(item.typeId && idMap[item.typeId]) item.typeId = idMap[item.typeId];
         if(item.catId && idMap[item.catId]) item.catId = idMap[item.catId];
@@ -2809,11 +2956,7 @@ function importData(e){
       } else {
         const word = prompt('⚠️ REMPLACEMENT TOTAL : tes données actuelles seront écrasées par le fichier.\n\nPour confirmer, tape REMPLACER en majuscules (sinon rien ne sera touché) :');
         if(word !== 'REMPLACER'){ toast('Import annulé, rien n\'a changé 🛡️'); e.target.value=''; return; }
-        data = Object.assign({}, DEFAULTS, d);
-        for(const k of ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects']) if(!Array.isArray(data[k])) data[k] = DEFAULTS[k] ? JSON.parse(JSON.stringify(DEFAULTS[k])) : [];
-        if(data.currentEvtProject === undefined) data.currentEvtProject = null;
-        if(typeof data.dayplans !== 'object' || !data.dayplans) data.dayplans = {};
-        if(typeof data.reports !== 'object' || !data.reports) data.reports = {};
+        data = normalizeData(d);
         persist(); renderAll(); toast('Données remplacées (l\'ancien état est dans les copies de sécurité) ✅');
       }
     }catch(err){ toast('Fichier invalide 😬'); }
@@ -2832,6 +2975,7 @@ function setPlanTab(t){
   document.querySelectorAll('[data-ptab]').forEach(b=>b.classList.toggle('active', b.dataset.ptab===t));
 }
 function gotoMonthBilan(k){
+  flushReport();
   const [y,m] = k.split('-');
   current = new Date(+y, +m-1, 1);
   switchPage('contenu','bilanmois');
@@ -3025,7 +3169,8 @@ function minOf(t){
   return (h>=0 && h<=23) ? h*60+mm : null;
 }
 function hourOf(t){ const x = minOf(t); return x===null ? null : Math.floor(x/60); }
-function fmtMin(x){ return String(Math.floor(x/60)).padStart(2,'0') + ':' + String(x%60).padStart(2,'0'); }
+/* (avant, cette fonction s'appelait aussi fmtMin et écrasait celle des durées : "2h30" s'affichait "02:30") */
+function fmtHM(x){ return String(Math.floor(x/60)).padStart(2,'0') + ':' + String(x%60).padStart(2,'0'); }
 function giveTime(k, id){
   const it = (data.dayplans[k]||[]).find(x=>x.id===id);
   if(!it) return;
@@ -3037,9 +3182,9 @@ function gridClick(ev){
   if(ev.target !== body) return;
   const y = ev.clientY - body.getBoundingClientRect().top;
   const mins = Math.min(AG_END*60-60, AG_START*60 + Math.round(y/HOUR_H*60/30)*30);
-  document.getElementById('dp-time').value = fmtMin(mins);
+  document.getElementById('dp-time').value = fmtHM(mins);
   document.getElementById('dp-text').focus();
-  toast('Heure réglée sur ' + fmtMin(mins) + ' — écris ton étape ✍️');
+  toast('Heure réglée sur ' + fmtHM(mins) + ' — écris ton étape ✍️');
 }
 function renderDayPlan(){
   const k = dkey(dayCursor);
@@ -3096,14 +3241,14 @@ function renderDayPlan(){
       const it = b.o;
       const sc = stepColor(it.text);
       return `<div class="tblock item ${it.done?'done':''}" data-kind="item" data-id="${it.id}" style="${pos}${sc?`;background:linear-gradient(135deg,${sc},var(--surface) 70%)`:''}">
-        <div class="t"><span class="tt-time">${fmtMin(b.s)} – ${fmtMin(b.s+b.d)}</span>
+        <div class="t"><span class="tt-time">${fmtHM(b.s)} – ${fmtHM(b.s+b.d)}</span>
           <button class="day-check ${it.done?'on':''}" onclick="toggleDayItem('${k}','${it.id}')" aria-label="Cocher">${it.done?'✓':''}</button>
           <button class="tiny-del" onclick="delDayItem('${k}','${it.id}')" aria-label="Retirer">✕</button></div>
         <div class="tx">${esc(it.text)}</div><div class="rs" title="Étirer pour changer la durée"></div></div>`;
     }
     const e = b.o;
     return `<div class="tblock evt" data-kind="evt" data-id="${e.id}" style="${pos};background:linear-gradient(135deg,${EVT_COLOR[e.type]||'var(--butter)'},var(--surface))">
-      <div class="t"><span class="tt-time">${fmtMin(b.s)} – ${fmtMin(b.s+b.d)}</span>
+      <div class="t"><span class="tt-time">${fmtHM(b.s)} – ${fmtHM(b.s+b.d)}</span>
         <button class="tiny-del" style="margin-left:auto" onclick="openEvtModal('${e.id}')" aria-label="Modifier">✎</button></div>
       <div class="tx">${esc(e.title)}${e.with?' · '+esc(e.with):''}</div><div class="rs" title="Étirer pour changer la durée"></div></div>`;
   }).join('');
@@ -3143,13 +3288,13 @@ function renderDayPlan(){
           obj.dur = Math.min(AG_END*60 - s0, Math.max(30, d0 + dm));
         } else {
           const ns = Math.min(AG_END*60 - (obj.dur||60), Math.max(AG_START*60, s0 + dm));
-          obj.time = fmtMin(ns);
+          obj.time = fmtHM(ns);
         }
         const s = minOf(obj.time), d = obj.dur || 60;
         el.style.top = ((s-AG_START*60)/60*HOUR_H) + 'px';
         el.style.height = Math.max(32, d/60*HOUR_H - 5) + 'px';
         const lbl = el.querySelector('.tt-time');
-        if(lbl) lbl.textContent = fmtMin(s) + ' – ' + fmtMin(s+d);
+        if(lbl) lbl.textContent = fmtHM(s) + ' – ' + fmtHM(s+d);
       };
       const up = ()=>{
         el.classList.remove('dragging');
@@ -3267,6 +3412,7 @@ function saveEvt(){
   const title = document.getElementById('e-title').value.trim();
   const date = document.getElementById('e-date').value;
   if(!title || !date){ toast('Il manque un titre ou une date 👀'); return; }
+  const old = editingEvtId ? data.events.find(x=>x.id===editingEvtId) : null;
   const evt = {
     id: editingEvtId || uid(), title, date,
     time: document.getElementById('e-time').value.trim(),
@@ -3274,6 +3420,7 @@ function saveEvt(){
     with: document.getElementById('e-with').value.trim(),
     notes: document.getElementById('e-notes').value
   };
+  if(old && old.dur) evt.dur = old.dur; /* on garde la durée réglée sur la grille */
   if(editingEvtId) data.events = data.events.map(e=>e.id===editingEvtId?evt:e);
   else data.events.push(evt);
   persist(); closeOverlays(); renderAgenda(); renderPlanningDay(); toast('Événement enregistré 🗓️');
@@ -3294,7 +3441,7 @@ function renderAgenda(){
 const PIN_COLORS = ['#E9707F','#7BA8E0','#6FBF8F','#E0A857','#A98BD6','#E58BB4'];
 let noteZ = 20;
 let persistTimer = null;
-function persistSoon(){ clearTimeout(persistTimer); persistTimer = setTimeout(persist, 700); }
+function persistSoon(){ clearTimeout(persistTimer); persistTimer = setTimeout(()=>{ persistTimer = null; persist(); }, 400); }
 function addNote(){
   const i = data.notes.length;
   data.notes.push({
@@ -3944,13 +4091,14 @@ function renderProjects(){
     const doneN = (p.steps||[]).filter(s=>s.done).length;
     const total = (p.steps||[]).length;
     const img = (p.images||[])[0];
+    const st = PST_LABEL[p.status] ? p.status : 'idee';
     return `<div class="idea-card" onclick="openProjectModal('${p.id}')">
       ${img?`<img src="${img}" alt="" style="width:100%;height:140px;object-fit:cover;border-radius:14px;margin-bottom:10px">`:''}
-      <span class="status-corner" title="${PST_LABEL[p.status]}">${PST_LABEL[p.status].slice(0,2).trim()}</span>
+      <span class="status-corner" title="${PST_LABEL[st]}">${PST_LABEL[st].slice(0,2).trim()}</span>
       <div class="t">${esc(p.name)}</div>
       ${p.desc?`<div class="d">${esc(p.desc)}</div>`:''}
       <div class="foot">
-        <span class="pill mini" style="background:${PST_BG[p.status]}">${PST_LABEL[p.status]}</span>
+        <span class="pill mini" style="background:${PST_BG[st]}">${PST_LABEL[st]}</span>
         ${total?`<span class="pill mini" style="background:#EFEAF9">${doneN}/${total} étapes</span>`:''}
         ${(p.compareRows||[]).length?`<span class="pill mini" style="background:var(--butter)">${p.compareRows.length} site${p.compareRows.length>1?'s':''} web comparé${p.compareRows.length>1?'s':''}</span>`:''}
       </div>
@@ -3965,6 +4113,7 @@ function openProjectModal(id=null){
 function showProjectView(id){
   const p = data.projects.find(x=>x.id===id); if(!p) return;
   const vide = '<span class="pv-empty">—</span>';
+  const st = PST_LABEL[p.status] ? p.status : 'idee';
   const doneN = (p.steps||[]).filter(s=>s.done).length;
   const total = (p.steps||[]).length;
   const imgs = (p.images||[]).map(src=>`<img src="${src}" alt="" style="width:90px;height:90px;object-fit:cover;border-radius:12px;box-shadow:var(--clay-soft)">`).join('');
@@ -3975,7 +4124,7 @@ function showProjectView(id){
   if(priceColIdx>-1){
     let min = Infinity;
     cRows.forEach(r=>{
-      const v = parsePriceNum(r.cells[cCols[priceColIdx].id]);
+      const v = parsePriceNum((r.cells||{})[cCols[priceColIdx].id]);
       if(v!==null && v<min){ min=v; cheapestRowId=r.id; }
     });
   }
@@ -3987,7 +4136,7 @@ function showProjectView(id){
       ${cRows.map(r=>`<tr style="${r.id===cheapestRowId?'background:linear-gradient(135deg,var(--mint),transparent)':''}">
         <td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${esc(r.site)||'—'}${r.id===cheapestRowId?' 💰 moins cher':''}</td>
         ${cCols.map(c=>{
-          const val = r.cells[c.id] || '';
+          const val = (r.cells||{})[c.id] || '';
           const isLink = /lien|url|site\s*web/i.test(c.label) && /^https?:\/\//i.test(val);
           return `<td style="padding:6px 8px;border-top:1px solid rgba(93,77,120,.12);font-weight:800">${isLink?`<a href="${esc(val)}" target="_blank" style="color:var(--ink)">Voir ↗</a>`:(esc(val)||'—')}</td>`;
         }).join('')}
@@ -4007,7 +4156,7 @@ function showProjectView(id){
       <div class="pv-title">${esc(p.name)}</div>
     </div>
     <div class="pv-grid">
-      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${PST_BG[p.status]}">${PST_LABEL[p.status]}</span></div></div>
+      <div class="pv-field"><div class="l">Statut</div><div class="v"><span class="pill" style="background:${PST_BG[st]}">${PST_LABEL[st]}</span></div></div>
       <div class="pv-field"><div class="l">Avancement</div><div class="v">${total?`${doneN}/${total} étapes`:vide}</div></div>
       <div class="pv-field full"><div class="l">Description</div><div class="v" style="white-space:pre-wrap;font-weight:700">${p.desc?esc(p.desc):vide}</div></div>
       <div class="pv-field full"><div class="l">📸 Photos</div><div class="v" style="gap:8px">${imgs || vide}</div></div>
@@ -4039,13 +4188,14 @@ function showProjectEdit(id=null){
     document.getElementById('projectModalTitle').textContent = 'Modifier le projet';
     document.getElementById('pj-name').value = p.name;
     document.getElementById('pj-desc').value = p.desc || '';
-    document.getElementById('pj-status').value = p.status;
+    document.getElementById('pj-status').value = p.status || 'idee';
     document.getElementById('pj-ship').value = linesFromRows(p.shipRows);
     document.getElementById('pj-notes').value = p.notes || '';
     pendingProjImages = [...(p.images||[])];
     draftProjSteps = JSON.parse(JSON.stringify(p.steps||[]));
     draftCompareCols = JSON.parse(JSON.stringify(p.compareCols||[]));
     draftCompareRows = JSON.parse(JSON.stringify(p.compareRows||[]));
+    draftCompareRows.forEach(r=>{ if(!r.cells) r.cells = {}; });
     if(!draftCompareCols.length && !draftCompareRows.length) newCompareDraft();
     del.style.display = 'inline-block';
   } else {
@@ -4247,73 +4397,105 @@ function renderAll(){
   safe('événementiel', renderEvtAll);
   safe('projets', renderProjects);
 }
-(function initialPage(){
+function initialPage(){
   const last = store.get('studioEditoLastPage');
-  if(last && PAGES[last.page]){
-    switchPage(last.page, last.sub, true);
-  } else {
-    switchPage('dashboard', null, true);
-  }
-})();
+  if(last && PAGES[last.page]) switchPage(last.page, last.sub, true);
+  else switchPage('dashboard', null, true);
+}
 
-
-  /* ================== SYNCHRO EN LIGNE (Supabase) ================== */
-const SUPABASE_URL = 'https://wxtcthrotvzkubhrzlne.supabase.co';   /* ← à remplacer par ton Project URL */
-const SUPABASE_KEY = 'sb_publishable_54LM0AUyx_A64EyVN7iOzQ_i-FoBh8Z';                      /* ← à remplacer par ta clé "anon public" */
+/* ================== SYNCHRO EN LIGNE (Supabase) ==================
+   Avant : le cloud faisait seulement une « fusion » qui ajoutait les éléments
+   inconnus → les suppressions revenaient et les modifications n'étaient jamais
+   reprises. Maintenant : la version la plus RÉCENTE gagne (date d'enregistrement),
+   et une copie de sécurité est prise avant tout remplacement. */
+const SUPABASE_URL = 'https://wxtcthrotvzkubhrzlne.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_54LM0AUyx_A64EyVN7iOzQ_i-FoBh8Z';
 const CLOUD_ID = 'studio-edito';
 const cloudOK = () => SUPABASE_URL.includes('.supabase.co') && !SUPABASE_URL.includes('TON-PROJET');
+const cloudHeaders = () => ({ 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY });
 
 let cloudTimer = null;
-function cloudSaveSoon(){ if(!cloudOK()) return; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudSave, 1200); }
-
-async function cloudSave(){
-  if(!cloudOK()) return;
+let cloudReady = false; /* on n'envoie rien tant que la version en ligne n'a pas été comparée */
+function cloudSaveSoon(){
+  if(!cloudOK() || !cloudReady) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(()=>{ cloudTimer = null; cloudSave(); }, 1200);
+}
+async function cloudSave(keepalive){
+  if(!cloudOK() || !cloudReady) return;
   try{
     const res = await fetch(SUPABASE_URL + '/rest/v1/studio', {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
+      keepalive: !!keepalive,
+      headers: Object.assign(cloudHeaders(), {
         'Content-Type': 'application/json',
         'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({ id: CLOUD_ID, payload: data, updated_at: new Date().toISOString() })
+      }),
+      body: JSON.stringify({ id: CLOUD_ID, payload: data, updated_at: data._savedAt || new Date().toISOString() })
     });
     if(!res.ok) throw new Error(res.status);
   }catch(e){
-    toast('⚠️ Synchro en ligne impossible — données gardées sur cet ordi');
+    if(!keepalive) toast('⚠️ Synchro en ligne impossible — données gardées sur cet appareil');
   }
 }
-
-/* Synchro cloud = FUSION uniquement (jamais un remplacement). Ainsi un souci
-   réseau ou une ancienne copie côté serveur ne peut plus jamais effacer ce
-   que tu viens d'ajouter en local : au pire, rien n'est importé du cloud. */
 async function cloudLoad(){
   if(!cloudOK()) return;
   try{
-    const res = await fetch(SUPABASE_URL + '/rest/v1/studio?id=eq.' + CLOUD_ID + '&select=payload', {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-    });
+    const res = await fetch(SUPABASE_URL + '/rest/v1/studio?id=eq.' + CLOUD_ID + '&select=payload,updated_at', { headers: cloudHeaders() });
+    if(!res.ok) throw new Error(res.status);
     const rows = await res.json();
-    if(Array.isArray(rows) && rows[0] && rows[0].payload){
-      const d = rows[0].payload;
-      const added = mergeData(d);
+    cloudReady = true;
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if(!row || !row.payload){ cloudSave(); return; } /* premier envoi */
+    const cloud = row.payload;
+    const cloudAt = cloud._savedAt || row.updated_at || '';
+    const localAt = data._savedAt || '';
+    if(!localAt){
+      /* ancienne version sans date : on fusionne pour ne rien perdre, puis on renvoie */
+      const added = mergeData(cloud);
+      persist(); renderAll();
+      if(added) toast('☁️ ' + added + ' élément(s) récupéré(s) depuis le cloud');
+      return;
+    }
+    if(cloudAt > localAt){
+      snapshot(); /* filet de sécurité avant de prendre la version en ligne */
+      data = normalizeData(cloud);
       store.set('studioEdito', data);
       renderAll();
-      if(added) toast('☁️ ' + added + ' élément(s) synchronisé(s) depuis le cloud');
-    } else {
-      cloudSave(); /* premier envoi : on pousse ce qu'il y a sur cet ordi */
+      toast('☁️ Version plus récente récupérée depuis le cloud');
+    } else if(cloudAt < localAt){
+      cloudSave();
     }
   }catch(e){
+    cloudReady = true;
     toast('⚠️ Pas de connexion au cloud — mode local');
   }
 }
 
-/* on greffe la synchro sur chaque enregistrement existant */
+/* on greffe la synchro sur chaque enregistrement */
 const _persistLocal = persist;
 persist = function(){ _persistLocal(); cloudSaveSoon(); };
-cloudLoad();
 
+/* Quand on actualise / ferme / change d'onglet : on enregistre TOUT ce qui est en attente */
+function flushNow(){
+  flushReport();
+  if(persistTimer){ clearTimeout(persistTimer); persistTimer = null; persist(); }
+  if(cloudTimer){ clearTimeout(cloudTimer); cloudTimer = null; cloudSave(true); }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'hidden') flushNow(); });
+window.addEventListener('pagehide', flushNow);
+window.addEventListener('beforeunload', flushNow);
+
+/* ================== DÉMARRAGE ================== */
+(async function boot(){
+  await bootStorage();
+  data = normalizeData(store.get('studioEdito'));
+  setSaveStatus(true);
+  snapshot();
+  REPORT_FIELDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.addEventListener('input', reportInput); });
+  initialPage();
+  cloudLoad();
+})();
 </script>
 </body>
 </html>
