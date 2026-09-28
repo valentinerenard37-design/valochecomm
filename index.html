@@ -1409,7 +1409,8 @@ const store = {
 function setSaveStatus(ok){
   const el = document.getElementById('saveStatus');
   if(el){
-    el.textContent = ok ? '✓ Enregistré' : '⚠️ Non enregistré';
+    const cl = el.dataset.cloud==='ok' ? ' · ☁️' : el.dataset.cloud==='ko' ? ' · ☁️✕' : '';
+    el.textContent = (ok ? '✓ Enregistré' : '⚠️ Non enregistré') + cl;
     el.classList.toggle('bad', !ok);
     el.title = ok ? 'Tout est sauvegardé sur cet appareil' : "L'enregistrement a échoué : exporte ton JSON par sécurité";
   }
@@ -4412,10 +4413,34 @@ const SUPABASE_URL = 'https://wxtcthrotvzkubhrzlne.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_54LM0AUyx_A64EyVN7iOzQ_i-FoBh8Z';
 const CLOUD_ID = 'studio-edito';
 const cloudOK = () => SUPABASE_URL.includes('.supabase.co') && !SUPABASE_URL.includes('TON-PROJET');
-const cloudHeaders = () => ({ 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY });
+/* ⚠️ CORRECTIF : les nouvelles clés Supabase (sb_publishable_…) ne sont PAS des jetons JWT.
+   Il faut les envoyer UNIQUEMENT dans l'en-tête « apikey ». Les mettre aussi dans
+   « Authorization: Bearer … » (comme avant) fait refuser TOUTES les requêtes (« Invalid JWT »). */
+const cloudHeaders = () => ({ 'apikey': SUPABASE_KEY });
+
+/* Traduit une erreur Supabase en français clair */
+async function cloudExplain(res){
+  let txt = '';
+  try{ txt = await res.text(); }catch(e){}
+  const low = txt.toLowerCase();
+  if(res.status===401 || low.includes('jwt') || low.includes('api key')) return 'clé refusée (vérifie la clé publishable)';
+  if(res.status===404 || low.includes('does not exist') || low.includes('could not find the table')) return 'table « studio » introuvable';
+  if(res.status===403 || low.includes('row-level security') || low.includes('permission')) return 'accès bloqué par la sécurité (RLS)';
+  if(res.status===413) return 'données trop lourdes pour un seul envoi';
+  return 'erreur ' + res.status + (txt ? ' — ' + txt.slice(0,80) : '');
+}
+function setCloudStatus(ok, msg){
+  const el = document.getElementById('saveStatus');
+  if(!el) return;
+  el.dataset.cloud = ok ? 'ok' : 'ko';
+  const base = el.textContent.replace(/ · ☁️.*$/, '');
+  el.textContent = base + (ok ? ' · ☁️' : ' · ☁️✕');
+  el.title = (el.title||'').split(' | ')[0] + ' | Cloud : ' + (ok ? 'synchronisé' : msg);
+}
 
 let cloudTimer = null;
 let cloudReady = false; /* on n'envoie rien tant que la version en ligne n'a pas été comparée */
+let cloudNoUpdatedAt = false; /* si la table n'a pas de colonne updated_at, on s'en passe */
 function cloudSaveSoon(){
   if(!cloudOK() || !cloudReady) return;
   clearTimeout(cloudTimer);
@@ -4423,34 +4448,56 @@ function cloudSaveSoon(){
 }
 async function cloudSave(keepalive){
   if(!cloudOK() || !cloudReady) return;
+  const row = { id: CLOUD_ID, payload: data };
+  if(!cloudNoUpdatedAt) row.updated_at = data._savedAt || new Date().toISOString();
+  const send = body => fetch(SUPABASE_URL + '/rest/v1/studio', {
+    method: 'POST',
+    keepalive: !!keepalive && body.length < 60000,
+    headers: Object.assign(cloudHeaders(), {
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    }),
+    body
+  });
   try{
-    const res = await fetch(SUPABASE_URL + '/rest/v1/studio', {
-      method: 'POST',
-      keepalive: !!keepalive,
-      headers: Object.assign(cloudHeaders(), {
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      }),
-      body: JSON.stringify({ id: CLOUD_ID, payload: data, updated_at: data._savedAt || new Date().toISOString() })
-    });
-    if(!res.ok) throw new Error(res.status);
+    let res = await send(JSON.stringify(row));
+    if(!res.ok && !cloudNoUpdatedAt){
+      const t = await res.clone().text().catch(()=> '');
+      if(/updated_at/i.test(t)){ cloudNoUpdatedAt = true; delete row.updated_at; res = await send(JSON.stringify(row)); }
+    }
+    if(!res.ok){
+      const why = await cloudExplain(res);
+      setCloudStatus(false, why);
+      if(!keepalive) toast('⚠️ Cloud : ' + why + ' — tout reste enregistré sur cet appareil');
+      return;
+    }
+    setCloudStatus(true);
   }catch(e){
-    if(!keepalive) toast('⚠️ Synchro en ligne impossible — données gardées sur cet appareil');
+    setCloudStatus(false, 'pas de réseau');
+    if(!keepalive) toast('⚠️ Cloud injoignable — tout reste enregistré sur cet appareil');
   }
 }
 async function cloudLoad(){
   if(!cloudOK()) return;
   try{
-    const res = await fetch(SUPABASE_URL + '/rest/v1/studio?id=eq.' + CLOUD_ID + '&select=payload,updated_at', { headers: cloudHeaders() });
-    if(!res.ok) throw new Error(res.status);
+    const res = await fetch(SUPABASE_URL + '/rest/v1/studio?id=eq.' + CLOUD_ID + '&select=*', { headers: cloudHeaders() });
+    if(!res.ok){
+      const why = await cloudExplain(res);
+      cloudReady = false; /* on ne force pas d'envoi tant que la connexion est cassée */
+      setCloudStatus(false, why);
+      toast('⚠️ Cloud : ' + why + ' — tout reste enregistré sur cet appareil');
+      return;
+    }
     const rows = await res.json();
     cloudReady = true;
     const row = Array.isArray(rows) ? rows[0] : null;
+    if(row && !('updated_at' in row)) cloudNoUpdatedAt = true;
     if(!row || !row.payload){ cloudSave(); return; } /* premier envoi */
-    const cloud = row.payload;
+    setCloudStatus(true);
+    const cloud = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
     const cloudAt = cloud._savedAt || row.updated_at || '';
     const localAt = data._savedAt || '';
-    if(!localAt){
+    if(!localAt || !cloudAt){
       /* ancienne version sans date : on fusionne pour ne rien perdre, puis on renvoie */
       const added = mergeData(cloud);
       persist(); renderAll();
@@ -4467,8 +4514,8 @@ async function cloudLoad(){
       cloudSave();
     }
   }catch(e){
-    cloudReady = true;
-    toast('⚠️ Pas de connexion au cloud — mode local');
+    setCloudStatus(false, 'pas de réseau');
+    toast('⚠️ Cloud injoignable (réseau) — tout reste enregistré sur cet appareil');
   }
 }
 
