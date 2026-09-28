@@ -987,6 +987,11 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   <!-- ================= COFFRE-FORT ================= -->
   <section id="view-coffre" class="view">
     <div class="card">
+      <h2>☁️ Synchro en ligne <button class="btn sky small" style="margin-left:auto" onclick="cloudDiagnose()">🔍 Tester la connexion</button></h2>
+      <p class="section-hint">Si le cloud est « injoignable », ce test te dit précisément où ça bloque.</p>
+      <div id="cloudDiag"></div>
+    </div>
+    <div class="card">
       <h2>🛡️ Coffre-fort des données</h2>
       <div class="safe-banner">🔒 Rien n'est jamais supprimé directement : tout passe par la corbeille, et une copie de sécurité est prise automatiquement à chaque enregistrement.</div>
       <h4 style="font-size:15px;margin:14px 0 8px">🗑️ Corbeille</h4>
@@ -4427,6 +4432,7 @@ async function cloudExplain(res){
   if(res.status===404 || low.includes('does not exist') || low.includes('could not find the table')) return 'table « studio » introuvable';
   if(res.status===403 || low.includes('row-level security') || low.includes('permission')) return 'accès bloqué par la sécurité (RLS)';
   if(res.status===413) return 'données trop lourdes pour un seul envoi';
+  if(res.status===402 || low.includes('read-only') || low.includes('read only')) return 'base Supabase pleine (plus de place, lecture seule)';
   return 'erreur ' + res.status + (txt ? ' — ' + txt.slice(0,80) : '');
 }
 function setCloudStatus(ok, msg){
@@ -4438,17 +4444,38 @@ function setCloudStatus(ok, msg){
   el.title = (el.title||'').split(' | ')[0] + ' | Cloud : ' + (ok ? 'synchronisé' : msg);
 }
 
+/* ☁️ Le cloud ne reçoit que le TEXTE (publis, tâches, idées, agenda…), sans visuels ni PDF.
+   Avant, chaque enregistrement renvoyait plusieurs Mo d'images toutes les secondes :
+   la base gratuite (500 Mo) se remplissait de vieilles versions et passait en lecture seule.
+   Les visuels et PDF restent enregistrés sur l'appareil (IndexedDB). */
+function cloudCopy(){
+  const c = lightCopy(data);
+  c._savedAt = data._savedAt;
+  return c;
+}
+function reattachBlobs(nd, from){
+  const empty = v => !v || (Array.isArray(v) && !v.length);
+  const re = (key, field) => (nd[key]||[]).forEach(it=>{
+    if(empty(it[field])){
+      const c = (from[key]||[]).find(x=>x.id===it.id);
+      if(c && !empty(c[field])) it[field] = c[field];
+    }
+  });
+  re('posts','img'); re('tasks','img'); re('projects','images'); re('vendors','pdfData');
+  return nd;
+}
+
 let cloudTimer = null;
 let cloudReady = false; /* on n'envoie rien tant que la version en ligne n'a pas été comparée */
 let cloudNoUpdatedAt = false; /* si la table n'a pas de colonne updated_at, on s'en passe */
 function cloudSaveSoon(){
   if(!cloudOK() || !cloudReady) return;
   clearTimeout(cloudTimer);
-  cloudTimer = setTimeout(()=>{ cloudTimer = null; cloudSave(); }, 1200);
+  cloudTimer = setTimeout(()=>{ cloudTimer = null; cloudSave(); }, 5000);
 }
 async function cloudSave(keepalive){
   if(!cloudOK() || !cloudReady) return;
-  const row = { id: CLOUD_ID, payload: data };
+  const row = { id: CLOUD_ID, payload: cloudCopy() };
   if(!cloudNoUpdatedAt) row.updated_at = data._savedAt || new Date().toISOString();
   const send = body => fetch(SUPABASE_URL + '/rest/v1/studio', {
     method: 'POST',
@@ -4506,7 +4533,7 @@ async function cloudLoad(){
     }
     if(cloudAt > localAt){
       snapshot(); /* filet de sécurité avant de prendre la version en ligne */
-      data = normalizeData(cloud);
+      data = reattachBlobs(normalizeData(cloud), data); /* on garde les visuels de cet appareil */
       store.set('studioEdito', data);
       renderAll();
       toast('☁️ Version plus récente récupérée depuis le cloud');
@@ -4516,6 +4543,60 @@ async function cloudLoad(){
   }catch(e){
     setCloudStatus(false, 'pas de réseau');
     toast('⚠️ Cloud injoignable (réseau) — tout reste enregistré sur cet appareil');
+  }
+}
+
+/* ---- Diagnostic pas à pas ---- */
+async function cloudDiagnose(){
+  const box = document.getElementById('cloudDiag');
+  const lines = [];
+  const show = () => { box.innerHTML = lines.map(l=>`<div class="trash-item"><span>${l[0]}</span><span class="n">${l[1]}</span></div>`).join(''); };
+  const add = (icon, txt) => { lines.push([icon, txt]); show(); };
+  box.innerHTML = '<p class="empty-msg">Test en cours…</p>';
+
+  add(navigator.onLine ? '✅' : '❌', navigator.onLine ? 'Appareil connecté à Internet' : 'Appareil hors ligne');
+  if(location.protocol === 'file:') add('⚠️', 'Le site est ouvert en fichier local (file://). Ça marche en général, mais héberge-le pour être sûre.');
+  const size = new Blob([JSON.stringify(cloudCopy())]).size;
+  add(size > 2e6 ? '⚠️' : '✅', 'Taille des données à envoyer : ' + (size/1e6).toFixed(1) + ' Mo' + ' (sans visuels ni PDF, qui restent sur l\'appareil)');
+
+  /* 1. le projet Supabase répond-il ? */
+  try{
+    const r = await fetch(SUPABASE_URL + '/rest/v1/', { headers: cloudHeaders() });
+    add('✅', 'Le serveur Supabase répond (code ' + r.status + ')');
+  }catch(e){
+    add('❌', 'Le serveur Supabase ne répond pas du tout (' + (e.message||e) + '). Causes probables : projet en PAUSE dans Supabase, adresse du projet fausse, ou bloqueur de pub / réseau qui bloque supabase.co.');
+    return;
+  }
+  /* 2. lecture de la table */
+  try{
+    const r = await fetch(SUPABASE_URL + '/rest/v1/studio?select=id&limit=1', { headers: cloudHeaders() });
+    if(r.ok) add('✅', 'Lecture de la table « studio » OK');
+    else { add('❌', 'Lecture refusée : ' + await cloudExplain(r)); return; }
+  }catch(e){ add('❌', 'Lecture impossible (' + (e.message||e) + ')'); return; }
+  /* 3. écriture d'un petit test */
+  try{
+    const r = await fetch(SUPABASE_URL + '/rest/v1/studio', {
+      method:'POST',
+      headers: Object.assign(cloudHeaders(), {'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body: JSON.stringify({id:'studio-edito-test', payload:{test:true}})
+    });
+    if(r.ok) add('✅', 'Écriture d\'un petit test OK');
+    else { add('❌', 'Écriture refusée : ' + await cloudExplain(r)); return; }
+  }catch(e){ add('❌', 'Écriture impossible (' + (e.message||e) + ')'); return; }
+  /* 4. envoi réel */
+  cloudReady = true;
+  try{
+    const row = { id: CLOUD_ID, payload: cloudCopy() };
+    if(!cloudNoUpdatedAt) row.updated_at = data._savedAt || new Date().toISOString();
+    const r = await fetch(SUPABASE_URL + '/rest/v1/studio', {
+      method:'POST',
+      headers: Object.assign(cloudHeaders(), {'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'}),
+      body: JSON.stringify(row)
+    });
+    if(r.ok){ add('🎉', 'Envoi complet de tes données réussi — la synchro fonctionne !'); setCloudStatus(true); }
+    else add('❌', 'Le petit test passe mais l\'envoi complet échoue : ' + await cloudExplain(r));
+  }catch(e){
+    add('❌', 'Le petit test passe mais l\'envoi complet coupe en route (' + (e.message||e) + ') : tes données sont sûrement trop lourdes (visuels/PDF).');
   }
 }
 
