@@ -526,6 +526,52 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .vendor-compare{position:absolute;top:14px;right:14px;width:24px;height:24px;border-radius:8px;border:none;cursor:pointer;background:var(--surface);box-shadow:var(--clay-soft);font-size:12px;color:var(--muted);display:grid;place-items:center}
 .vendor-compare.on{background:linear-gradient(135deg,var(--mint),#CFF5E2);color:var(--ink);box-shadow:var(--clay-in)}
 
+/* ---------- Budget com (devis & compta) ---------- */
+.stat .sub{font-size:12px;font-weight:700;color:rgba(69,60,92,.65);margin-top:3px}
+.stat .big.mid{font-size:22px}
+.env-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface-2);border-radius:18px;padding:12px 16px;box-shadow:var(--clay-in);margin-bottom:16px;font-weight:800;font-size:14px}
+.env-row input{width:170px;flex:none;background:var(--surface);box-shadow:var(--clay-soft)}
+.btable{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:780px;font-size:13px}
+.btable th{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:4px 10px;text-align:right;white-space:nowrap}
+.btable td{background:var(--surface-2);padding:11px 10px;font-weight:700;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.btable th:first-child,.btable td:first-child{text-align:left}
+.btable td:first-child{border-radius:14px 0 0 14px;font-family:'Fredoka',sans-serif;font-weight:500;font-size:14px}
+.btable td:last-child{border-radius:0 14px 14px 0}
+.btable tr.clk{cursor:pointer}
+.btable tr.clk:hover td{background:#F1ECFB}
+.btable tr.sel td{background:#E9E1FB}
+.btable tr.tot td{background:linear-gradient(135deg,#E6F8EE,#F3FBF7);font-weight:800}
+.btable .z{color:#C3BCD6}
+.btable .nowtag{font-size:10px;font-weight:800;background:var(--lilac);border-radius:8px;padding:2px 6px;margin-left:6px;font-family:'Nunito',sans-serif}
+.qmonth-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:20px 0 10px;padding:0 4px}
+.qmonth-head:first-child{margin-top:4px}
+.qmonth-head h4{font-size:18px;font-weight:600}
+.qmonth-head span{font-size:12.5px;font-weight:800;color:var(--muted)}
+.qsub{font-size:12px;font-weight:600;color:var(--muted)}
+.q-refused{opacity:.55}
+.q-refused .post-title{text-decoration:line-through}
+.qtoggles{display:flex;gap:6px;flex:none}
+.qtoggle{border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;padding:7px 11px;border-radius:12px;background:var(--surface);color:var(--muted);box-shadow:var(--clay-soft);white-space:nowrap}
+.qtoggle.on{color:var(--ink);background:linear-gradient(135deg,var(--mint),#CFF5E2);box-shadow:var(--clay-in)}
+.qtoggle.pay.on{background:linear-gradient(135deg,var(--peach),#FFE3D5)}
+.qamt{display:flex;flex-direction:column;align-items:flex-end;flex:none;min-width:100px;font-family:'Fredoka',sans-serif}
+.qamt b{font-weight:600;font-size:16px}
+.qamt small{font-size:11.5px;color:var(--muted);font-weight:500}
+.check-line{display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);cursor:pointer;background:var(--surface-2);border-radius:16px;padding:12px 14px;box-shadow:var(--clay-in);margin:0}
+.check-line input{width:20px;height:20px;accent-color:#6FBF8F;cursor:pointer;flex:none}
+.check-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.modal-sec{font-family:'Fredoka',sans-serif;font-size:16px;font-weight:600;margin:22px 0 0;padding-top:16px;border-top:2px dashed rgba(93,77,120,.14)}
+.ttc-box{background:var(--surface-2);border-radius:16px;padding:12px 16px;box-shadow:var(--clay-in);font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;min-height:46px;display:flex;align-items:center}
+.qfile{display:flex;align-items:center;gap:10px;background:var(--surface-2);border-radius:14px;padding:8px 12px;box-shadow:var(--clay-soft);margin-top:8px;font-weight:700;font-size:13px}
+.qfile img{width:44px;height:44px;object-fit:cover;border-radius:10px;flex:none;cursor:pointer}
+.qfile .ic{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--sky);font-size:20px;flex:none;cursor:pointer}
+.qfile .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qfile select{width:auto;padding:6px 10px;font-size:12px;border-radius:10px}
+@media (max-width:760px){
+  .check-grid{grid-template-columns:1fr}
+  .qamt{align-items:flex-start}
+}
+
 /* ---------- Confettis ---------- */
 .confetti{position:fixed;top:-14px;width:11px;height:11px;border-radius:4px;pointer-events:none;z-index:200;animation:confall linear forwards}
 .confetti-piece{position:fixed;top:-14px;pointer-events:none;z-index:200}
@@ -550,12 +596,15 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:30px;font-family:'Nunito',sans-serif;color:#333}
   #printArea h1{font-family:'Fredoka',sans-serif;font-size:24px;margin-bottom:4px}
   #printArea h2{font-family:'Fredoka',sans-serif;font-size:16px;margin:20px 0 8px;border-bottom:2px solid #CBB9F5;padding-bottom:4px}
+  #printArea h3{font-family:'Fredoka',sans-serif;font-size:14px;margin:14px 0 4px}
   #printArea p,#printArea li{font-size:13px;line-height:1.6}
-  #printArea .pstats{display:flex;gap:24px;margin:10px 0}
+  #printArea .pstats{display:flex;gap:24px;margin:10px 0;flex-wrap:wrap}
   #printArea .pstats div{text-align:center}
   #printArea .pstats b{font-size:22px;display:block}
   #printArea table{width:100%;border-collapse:collapse;margin-top:6px}
   #printArea th,#printArea td{text-align:left;font-size:12px;padding:6px 8px;border-bottom:1px solid #eee}
+  #printArea td.r,#printArea th.r{text-align:right}
+  #printArea tr.tot td{font-weight:800;border-top:2px solid #CBB9F5}
 }
 
 @media (max-width:760px){
@@ -568,17 +617,6 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   .cal-side>*{flex:1 1 150px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
-
-
-.check-line{display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);cursor:pointer;background:var(--surface-2);border-radius:16px;padding:12px 16px;box-shadow:var(--clay-in);margin-top:16px}
-.check-line input{width:20px;height:20px;accent-color:#6FBF8F;cursor:pointer;flex:none}
-.post-row.q-done .post-title{text-decoration:line-through;color:var(--muted)}
-.q-amount{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;color:var(--ink);background:var(--surface);border-radius:14px;padding:7px 12px;box-shadow:var(--clay-in);white-space:nowrap;flex:none}
-.q-total{display:flex;justify-content:flex-end;gap:10px;align-items:center;margin-top:6px;font-weight:800;color:var(--muted);font-size:13px}
-.budget-bar .bar-lbl{width:130px;text-transform:none;display:flex;align-items:center;justify-content:flex-end}
-.budget-bar .bar-val{width:auto;min-width:84px;text-align:right}
-.bar-fill.done-part{background:linear-gradient(90deg,var(--mint),#7FD9BD)}
 </style>
 </head>
 <body>
@@ -726,7 +764,6 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
   </section>
 
 
-  
   <!-- ================= CLÉMENTINE ================= -->
   <section id="view-clem" class="view">
 
@@ -966,15 +1003,72 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
     </div>
   </section>
 
-
-    <section id="view-budget" class="view">
-  <div class="card" style="padding:20px 26px">
-    <div class="month-nav" style="margin-bottom:0">
-      <button class="round-btn" onclick="navBudgetYear(-1)" aria-label="Année précédente"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-      <h2 id="budgetYearTitle"></h2>
-      <button class="round-btn" onclick="navBudgetYear(1)" aria-label="Année suivante"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  <!-- ================= BUDGET COM (devis & compta) ================= -->
+  <section id="view-budget" class="view">
+    <div class="card" style="padding:20px 26px">
+      <div class="month-nav" style="margin-bottom:0">
+        <button class="round-btn" onclick="navBudgetYear(-1)" aria-label="Année précédente"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <h2 id="budgetYearTitle"></h2>
+        <button class="round-btn" onclick="navBudgetYear(1)" aria-label="Année suivante"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
     </div>
-  </div>
+
+    <div class="card">
+      <h2>💶 Vue d'ensemble de l'année
+        <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sky small" onclick="exportBudgetPDF()">🖨️ Export PDF</button>
+          <button class="btn small" onclick="exportBudgetCSV()">📊 Export Excel</button>
+          <button class="btn primary small" onclick="openQuoteModal()">+ Nouveau devis</button>
+        </span>
+      </h2>
+      <p class="section-hint">Montants en HT, avec le TTC en dessous. Les devis refusés ne comptent pas dans les totaux.</p>
+      <div class="env-row">
+        <span>🎯 Enveloppe budget com de l'année (HT)</span>
+        <input type="number" id="b-envelope" min="0" step="1" placeholder="ex: 15000" oninput="setEnvelope(this.value)">
+        <span>€</span>
+      </div>
+      <div class="stat-grid" id="budgetStats"></div>
+      <div id="budgetProgress"></div>
+    </div>
+
+    <div class="card">
+      <h2>📅 Mois par mois</h2>
+      <p class="section-hint">Clique sur un mois pour afficher uniquement ses devis juste en dessous.</p>
+      <div style="overflow-x:auto"><table class="btable" id="budgetMonthTable"></table></div>
+    </div>
+
+    <div class="card" id="quoteListCard">
+      <h2>🧾 Les devis <span id="quoteListTitle" style="font-size:14px;color:var(--muted);font-weight:500"></span></h2>
+      <div class="filters">
+        <select id="quoteMonthFilter" class="fselect" onchange="renderBudget()"></select>
+        <select id="quoteStatusFilter" class="fselect" onchange="renderBudget()">
+          <option value="all">Tous les statuts de devis</option>
+          <option value="ademander">📝 À demander</option>
+          <option value="demande">📨 Demandé</option>
+          <option value="recu">📄 Reçu</option>
+          <option value="valide">✅ Validé / signé</option>
+          <option value="refuse">❌ Refusé</option>
+        </select>
+        <select id="quoteCatFilter" class="fselect" onchange="renderBudget()"></select>
+        <button class="fchip" onclick="toggleQuoteCatManager()" id="qcatToggleBtn">🏷️ Gérer les catégories</button>
+      </div>
+      <div class="filters">
+        <button class="fchip a active" data-qprog="all" onclick="setQuoteProg('all')">Tous</button>
+        <button class="fchip a" data-qprog="afaire" onclick="setQuoteProg('afaire')">☐ Pas encore fait</button>
+        <button class="fchip a" data-qprog="fait" onclick="setQuoteProg('fait')">☑ Fait</button>
+        <button class="fchip a" data-qprog="apayer" onclick="setQuoteProg('apayer')">⏳ À payer</button>
+        <button class="fchip a" data-qprog="paye" onclick="setQuoteProg('paye')">💳 Payé</button>
+      </div>
+      <div id="quoteCatManager" style="display:none;margin-bottom:16px"></div>
+      <div id="quoteList"></div>
+    </div>
+
+    <div class="card">
+      <h2>📊 Par catégorie</h2>
+      <p class="section-hint">Où part le budget com de l'année.</p>
+      <div style="overflow-x:auto"><table class="btable" id="budgetCatTable"></table></div>
+    </div>
+  </section>
 
   <!-- ================= TAGS ================= -->
   <section id="view-tags" class="view">
@@ -1378,29 +1472,80 @@ Envoi Colissimo : 8,50€"></textarea>
   </div>
 </div>
 
+<!-- ========== MODAL DEVIS (budget com) ========== -->
 <div class="overlay" id="quoteOverlay">
-  <div class="modal">
+  <div class="modal" style="max-width:660px">
     <h3 id="quoteModalTitle">Nouveau devis</h3>
+
     <label>Objet du devis</label>
     <input type="text" id="q-name" placeholder="ex: Impression flyers portes ouvertes">
     <div class="grid-2">
-      <div><label>Prestataire</label><input type="text" id="q-supplier" placeholder="ex: Imprimerie du Centre"></div>
+      <div><label>Prestataire / fournisseur</label><input type="text" id="q-supplier" placeholder="ex: Imprimerie du Centre"></div>
       <div><label>Catégorie</label><select id="q-cat"></select></div>
     </div>
     <div class="grid-3">
-      <div><label>Montant (€)</label><input type="number" id="q-amount" min="0" step="0.01" placeholder="ex: 450"></div>
-      <div><label>Mois prévu</label><select id="q-month"></select></div>
+      <div><label>Statut du devis</label>
+        <select id="q-status">
+          <option value="ademander">📝 À demander</option>
+          <option value="demande">📨 Demandé</option>
+          <option value="recu">📄 Reçu</option>
+          <option value="valide">✅ Validé / signé</option>
+          <option value="refuse">❌ Refusé</option>
+        </select>
+      </div>
+      <div><label>N° du devis</label><input type="text" id="q-number" placeholder="ex: D-2026-014"></div>
+      <div><label>Date du devis</label><input type="date" id="q-date"></div>
+    </div>
+
+    <div class="modal-sec">💶 Montant & période</div>
+    <div class="grid-3">
+      <div><label>Montant HT (€)</label><input type="number" id="q-amount" min="0" step="0.01" placeholder="ex: 450" oninput="updateQuoteTTC()"></div>
+      <div><label>TVA</label>
+        <select id="q-vat" onchange="updateQuoteTTC()">
+          <option value="20">20 %</option>
+          <option value="10">10 %</option>
+          <option value="5.5">5,5 %</option>
+          <option value="2.1">2,1 %</option>
+          <option value="0">0 % (pas de TVA)</option>
+        </select>
+      </div>
+      <div><label>Montant TTC</label><div class="ttc-box" id="q-ttc">—</div></div>
+    </div>
+    <div class="grid-2">
+      <div><label>Mois concerné</label><select id="q-month"></select></div>
       <div><label>Année</label><input type="number" id="q-year" min="2020" max="2100"></div>
     </div>
-    <label class="check-line"><input type="checkbox" id="q-done"><span>C'est fait ✓</span></label>
+
+    <div class="modal-sec">✅ Suivi</div>
+    <div class="check-grid">
+      <label class="check-line"><input type="checkbox" id="q-done"><span>Prestation faite</span></label>
+      <label class="check-line"><input type="checkbox" id="q-invoiced"><span>Facture reçue</span></label>
+      <label class="check-line"><input type="checkbox" id="q-paid" onchange="if(this.checked && !document.getElementById('q-paidAt').value) document.getElementById('q-paidAt').value = new Date().toISOString().slice(0,10)"><span>Payé</span></label>
+    </div>
+    <div class="grid-3">
+      <div><label>N° de facture</label><input type="text" id="q-invoiceNo" placeholder="ex: F-8841"></div>
+      <div><label>Date de paiement</label><input type="date" id="q-paidAt"></div>
+      <div><label>Mode de paiement</label><select id="q-payMode"></select></div>
+    </div>
+
+    <div class="modal-sec">📎 Devis & factures (PDF ou photo)</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <select id="q-filekind" class="fselect" aria-label="Type de document">
+        <option value="devis">C'est un devis</option>
+        <option value="facture">C'est une facture</option>
+        <option value="autre">Autre document</option>
+      </select>
+      <input type="file" id="q-fileinput" accept="application/pdf,image/*" multiple hidden onchange="addQuoteFiles(event)">
+      <button class="btn small sky" type="button" onclick="document.getElementById('q-fileinput').click()">📎 Ajouter un PDF ou une photo</button>
+    </div>
+    <div id="q-files"></div>
+
+    <div class="modal-sec">📝 Autres infos</div>
     <label>Notes</label>
     <textarea id="q-notes" placeholder="Ce qui est inclus, validité du devis, remise négociée…"></textarea>
-    <label>Lien (devis en ligne, site…)</label>
+    <label>Lien (devis en ligne, site du prestataire…)</label>
     <input type="url" id="q-link" placeholder="https://…">
-    <label>📄 Devis (PDF)</label>
-    <input type="file" id="q-pdf" accept="application/pdf" hidden onchange="handleQuotePdfUpload(event)">
-    <button class="btn small" type="button" onclick="document.getElementById('q-pdf').click()">Choisir un PDF</button>
-    <div id="q-pdf-preview" style="margin-top:8px"></div>
+
     <div class="modal-actions">
       <button class="btn danger" id="deleteQuoteBtn" style="display:none" onclick="deleteQuote()">🗑️ Corbeille</button>
       <button class="btn" onclick="closeOverlays()">Annuler</button>
@@ -1408,8 +1553,7 @@ Envoi Colissimo : 8,50€"></textarea>
     </div>
   </div>
 </div>
- 
-  
+
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
@@ -1581,10 +1725,22 @@ const DEFAULTS = {
     {id:'vc6', name:'Décoration', color:'#FFC2DC'}
   ],
   projects: [],
+  quotes: [],
+  quoteCats: [
+    {id:'qc1', name:'Réseaux sociaux & pub en ligne', color:'#FFC2DC'},
+    {id:'qc2', name:'Print & impression', color:'#FFE29A'},
+    {id:'qc3', name:'Vidéo & photo', color:'#A9D3FF'},
+    {id:'qc4', name:'Événementiel', color:'#FFB9A3'},
+    {id:'qc5', name:'Goodies & objets', color:'#A8E6C9'},
+    {id:'qc6', name:'Site web & outils', color:'#CBB9F5'},
+    {id:'qc7', name:'Presse & partenariats', color:'#B8EDE3'},
+    {id:'qc8', name:'Autre', color:'#F5CBA7'}
+  ],
+  budgetEnv: {},
   currentEvtProject: null
 };
-const ARRAY_KEYS = ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects'];
-const OBJ_KEYS = ['reports','dayplans','remote','office','leave'];
+const ARRAY_KEYS = ['posts','tasks','ideas','tags','taskTypes','trash','events','notes','evtProjects','evtTasks','vendors','vendorCats','retroCats','projects','quotes','quoteCats'];
+const OBJ_KEYS = ['reports','dayplans','remote','office','leave','budgetEnv'];
 /* Remet d'aplomb n'importe quelle donnée (locale, cloud, import, copie de sécurité) */
 function normalizeData(raw){
   const d = Object.assign({}, JSON.parse(JSON.stringify(DEFAULTS)), raw || {});
@@ -1607,6 +1763,13 @@ function normalizeData(raw){
       }
     });
   });
+  /* devis : format homogène (pièces jointes, statut, année) */
+  d.quotes.forEach(q=>{
+    if(!Array.isArray(q.files)) q.files = [];
+    if(q.pdfData){ q.files.push({id:'f'+Math.random().toString(36).slice(2,8), name:q.pdfName||'devis.pdf', type:'application/pdf', kind:'devis', data:q.pdfData}); delete q.pdfData; delete q.pdfName; }
+    if(!q.status) q.status = 'recu';
+    if(!q.year) q.year = new Date().getFullYear();
+  });
   return d;
 }
 let data = normalizeData(null); /* remplacé par les vraies données au démarrage (voir boot tout en bas) */
@@ -1619,6 +1782,7 @@ function lightCopy(src){
   (light.tasks||[]).forEach(t=>{ if(t.img) t.img=''; });
   (light.projects||[]).forEach(p=>{ if(p.images) p.images=[]; });
   (light.vendors||[]).forEach(v=>{ if(v.pdfData) v.pdfData=null; });
+  (light.quotes||[]).forEach(q=>{ if(q.files) q.files=[]; });
   return light;
 }
 function snapshot(){
@@ -1631,7 +1795,7 @@ function snapshot(){
     store.set('studioEditoBackups', backups.slice(0, 12));
   }
   /* point de repère quotidien : on garde la version LA PLUS RICHE de chaque jour, 30 jours */
-  const size = d => (d.posts||[]).length + (d.tasks||[]).length + (d.ideas||[]).length + (d.events||[]).length + (d.notes||[]).length;
+  const size = d => (d.posts||[]).length + (d.tasks||[]).length + (d.ideas||[]).length + (d.events||[]).length + (d.notes||[]).length + (d.quotes||[]).length;
   const daily = Object.assign({}, store.get('studioEditoDaily') || {});
   const key = new Date().toISOString().slice(0,10);
   if(!daily[key] || size(light) >= size(daily[key].data)) daily[key] = {at: new Date().toISOString(), data: light};
@@ -1693,6 +1857,7 @@ const PAGES = {
   agenda:    {title:'Agenda', subs:[]},
   evenement: {title:'Événementiel', subs:[['retro','Rétroplanning'],['prestataires','Prestataires']]},
   projets:   {title:'Projets', subs:[]},
+  budget:    {title:'Budget communication', subs:[]},
   params:    {title:'Paramètres', subs:[['tags','Tags & types'],['coffre','Coffre-fort']]}
 };
 const SUB_SECTION = {taches:'view-taches', clem:'view-clem', notes:'view-notes', bilan:'view-bilan', planning:'view-planning', idees:'view-idees', galerie:'view-galerie', bilanmois:'view-planning', tags:'view-tags', coffre:'view-coffre', retro:'view-evtretro', prestataires:'view-evtprestataires'};
@@ -2881,7 +3046,7 @@ function removeType(id){
 }
 
 /* ================== COFFRE-FORT ================== */
-const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire', retrocat:'🏷️ Catégorie rétroplanning', project:'📦 Projet'};
+const KIND_LABEL = {post:'📅 Publi', task:'✅ Tâche', idea:'💡 Idée', tag:'🏷️ Tag', type:'🎨 Type', evt:'🗓️ Événement', jour:'☀️ Planning du jour', note:'📌 Note', evtproject:'🎉 Événement', evttask:'🗓️ Étape événement', vendor:'🤝 Prestataire', vendorcat:'🏷️ Catégorie prestataire', retrocat:'🏷️ Catégorie rétroplanning', project:'📦 Projet', quote:'💶 Devis', quotecat:'🏷️ Catégorie budget'};
 function renderSafe(){
   const tl = document.getElementById('trashList');
   tl.innerHTML = data.trash.length ? data.trash.map((x,i)=>
@@ -2890,7 +3055,7 @@ function renderSafe(){
       <button class="btn small primary" onclick="restoreTrash(${i})">↩️ Restaurer</button></div>`).join('')
     : '<p class="empty-msg" style="padding:10px;font-size:13px">Corbeille vide, tout va bien ✨</p>';
   const row = (b, call) => `<div class="trash-item"><span>🕰️</span><span class="n">${new Date(b.at).toLocaleString('fr-FR')}</span>
-      <span class="d">${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches · ${(b.data.ideas||[]).length} idées</span>
+      <span class="d">${(b.data.posts||[]).length} publis · ${(b.data.tasks||[]).length} tâches · ${(b.data.ideas||[]).length} idées · ${(b.data.quotes||[]).length} devis</span>
       <button class="btn small" onclick="${call}">↩️ Revenir ici</button></div>`;
   const backups = store.get('studioEditoBackups') || [];
   document.getElementById('backupList').innerHTML = backups.length
@@ -2928,6 +3093,8 @@ function restoreTrash(i){
     case 'vendorcat': push('vendorCats', it); break;
     case 'retrocat': push('retroCats', it); break;
     case 'project': push('projects', it); break;
+    case 'quote': push('quotes', it); break;
+    case 'quotecat': push('quoteCats', it); break;
     default: toast('Impossible de restaurer cet élément 😬'); return;
   }
   data.trash.splice(i, 1);
@@ -2954,7 +3121,7 @@ function restoreBackup(kind, i){
       if(c && !empty(c[field])) it[field] = c[field];
     }
   });
-  reattach('posts','img'); reattach('tasks','img'); reattach('projects','images'); reattach('vendors','pdfData');
+  reattach('posts','img'); reattach('tasks','img'); reattach('projects','images'); reattach('vendors','pdfData'); reattach('quotes','files');
   data = nd;
   persist(); renderAll(); toast('Version restaurée 🕰️');
 }
@@ -2973,7 +3140,7 @@ function mergeData(d){
   const norm = s => (s||'').trim().toLowerCase();
   /* tags & types : dédoublonnés par nom, en gardant la correspondance d'id */
   const idMap = {};
-  for(const [key, list] of [['tags', d.tags||[]], ['taskTypes', d.taskTypes||[]], ['vendorCats', d.vendorCats||[]], ['retroCats', d.retroCats||[]]]){
+  for(const [key, list] of [['tags', d.tags||[]], ['taskTypes', d.taskTypes||[]], ['vendorCats', d.vendorCats||[]], ['retroCats', d.retroCats||[]], ['quoteCats', d.quoteCats||[]]]){
     list.forEach(item=>{
       const match = data[key].find(x=>norm(x.name)===norm(item.name));
       if(match){ idMap[item.id] = match.id; }
@@ -2981,7 +3148,7 @@ function mergeData(d){
     });
   }
   let added = 0;
-  for(const key of ['posts','tasks','ideas','events','notes','trash','evtProjects','evtTasks','vendors','projects']){
+  for(const key of ['posts','tasks','ideas','events','notes','trash','evtProjects','evtTasks','vendors','projects','quotes']){
     (d[key]||[]).forEach(item=>{
       if(key==='trash' ? !data.trash.some(x=>x.deletedAt===item.deletedAt && x.label===item.label) : !data[key].some(x=>x.id===item.id)){
         if(item.tagId && idMap[item.tagId]) item.tagId = idMap[item.tagId];
@@ -2998,6 +3165,7 @@ function mergeData(d){
   for(const k in (d.remote||{})) if(!data.remote[k]) data.remote[k] = d.remote[k];
   for(const k in (d.office||{})) if(!data.office[k]) data.office[k] = d.office[k];
   for(const k in (d.leave||{})) if(!data.leave[k]) data.leave[k] = d.leave[k];
+  for(const k in (d.budgetEnv||{})) if(!data.budgetEnv[k]) data.budgetEnv[k] = d.budgetEnv[k];
   return added;
 }
 function importData(e){
@@ -3011,7 +3179,7 @@ function importData(e){
       snapshot(); /* filet de sécurité avant toute chose */
       const merge = confirm('Comment importer ?\n\nOK = FUSIONNER (recommandé) : ajoute le contenu du fichier sans rien effacer de ce qui existe.\n\nAnnuler = choisir le remplacement complet.');
       if(merge){
-        const n = mergeData(d);
+        const n = mergeData(normalizeData(d));
         persist(); renderAll();
         toast(n ? n + ' élément(s) ajouté(s) ✅ (rien n\'a été effacé)' : 'Rien de nouveau à ajouter — tout y était déjà ✅');
       } else {
@@ -4438,6 +4606,513 @@ function deleteProject(){
   persist(); closeOverlays(); renderProjects(); toast('Projet envoyé à la corbeille 🛡️');
 }
 
+/* ================== BUDGET COM (devis & compta) ==================
+   Tous les devis de la com, mois par mois : montant HT / TVA / TTC,
+   statut du devis, cases « fait », « facture reçue », « payé »,
+   pièces jointes (PDF ou photo), enveloppe annuelle, exports PDF et Excel. */
+const QSTATUS_LABEL = {ademander:'📝 À demander', demande:'📨 Demandé', recu:'📄 Reçu', valide:'✅ Validé / signé', refuse:'❌ Refusé'};
+const QSTATUS_TEXT = {ademander:'À demander', demande:'Demandé', recu:'Reçu', valide:'Validé / signé', refuse:'Refusé'};
+const QSTATUS_BG = {ademander:'#EFEAF9', demande:'var(--butter)', recu:'var(--sky)', valide:'var(--mint)', refuse:'var(--rose)'};
+const PAY_MODES = ['Virement','Carte bancaire','Prélèvement','Chèque','Espèces','Autre'];
+const FILE_KIND = {devis:'Devis', facture:'Facture', autre:'Document'};
+let budgetYear = Math.max(2026, new Date().getFullYear());
+let quoteProgFilter = 'all';
+let editingQuoteId = null;
+let pendingQuoteFiles = [];
+let selectedQuoteCatColor = PALETTE[4];
+
+const r2 = n => Math.round((n||0)*100)/100;
+function qHT(q){ const n = parseFloat(String(q.amount ?? '').replace(/\s/g,'').replace(',','.')); return isNaN(n) ? 0 : n; }
+function qRate(q){ return (q.vat===undefined || q.vat===null || q.vat==='') ? 20 : +q.vat; }
+function qTTC(q){ return r2(qHT(q)*(1+qRate(q)/100)); }
+function qTVA(q){ return r2(qTTC(q)-qHT(q)); }
+function qActive(q){ return q.status!=='refuse'; }
+function eur(n){ n = r2(n); return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR',minimumFractionDigits: n%1 ? 2 : 0, maximumFractionDigits:2}); }
+function qMonthName(m){ m = +m||0; return m ? MONTHS[m-1].charAt(0).toUpperCase()+MONTHS[m-1].slice(1) : 'Toute l’année'; }
+function quoteCatById(id){ return data.quoteCats.find(c=>c.id===id); }
+function quotesOfYear(){ return data.quotes.filter(q=>+q.year===budgetYear); }
+function sumBy(arr, f){ return r2(arr.reduce((s,q)=>s+f(q),0)); }
+function envelopeOf(y){ const n = parseFloat(String(data.budgetEnv[y] ?? '').replace(',','.')); return isNaN(n) ? 0 : n; }
+
+function navBudgetYear(dir){
+  budgetYear += dir;
+  document.getElementById('quoteMonthFilter').value = 'all';
+  renderBudget();
+}
+function setEnvelope(v){
+  data.budgetEnv[budgetYear] = v;
+  persistSoon();
+  renderBudgetStats();
+}
+function setQuoteProg(f){
+  quoteProgFilter = f;
+  document.querySelectorAll('[data-qprog]').forEach(b=>b.classList.toggle('active', b.dataset.qprog===f));
+  renderBudget();
+}
+function showBudgetMonth(m){
+  const sel = document.getElementById('quoteMonthFilter');
+  sel.value = sel.value===String(m) ? 'all' : String(m);
+  renderBudget();
+  if(sel.value!=='all') document.getElementById('quoteListCard').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---- Chiffres clés ---- */
+function renderBudgetStats(){
+  const all = quotesOfYear().filter(qActive);
+  const env = envelopeOf(budgetYear);
+  const ht = sumBy(all,qHT), ttc = sumBy(all,qTTC);
+  const validated = all.filter(q=>q.status==='valide');
+  const done = all.filter(q=>q.done);
+  const paid = all.filter(q=>q.paid);
+  const paidTTC = sumBy(paid,qTTC);
+  const toPay = r2(ttc - paidTTC);
+  const tiles = [
+    {lbl:'Total des devis', big:eur(ht)+' HT', sub:eur(ttc)+' TTC · '+all.length+' devis', bg:'var(--lilac)'},
+    {lbl:'Validés / signés', big:eur(sumBy(validated,qHT))+' HT', sub:validated.length+' devis signé'+(validated.length>1?'s':''), bg:'var(--sky)'},
+    {lbl:'Prestations faites', big:eur(sumBy(done,qHT))+' HT', sub:done.length+' / '+all.length+' cochées', bg:'var(--mint)'},
+    {lbl:'Déjà payé', big:eur(paidTTC)+' TTC', sub:paid.length+' paiement'+(paid.length>1?'s':''), bg:'var(--peach)'},
+    {lbl:'Reste à payer', big:eur(toPay)+' TTC', sub:(all.length-paid.length)+' devis non payé'+((all.length-paid.length)>1?'s':''), bg:'var(--butter)'},
+    env
+      ? {lbl:'Reste dans l’enveloppe', big:eur(env-ht)+' HT', sub: env-ht<0 ? '⚠️ enveloppe dépassée' : 'sur '+eur(env)+' HT prévus', bg: env-ht<0 ? 'var(--rose)' : 'var(--mint)'}
+      : {lbl:'Enveloppe annuelle', big:'À définir', sub:'renseigne-la juste au-dessus', bg:'#EFEAF9'}
+  ];
+  document.getElementById('budgetStats').innerHTML = tiles.map(t=>
+    `<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))">
+      <div class="lbl" style="margin:0 0 4px">${t.lbl}</div>
+      <div class="big mid">${t.big}</div>
+      <div class="sub">${t.sub}</div>
+    </div>`).join('');
+
+  const pr = document.getElementById('budgetProgress');
+  const doneHT = sumBy(done,qHT);
+  if(!ht && !env){ pr.innerHTML = ''; return; }
+  const base = Math.max(env, ht, 1);
+  const wDone = doneHT/base*100, wRest = (ht-doneHT)/base*100;
+  const txt = env
+    ? `${eur(ht)} HT engagés sur une enveloppe de ${eur(env)} HT (${Math.round(ht/env*100)} %), dont ${eur(doneHT)} déjà réalisés.`
+    : `${Math.round(ht ? doneHT/ht*100 : 0)} % du budget ${budgetYear} est déjà réalisé (${eur(doneHT)} sur ${eur(ht)} HT).`;
+  pr.innerHTML = `<div class="bar-track" style="height:22px;margin-top:14px;display:flex">
+      <span class="bar-fill" style="width:${wDone}%;border-radius:0;background:linear-gradient(90deg,var(--mint),#7FD9BD)"></span>
+      <span class="bar-fill" style="width:${wRest}%;border-radius:0"></span>
+    </div>
+    <p class="section-hint" style="margin:8px 0 0">${txt} <span style="white-space:nowrap">🟩 fait · 🟪 prévu pas encore fait${env?' · vide = reste de l’enveloppe':''}</span></p>`;
+}
+
+/* ---- Tableau mois par mois ---- */
+function renderBudgetMonthTable(){
+  const all = quotesOfYear().filter(qActive);
+  const sel = document.getElementById('quoteMonthFilter').value;
+  const now = new Date();
+  const rows = [];
+  for(let m=0; m<=12; m++){
+    const items = all.filter(q=>(+q.month||0)===m);
+    if(m===0 && !items.length) continue;
+    const paid = items.filter(q=>q.paid);
+    rows.push({
+      m, n:items.length,
+      ht:sumBy(items,qHT), tva:sumBy(items,qTVA), ttc:sumBy(items,qTTC),
+      val:sumBy(items.filter(q=>q.status==='valide'),qHT),
+      done:sumBy(items.filter(q=>q.done),qHT),
+      paid:sumBy(paid,qTTC),
+      topay:r2(sumBy(items,qTTC)-sumBy(paid,qTTC))
+    });
+  }
+  const tot = k => r2(rows.reduce((s,r)=>s+r[k],0));
+  const cell = v => v ? eur(v) : '<span class="z">—</span>';
+  document.getElementById('budgetMonthTable').innerHTML = `
+    <tr><th>Mois</th><th>Devis</th><th>Total HT</th><th>TVA</th><th>Total TTC</th><th>Validé HT</th><th>Fait HT</th><th>Payé TTC</th><th>Reste à payer TTC</th></tr>
+    ${rows.map(r=>{
+      const isNow = budgetYear===now.getFullYear() && r.m===now.getMonth()+1;
+      return `<tr class="clk ${sel===String(r.m)?'sel':''}" onclick="showBudgetMonth(${r.m})" title="Voir les devis de ${qMonthName(r.m)}">
+        <td>${qMonthName(r.m)}${isNow?'<span class="nowtag">ce mois-ci</span>':''}</td>
+        <td>${r.n || '<span class="z">—</span>'}</td>
+        <td><b>${cell(r.ht)}</b></td><td>${cell(r.tva)}</td><td>${cell(r.ttc)}</td>
+        <td>${cell(r.val)}</td><td>${cell(r.done)}</td><td>${cell(r.paid)}</td>
+        <td>${r.topay ? '<b>'+eur(r.topay)+'</b>' : '<span class="z">—</span>'}</td>
+      </tr>`;
+    }).join('')}
+    <tr class="tot"><td>Total ${budgetYear}</td><td>${tot('n')}</td><td>${eur(tot('ht'))}</td><td>${eur(tot('tva'))}</td><td>${eur(tot('ttc'))}</td><td>${eur(tot('val'))}</td><td>${eur(tot('done'))}</td><td>${eur(tot('paid'))}</td><td>${eur(tot('topay'))}</td></tr>`;
+}
+
+/* ---- Liste des devis (groupée par mois) ---- */
+function filteredQuotes(){
+  let qs = quotesOfYear();
+  const mf = document.getElementById('quoteMonthFilter').value;
+  if(mf!=='all') qs = qs.filter(q=>String(+q.month||0)===mf);
+  const sf = document.getElementById('quoteStatusFilter').value;
+  if(sf!=='all') qs = qs.filter(q=>q.status===sf);
+  const cf = document.getElementById('quoteCatFilter').value;
+  if(cf!=='all') qs = qs.filter(q=>q.catId===cf);
+  if(quoteProgFilter==='afaire') qs = qs.filter(q=>!q.done);
+  else if(quoteProgFilter==='fait') qs = qs.filter(q=>q.done);
+  else if(quoteProgFilter==='apayer') qs = qs.filter(q=>qActive(q) && !q.paid);
+  else if(quoteProgFilter==='paye') qs = qs.filter(q=>q.paid);
+  return qs.sort((a,b)=>(+a.month||0)-(+b.month||0) || (a.name||'').localeCompare(b.name||''));
+}
+function quoteRow(q){
+  const c = quoteCatById(q.catId);
+  const files = q.files||[];
+  const sub = [q.supplier ? esc(q.supplier) : '', q.number ? 'Devis n° '+esc(q.number) : '', q.invoiceNo ? 'Facture n° '+esc(q.invoiceNo) : ''].filter(Boolean).join(', ');
+  return `<div class="post-row ${q.status==='refuse'?'q-refused':''}" onclick="openQuoteModal('${q.id}')">
+    <span class="post-title">${esc(q.name)}${sub?`<br><span class="qsub">${sub}</span>`:''}</span>
+    ${c?`<span class="pill" style="background:${c.color}">${esc(c.name)}</span>`:''}
+    <span class="pill" style="background:${QSTATUS_BG[q.status]||'#EFEAF9'}">${QSTATUS_LABEL[q.status]||q.status}</span>
+    ${q.invoiced?'<span class="pill" style="background:#EFEAF9">🧾 Facture reçue</span>':''}
+    ${q.paid && q.paidAt?`<span class="pill" style="background:#FFE3D5">💳 ${fmtDate(q.paidAt)}${q.payMode?', '+esc(q.payMode):''}</span>`:''}
+    ${files.length?`<span class="pill" style="background:var(--sky)">📎 ${files.length} pièce${files.length>1?'s':''}</span>`:''}
+    <span class="qtoggles">
+      <button class="qtoggle ${q.done?'on':''}" role="checkbox" aria-checked="${q.done?'true':'false'}" onclick="event.stopPropagation();toggleQuoteFlag('${q.id}','done')">${q.done?'☑':'☐'} Fait</button>
+      <button class="qtoggle pay ${q.paid?'on':''}" role="checkbox" aria-checked="${q.paid?'true':'false'}" onclick="event.stopPropagation();toggleQuoteFlag('${q.id}','paid')">${q.paid?'☑':'☐'} Payé</button>
+    </span>
+    <span class="qamt"><b>${eur(qHT(q))} HT</b><small>${eur(qTTC(q))} TTC</small></span>
+  </div>`;
+}
+function renderQuoteList(){
+  const qs = filteredQuotes();
+  const all = quotesOfYear();
+  const mf = document.getElementById('quoteMonthFilter').value;
+  document.getElementById('quoteListTitle').textContent = mf==='all' ? 'toute l’année ' + budgetYear : qMonthName(mf) + ' ' + budgetYear;
+  const list = document.getElementById('quoteList');
+  if(!qs.length){
+    list.innerHTML = `<p class="empty-msg">${all.length ? 'Aucun devis ne correspond à ces filtres.' : 'Aucun devis pour ' + budgetYear + ' — ajoute le premier avec « + Nouveau devis » 🌱'}</p>`;
+    return;
+  }
+  const groups = {};
+  qs.forEach(q=>{ const m = +q.month||0; (groups[m] = groups[m] || []).push(q); });
+  list.innerHTML = Object.keys(groups).map(Number).sort((a,b)=>a-b).map(m=>{
+    const items = groups[m];
+    const act = items.filter(qActive);
+    return `<div class="qmonth-head"><h4>${qMonthName(m)}</h4>
+        <span>${items.length} devis, ${eur(sumBy(act,qHT))} HT (${eur(sumBy(act,qTTC))} TTC)</span></div>
+      ${items.map(quoteRow).join('')}`;
+  }).join('')
+  + `<div class="qmonth-head" style="justify-content:flex-end"><span>Total affiché (hors refusés) :</span>
+      <span class="qamt" style="min-width:0"><b>${eur(sumBy(qs.filter(qActive),qHT))} HT</b><small>${eur(sumBy(qs.filter(qActive),qTTC))} TTC</small></span></div>`;
+}
+
+/* ---- Par catégorie ---- */
+function renderBudgetCatTable(){
+  const all = quotesOfYear().filter(qActive);
+  const groups = data.quoteCats.map(c=>({name:c.name, color:c.color, items:all.filter(q=>q.catId===c.id)}));
+  const orphans = all.filter(q=>!quoteCatById(q.catId));
+  if(orphans.length) groups.push({name:'Sans catégorie', color:'#DDD6EC', items:orphans});
+  const rows = groups.filter(g=>g.items.length).map(g=>({...g, ht:sumBy(g.items,qHT), ttc:sumBy(g.items,qTTC), done:sumBy(g.items.filter(q=>q.done),qHT), paid:sumBy(g.items.filter(q=>q.paid),qTTC)})).sort((a,b)=>b.ht-a.ht);
+  const total = sumBy(all,qHT);
+  const el = document.getElementById('budgetCatTable');
+  if(!rows.length){ el.innerHTML = '<tr><td style="text-align:center;border-radius:14px" class="z">Aucun devis pour l’instant</td></tr>'; return; }
+  el.innerHTML = `<tr><th>Catégorie</th><th>Devis</th><th>Total HT</th><th>Total TTC</th><th>Fait HT</th><th>Payé TTC</th><th>Part du budget</th></tr>
+    ${rows.map(r=>{
+      const pct = total ? Math.round(r.ht/total*100) : 0;
+      return `<tr><td><span class="ndot" style="background:${r.color}"></span>${esc(r.name)}</td>
+        <td>${r.items.length}</td><td><b>${eur(r.ht)}</b></td><td>${eur(r.ttc)}</td><td>${r.done?eur(r.done):'<span class="z">—</span>'}</td><td>${r.paid?eur(r.paid):'<span class="z">—</span>'}</td>
+        <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="bar-track" style="width:90px;height:12px;display:inline-block"><span class="bar-fill" style="display:block;width:${pct}%"></span></span>${pct} %</span></td></tr>`;
+    }).join('')}`;
+}
+
+function renderBudget(){
+  if(!document.getElementById('budgetYearTitle')) return;
+  document.getElementById('budgetYearTitle').textContent = 'Budget com ' + budgetYear;
+  const envInput = document.getElementById('b-envelope');
+  if(document.activeElement !== envInput) envInput.value = data.budgetEnv[budgetYear] ?? '';
+
+  const mf = document.getElementById('quoteMonthFilter');
+  const curM = mf.value || 'all';
+  mf.innerHTML = '<option value="all">Tous les mois</option><option value="0">Toute l’année (sans mois précis)</option>'
+    + MONTHS.map((m,i)=>`<option value="${i+1}">${qMonthName(i+1)}</option>`).join('');
+  mf.value = [...mf.options].some(o=>o.value===curM) ? curM : 'all';
+
+  const cf = document.getElementById('quoteCatFilter');
+  const curC = cf.value;
+  cf.innerHTML = '<option value="all">Toutes les catégories</option>' + data.quoteCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  if([...cf.options].some(o=>o.value===curC)) cf.value = curC;
+
+  renderBudgetStats();
+  renderBudgetMonthTable();
+  renderQuoteList();
+  renderBudgetCatTable();
+  renderQuoteCatManager();
+}
+function toggleQuoteFlag(id, flag){
+  const q = data.quotes.find(x=>x.id===id); if(!q) return;
+  q[flag] = !q[flag];
+  if(flag==='paid') q.paidAt = q.paid ? (q.paidAt || new Date().toISOString().slice(0,10)) : '';
+  if(flag==='done') q.doneAt = q.done ? new Date().toISOString().slice(0,10) : '';
+  if(q[flag]) confetti();
+  persist(); renderBudget();
+  toast(flag==='done' ? (q.done ? 'Prestation cochée comme faite ✅' : 'Remis en « pas encore fait »')
+                      : (q.paid ? 'Devis marqué comme payé 💳' : 'Remis en « à payer »'));
+}
+
+/* ---- Fiche devis ---- */
+function openQuoteModal(id=null){
+  editingQuoteId = id;
+  document.getElementById('q-cat').innerHTML = '<option value="">— Aucune —</option>' + data.quoteCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  document.getElementById('q-month').innerHTML = '<option value="">Toute l’année (sans mois précis)</option>' + MONTHS.map((m,i)=>`<option value="${i+1}">${qMonthName(i+1)}</option>`).join('');
+  document.getElementById('q-payMode').innerHTML = '<option value="">—</option>' + PAY_MODES.map(p=>`<option>${p}</option>`).join('');
+  const del = document.getElementById('deleteQuoteBtn');
+  const set = (i,v) => document.getElementById(i).value = v ?? '';
+  const chk = (i,v) => document.getElementById(i).checked = !!v;
+  if(id){
+    const q = data.quotes.find(x=>x.id===id); if(!q) return;
+    document.getElementById('quoteModalTitle').textContent = 'Modifier le devis';
+    set('q-name', q.name); set('q-supplier', q.supplier); set('q-cat', q.catId); set('q-status', q.status || 'recu');
+    set('q-number', q.number); set('q-date', q.qdate); set('q-amount', q.amount); set('q-vat', String(qRate(q)));
+    set('q-month', q.month ? String(+q.month) : ''); set('q-year', q.year || budgetYear);
+    chk('q-done', q.done); chk('q-invoiced', q.invoiced); chk('q-paid', q.paid);
+    set('q-invoiceNo', q.invoiceNo); set('q-paidAt', q.paidAt); set('q-payMode', q.payMode);
+    set('q-notes', q.notes); set('q-link', q.link);
+    pendingQuoteFiles = (q.files||[]).map(f=>Object.assign({}, f));
+    del.style.display = 'inline-block';
+  } else {
+    document.getElementById('quoteModalTitle').textContent = 'Nouveau devis';
+    ['q-name','q-supplier','q-number','q-date','q-amount','q-invoiceNo','q-paidAt','q-payMode','q-notes','q-link'].forEach(i=>set(i,''));
+    const cf = document.getElementById('quoteCatFilter').value;
+    set('q-cat', cf!=='all' ? cf : '');
+    set('q-status', 'recu'); set('q-vat', '20');
+    const mf = document.getElementById('quoteMonthFilter').value;
+    const now = new Date();
+    set('q-month', (mf!=='all' && mf!=='0') ? mf : (budgetYear===now.getFullYear() ? String(now.getMonth()+1) : ''));
+    set('q-year', budgetYear);
+    chk('q-done', false); chk('q-invoiced', false); chk('q-paid', false);
+    pendingQuoteFiles = [];
+    del.style.display = 'none';
+  }
+  updateQuoteTTC();
+  renderQuoteFiles();
+  document.getElementById('quoteOverlay').classList.add('open');
+  document.getElementById('q-name').focus();
+}
+function updateQuoteTTC(){
+  const q = {amount: document.getElementById('q-amount').value, vat: document.getElementById('q-vat').value};
+  document.getElementById('q-ttc').textContent = qHT(q) ? eur(qTTC(q)) + '  (TVA ' + eur(qTVA(q)) + ')' : '—';
+}
+function saveQuote(){
+  const name = document.getElementById('q-name').value.trim();
+  if(!name){ toast('Donne un nom à ton devis 🧾'); return; }
+  const v = i => document.getElementById(i).value;
+  const c = i => document.getElementById(i).checked;
+  const old = editingQuoteId ? data.quotes.find(x=>x.id===editingQuoteId) : null;
+  const paid = c('q-paid');
+  const quote = {
+    id: editingQuoteId || uid(), name,
+    supplier: v('q-supplier').trim(), catId: v('q-cat'), status: v('q-status'),
+    number: v('q-number').trim(), qdate: v('q-date'),
+    amount: v('q-amount'), vat: v('q-vat'),
+    month: v('q-month'), year: +v('q-year') || budgetYear,
+    done: c('q-done'), doneAt: c('q-done') ? ((old && old.doneAt) || new Date().toISOString().slice(0,10)) : '',
+    invoiced: c('q-invoiced'), invoiceNo: v('q-invoiceNo').trim(),
+    paid, paidAt: paid ? (v('q-paidAt') || new Date().toISOString().slice(0,10)) : '', payMode: v('q-payMode'),
+    notes: v('q-notes'), link: v('q-link').trim(),
+    files: pendingQuoteFiles.map(f=>Object.assign({}, f)),
+    createdAt: old ? old.createdAt : new Date().toISOString().slice(0,10)
+  };
+  if(editingQuoteId) data.quotes = data.quotes.map(q=>q.id===editingQuoteId?quote:q);
+  else data.quotes.push(quote);
+  if((quote.done && !(old && old.done)) || (quote.paid && !(old && old.paid))) confetti();
+  budgetYear = quote.year;
+  persist(); closeOverlays(); renderBudget(); toast('Devis enregistré 💶');
+}
+function deleteQuote(){
+  const q = data.quotes.find(x=>x.id===editingQuoteId); if(!q) return;
+  data.trash.unshift({kind:'quote', label:q.name, deletedAt:new Date().toISOString(), item:q});
+  data.quotes = data.quotes.filter(x=>x.id!==editingQuoteId);
+  persist(); closeOverlays(); renderBudget(); toast('Devis envoyé à la corbeille 🛡️');
+}
+
+/* ---- Pièces jointes : PDF ou photo ---- */
+function addQuoteFiles(e){
+  const files = Array.from(e.target.files || []);
+  e.target.value = '';
+  const kind = document.getElementById('q-filekind').value;
+  files.forEach(file=>{
+    if(file.type==='application/pdf'){
+      if(file.size > 8*1024*1024){ toast('« ' + file.name + ' » est trop lourd (8 Mo max) 😅'); return; }
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        pendingQuoteFiles.push({id:uid(), name:file.name, type:'application/pdf', kind, data:ev.target.result});
+        renderQuoteFiles(); toast('PDF ajouté 📄');
+      };
+      reader.readAsDataURL(file);
+    } else if(file.type.startsWith('image/')){
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        const img = new Image();
+        img.onload = ()=>{
+          const MAX = 1600; /* assez grand pour que le devis reste lisible */
+          const scale = Math.min(1, MAX/Math.max(img.width, img.height));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(img.width*scale); cv.height = Math.round(img.height*scale);
+          const ctx = cv.getContext('2d');
+          ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+          ctx.drawImage(img,0,0,cv.width,cv.height);
+          const nm = file.name.replace(/\.[^.]+$/,'') + '.jpg';
+          pendingQuoteFiles.push({id:uid(), name:nm, type:'image/jpeg', kind, data:cv.toDataURL('image/jpeg', .85)});
+          renderQuoteFiles(); toast('Photo ajoutée 🖼️');
+        };
+        img.onerror = ()=>toast('Cette image ne peut pas être lue (format HEIC ?) — essaie en JPG ou PNG');
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      toast('« ' + file.name + ' » : seuls les PDF et les photos sont acceptés');
+    }
+  });
+}
+function setQuoteFileKind(fid, kind){
+  const f = pendingQuoteFiles.find(x=>x.id===fid); if(f) f.kind = kind;
+}
+function removeQuoteFile(fid){
+  pendingQuoteFiles = pendingQuoteFiles.filter(x=>x.id!==fid);
+  renderQuoteFiles();
+}
+function renderQuoteFiles(){
+  const box = document.getElementById('q-files');
+  if(!pendingQuoteFiles.length){
+    box.innerHTML = '<p class="section-hint" style="margin:10px 0 0">Aucune pièce jointe. Tu peux ajouter le devis et la facture, en PDF ou en photo prise avec ton téléphone.</p>';
+    return;
+  }
+  box.innerHTML = pendingQuoteFiles.map(f=>`
+    <div class="qfile">
+      ${f.type.startsWith('image/') ? `<img src="${f.data}" alt="" onclick="openQuoteFile('${f.id}')" title="Ouvrir">` : `<span class="ic" onclick="openQuoteFile('${f.id}')" title="Ouvrir">📄</span>`}
+      <span class="nm" title="${escAttr(f.name)}">${esc(f.name)}</span>
+      <select onchange="setQuoteFileKind('${f.id}', this.value)" aria-label="Type de document">
+        ${Object.entries(FILE_KIND).map(([k,l])=>`<option value="${k}" ${f.kind===k?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <button type="button" class="btn small" onclick="openQuoteFile('${f.id}')">Ouvrir</button>
+      <a class="btn small" href="${f.data}" download="${escAttr(f.name)}" style="text-decoration:none">⬇️</a>
+      <button type="button" class="tiny-del" onclick="removeQuoteFile('${f.id}')" aria-label="Retirer">✕</button>
+    </div>`).join('');
+}
+function openQuoteFile(fid){
+  const f = pendingQuoteFiles.find(x=>x.id===fid); if(!f) return;
+  fetch(f.data).then(r=>r.blob()).then(b=>{
+    const u = URL.createObjectURL(b);
+    const w = window.open(u, '_blank');
+    if(!w) toast('Autorise les pop-ups pour ouvrir le fichier, ou utilise ⬇️');
+    setTimeout(()=>URL.revokeObjectURL(u), 120000);
+  }).catch(()=>toast('Impossible d’ouvrir ce fichier 😬'));
+}
+
+/* ---- Catégories ---- */
+function toggleQuoteCatManager(){
+  const box = document.getElementById('quoteCatManager');
+  const open = box.style.display !== 'none';
+  box.style.display = open ? 'none' : 'block';
+  document.getElementById('qcatToggleBtn').classList.toggle('active', !open);
+  if(!open) renderQuoteCatManager();
+}
+function renderQuoteCatManager(){
+  const box = document.getElementById('quoteCatManager');
+  if(!box || box.style.display==='none') return;
+  box.innerHTML = `<div class="card" style="box-shadow:var(--clay-in);background:var(--surface-2)">
+    ${data.quoteCats.map(c=>`<div class="tag-row"><span class="swatch" style="background:${c.color}"></span><span class="name">${esc(c.name)}</span>
+      <button class="btn danger small" onclick="removeQuoteCat('${c.id}')">Corbeille</button></div>`).join('') || '<p class="empty-msg">Aucune catégorie</p>'}
+    <label>Nouvelle catégorie</label>
+    <input type="text" id="newQuoteCatName" placeholder="ex: Salons, Sponsoring, Radio locale…">
+    <label>Couleur</label>
+    <div class="color-picks" id="qcatColorPicks"></div>
+    <div class="modal-actions"><button class="btn primary" onclick="addQuoteCat()">+ Ajouter la catégorie</button></div>
+  </div>`;
+  document.getElementById('qcatColorPicks').innerHTML = PALETTE.map(c=>
+    `<button style="background:${c}" class="${c===selectedQuoteCatColor?'sel':''}" onclick="selectedQuoteCatColor='${c}';renderQuoteCatManager()" aria-label="Couleur ${c}"></button>`).join('');
+}
+function addQuoteCat(){
+  const name = document.getElementById('newQuoteCatName').value.trim();
+  if(!name){ toast('Donne un nom à la catégorie 🏷️'); return; }
+  data.quoteCats.push({id:uid(), name, color:selectedQuoteCatColor});
+  persist(); renderBudget(); toast('Catégorie ajoutée 🎨');
+}
+function removeQuoteCat(id){
+  const c = data.quoteCats.find(x=>x.id===id); if(!c) return;
+  if(data.quotes.some(q=>q.catId===id) && !confirm(`La catégorie « ${c.name} » est utilisée par des devis. L'envoyer à la corbeille quand même ?`)) return;
+  data.trash.unshift({kind:'quotecat', label:c.name, deletedAt:new Date().toISOString(), item:c});
+  data.quoteCats = data.quoteCats.filter(x=>x.id!==id);
+  persist(); renderBudget(); toast('Catégorie envoyée à la corbeille 🛡️');
+}
+
+/* ---- Export Excel (CSV lisible par Excel) ---- */
+function exportBudgetCSV(){
+  const all = quotesOfYear().sort((a,b)=>(+a.month||0)-(+b.month||0) || (a.name||'').localeCompare(b.name||''));
+  if(!all.length){ toast('Aucun devis à exporter pour ' + budgetYear + ' 🌱'); return; }
+  const num = n => String(r2(n)).replace('.',',');
+  const txt = v => '"' + String(v ?? '').replace(/"/g,'""').replace(/\r?\n/g,' ') + '"';
+  const yn = b => b ? 'Oui' : 'Non';
+  const head = ['Année','Mois','Objet','Prestataire','Catégorie','Statut du devis','N° devis','Date devis','Montant HT','TVA %','TVA €','Montant TTC','Prestation faite','Facture reçue','N° facture','Payé','Date paiement','Mode de paiement','Pièces jointes','Notes'];
+  const lines = [head.map(txt).join(';')];
+  all.forEach(q=>{
+    const c = quoteCatById(q.catId);
+    lines.push([
+      txt(q.year), txt(qMonthName(q.month)), txt(q.name), txt(q.supplier), txt(c?c.name:''), txt(QSTATUS_TEXT[q.status]||q.status),
+      txt(q.number), txt(q.qdate ? fmtDate(q.qdate) : ''), num(qHT(q)), num(qRate(q)), num(qTVA(q)), num(qTTC(q)),
+      txt(yn(q.done)), txt(yn(q.invoiced)), txt(q.invoiceNo), txt(yn(q.paid)), txt(q.paidAt ? fmtDate(q.paidAt) : ''), txt(q.payMode),
+      txt((q.files||[]).map(f=>FILE_KIND[f.kind]+' : '+f.name).join(' | ')), txt(q.notes)
+    ].join(';'));
+  });
+  const act = all.filter(qActive);
+  lines.push('');
+  lines.push([txt('TOTAL (hors refusés)'),'','','','','','','',num(sumBy(act,qHT)),'',num(sumBy(act,qTVA)),num(sumBy(act,qTTC))].join(';'));
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'budget-com-' + budgetYear + '.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  toast('Fichier Excel téléchargé 📊');
+}
+
+/* ---- Export PDF ---- */
+function exportBudgetPDF(){
+  const all = quotesOfYear().sort((a,b)=>(+a.month||0)-(+b.month||0) || (a.name||'').localeCompare(b.name||''));
+  if(!all.length){ toast('Aucun devis à exporter pour ' + budgetYear + ' 🌱'); return; }
+  const act = all.filter(qActive);
+  const env = envelopeOf(budgetYear);
+  const ht = sumBy(act,qHT), ttc = sumBy(act,qTTC), paidTTC = sumBy(act.filter(q=>q.paid),qTTC);
+  /* mois par mois */
+  let monthRows = '';
+  for(let m=0; m<=12; m++){
+    const it = act.filter(q=>(+q.month||0)===m);
+    if(!it.length) continue;
+    monthRows += `<tr><td>${qMonthName(m)}</td><td class="r">${it.length}</td><td class="r">${eur(sumBy(it,qHT))}</td><td class="r">${eur(sumBy(it,qTVA))}</td><td class="r">${eur(sumBy(it,qTTC))}</td><td class="r">${eur(sumBy(it.filter(q=>q.done),qHT))}</td><td class="r">${eur(sumBy(it.filter(q=>q.paid),qTTC))}</td></tr>`;
+  }
+  /* catégories */
+  const groups = data.quoteCats.map(c=>({name:c.name, items:act.filter(q=>q.catId===c.id)}));
+  const orphans = act.filter(q=>!quoteCatById(q.catId));
+  if(orphans.length) groups.push({name:'Sans catégorie', items:orphans});
+  const catRows = groups.filter(g=>g.items.length).map(g=>`<tr><td>${esc(g.name)}</td><td class="r">${g.items.length}</td><td class="r">${eur(sumBy(g.items,qHT))}</td><td class="r">${eur(sumBy(g.items,qTTC))}</td><td class="r">${ht?Math.round(sumBy(g.items,qHT)/ht*100):0} %</td></tr>`).join('');
+  /* détail groupé par mois */
+  const byMonth = {};
+  all.forEach(q=>{ const m = +q.month||0; (byMonth[m] = byMonth[m] || []).push(q); });
+  const detail = Object.keys(byMonth).map(Number).sort((a,b)=>a-b).map(m=>`
+    <h3>${qMonthName(m)}</h3>
+    <table><tr><th>Objet</th><th>Prestataire</th><th>Catégorie</th><th>Statut</th><th class="r">HT</th><th class="r">TTC</th><th>Fait</th><th>Payé</th></tr>
+    ${byMonth[m].map(q=>{ const c = quoteCatById(q.catId); return `<tr>
+      <td><strong>${esc(q.name)}</strong>${q.number?`<br><span style="color:#888;font-size:11px">Devis n° ${esc(q.number)}</span>`:''}</td>
+      <td>${esc(q.supplier)||'—'}</td><td>${c?esc(c.name):'—'}</td><td>${QSTATUS_TEXT[q.status]||'—'}</td>
+      <td class="r">${eur(qHT(q))}</td><td class="r">${eur(qTTC(q))}</td>
+      <td>${q.done?'☑':'☐'}</td><td>${q.paid?'☑'+(q.paidAt?' '+fmtDate(q.paidAt):''):'☐'}</td></tr>`; }).join('')}
+    </table>`).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h1>Budget communication ${budgetYear}</h1>
+    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')} · montants hors devis refusés</p>
+    <div class="pstats">
+      ${env?`<div><b>${eur(env)}</b>enveloppe HT</div>`:''}
+      <div><b>${eur(ht)}</b>total HT</div>
+      <div><b>${eur(ttc)}</b>total TTC</div>
+      <div><b>${eur(paidTTC)}</b>payé TTC</div>
+      <div><b>${eur(r2(ttc-paidTTC))}</b>reste à payer TTC</div>
+      ${env?`<div><b>${eur(env-ht)}</b>reste enveloppe HT</div>`:''}
+    </div>
+    <h2>Mois par mois</h2>
+    <table><tr><th>Mois</th><th class="r">Devis</th><th class="r">HT</th><th class="r">TVA</th><th class="r">TTC</th><th class="r">Fait HT</th><th class="r">Payé TTC</th></tr>
+      ${monthRows}
+      <tr class="tot"><td>Total</td><td class="r">${act.length}</td><td class="r">${eur(ht)}</td><td class="r">${eur(sumBy(act,qTVA))}</td><td class="r">${eur(ttc)}</td><td class="r">${eur(sumBy(act.filter(q=>q.done),qHT))}</td><td class="r">${eur(paidTTC)}</td></tr></table>
+    <h2>Par catégorie</h2>
+    <table><tr><th>Catégorie</th><th class="r">Devis</th><th class="r">HT</th><th class="r">TTC</th><th class="r">Part</th></tr>${catRows}</table>
+    <h2>Détail des devis</h2>
+    ${detail}`;
+  window.print();
+}
+
 /* ================== RENDER GLOBAL ================== */
 function renderAll(){
   /* Chaque bloc est isolé : si l'un d'eux plante sur une donnée inattendue,
@@ -4457,6 +5132,7 @@ function renderAll(){
   safe('notes', renderNotes);
   safe('événementiel', renderEvtAll);
   safe('projets', renderProjects);
+  safe('budget com', renderBudget);
 }
 function initialPage(){
   const last = store.get('studioEditoLastPage');
@@ -4499,7 +5175,7 @@ function setCloudStatus(ok, msg){
   el.title = (el.title||'').split(' | ')[0] + ' | Cloud : ' + (ok ? 'synchronisé' : msg);
 }
 
-/* ☁️ Le cloud ne reçoit que le TEXTE (publis, tâches, idées, agenda…), sans visuels ni PDF.
+/* ☁️ Le cloud ne reçoit que le TEXTE (publis, tâches, idées, agenda, devis…), sans visuels ni PDF.
    Avant, chaque enregistrement renvoyait plusieurs Mo d'images toutes les secondes :
    la base gratuite (500 Mo) se remplissait de vieilles versions et passait en lecture seule.
    Les visuels et PDF restent enregistrés sur l'appareil (IndexedDB). */
@@ -4516,7 +5192,7 @@ function reattachBlobs(nd, from){
       if(c && !empty(c[field])) it[field] = c[field];
     }
   });
-  re('posts','img'); re('tasks','img'); re('projects','images'); re('vendors','pdfData');
+  re('posts','img'); re('tasks','img'); re('projects','images'); re('vendors','pdfData'); re('quotes','files');
   return nd;
 }
 
@@ -4581,7 +5257,7 @@ async function cloudLoad(){
     const localAt = data._savedAt || '';
     if(!localAt || !cloudAt){
       /* ancienne version sans date : on fusionne pour ne rien perdre, puis on renvoie */
-      const added = mergeData(cloud);
+      const added = mergeData(normalizeData(cloud));
       persist(); renderAll();
       if(added) toast('☁️ ' + added + ' élément(s) récupéré(s) depuis le cloud');
       return;
@@ -4678,376 +5354,6 @@ window.addEventListener('beforeunload', flushNow);
   REPORT_FIELDS.forEach(id=>{ const el = document.getElementById(id); if(el) el.addEventListener('input', reportInput); });
   initialPage();
   cloudLoad();
-})();
-
-
-  const QUOTE_CATS_DEFAULT = [
-  {id:'qc1', name:'Réseaux sociaux & pub', color:'#FFC2DC'},
-  {id:'qc2', name:'Print & impression', color:'#FFE29A'},
-  {id:'qc3', name:'Vidéo & photo', color:'#A9D3FF'},
-  {id:'qc4', name:'Événementiel', color:'#FFB9A3'},
-  {id:'qc5', name:'Goodies & objets', color:'#A8E6C9'},
-  {id:'qc6', name:'Site web & outils', color:'#CBB9F5'},
-  {id:'qc7', name:'Autre', color:'#F5CBA7'}
-];
-function ensureQuotes(){
-  if(!Array.isArray(data.quotes)) data.quotes = [];
-  if(!Array.isArray(data.quoteCats)) data.quoteCats = JSON.parse(JSON.stringify(QUOTE_CATS_DEFAULT));
-}
-let budgetYear = Math.max(2026, new Date().getFullYear());
-let quoteDoneFilter = 'all';
-let editingQuoteId = null;
-let currentQuotePdf = {data:null, name:null};
-let selectedQuoteCatColor = PALETTE[4];
-function quoteCatById(id){ return (data.quoteCats||[]).find(c=>c.id===id); }
-function qAmount(q){ const n = parseFloat(String(q.amount ?? '').replace(/\s/g,'').replace(',','.')); return isNaN(n) ? 0 : n; }
-function eur(n){ n = n || 0; return n.toLocaleString('fr-FR', {style:'currency', currency:'EUR', minimumFractionDigits: n%1 ? 2 : 0, maximumFractionDigits: 2}); }
-function qMonthLabel(q){ return q.month ? MONTHS[+q.month-1] : 'Toute l’année'; }
- 
-function navBudgetYear(dir){ budgetYear += dir; renderBudget(); }
-function setQuoteDoneFilter(f){
-  quoteDoneFilter = f;
-  document.querySelectorAll('[data-qdone]').forEach(b=>b.classList.toggle('active', b.dataset.qdone===f));
-  renderBudget();
-}
-function budgetBar(name, t, d, max, color){
-  return `<div class="bar-row budget-bar" style="cursor:default" title="${escAttr(name)} : ${eur(d)} fait sur ${eur(t)}">
-    <span class="bar-lbl">${color?`<span class="ndot" style="background:${color};margin-right:5px"></span>`:''}${esc(name)}</span>
-    <span class="bar-track" style="display:flex"><span class="bar-fill done-part" style="width:${d/max*100}%;border-radius:0"></span><span class="bar-fill" style="width:${(t-d)/max*100}%;border-radius:0"></span></span>
-    <span class="bar-val">${t?eur(t):''}</span>
-  </div>`;
-}
-function renderBudget(){
-  const title = document.getElementById('budgetYearTitle');
-  if(!title) return;
-  ensureQuotes();
-  title.textContent = 'Budget com ' + budgetYear;
- 
-  const cf = document.getElementById('quoteCatFilter');
-  const cur = cf.value;
-  cf.innerHTML = '<option value="all">Toutes les catégories</option>' + data.quoteCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  if([...cf.options].some(o=>o.value===cur)) cf.value = cur;
- 
-  const all = data.quotes.filter(q=>+q.year===budgetYear);
-  const sum = arr => arr.reduce((s,q)=>s+qAmount(q),0);
-  const doneList = all.filter(q=>q.done);
-  const total = sum(all), done = sum(doneList), left = total - done;
-  const stats = [
-    [eur(total), 'budget total', 'var(--lilac)'],
-    [eur(done), 'déjà fait', 'var(--mint)'],
-    [eur(left), 'reste à faire', 'var(--butter)'],
-    [doneList.length + ' / ' + all.length, 'devis cochés', 'var(--sky)']
-  ];
-  document.getElementById('budgetStats').innerHTML = stats.map(s=>
-    `<div class="stat" style="background:linear-gradient(135deg,${s[2]},var(--surface-2))"><div class="big">${s[0]}</div><div class="lbl">${s[1]}</div></div>`).join('');
-  const pct = total ? Math.round(done/total*100) : 0;
-  document.getElementById('budgetProgress').innerHTML = total
-    ? `<div class="bar-track" style="height:22px;margin-top:14px"><span class="bar-fill done-part" style="display:block;width:${pct}%"></span></div>
-       <p class="section-hint" style="margin:8px 0 0">${pct} % du budget ${budgetYear} est déjà réalisé</p>`
-    : '';
- 
-  /* liste des devis */
-  let qs = all.slice();
-  if(quoteDoneFilter==='fait') qs = qs.filter(q=>q.done);
-  else if(quoteDoneFilter==='afaire') qs = qs.filter(q=>!q.done);
-  if(cf.value!=='all') qs = qs.filter(q=>q.catId===cf.value);
-  qs.sort((a,b)=>(+a.month||0)-(+b.month||0) || (a.name||'').localeCompare(b.name||''));
-  const list = document.getElementById('quoteList');
-  if(!qs.length){
-    list.innerHTML = `<p class="empty-msg">${all.length ? 'Aucun devis ne correspond à ces filtres.' : 'Aucun devis pour ' + budgetYear + ' — ajoute le premier avec « + Nouveau devis » 🌱'}</p>`;
-  } else {
-    list.innerHTML = qs.map(q=>{
-      const c = quoteCatById(q.catId);
-      return `<div class="post-row ${q.done?'q-done':''}" onclick="openQuoteModal('${q.id}')">
-        <button class="day-check ${q.done?'on':''}" role="checkbox" aria-checked="${q.done?'true':'false'}" aria-label="Marquer comme fait" title="Cocher quand c'est fait" onclick="event.stopPropagation();toggleQuoteDone('${q.id}')">${q.done?'✓':''}</button>
-        <span class="post-title">${esc(q.name)}${q.supplier?`<br><span style="font-size:12px;font-weight:600;color:var(--muted)">${esc(q.supplier)}</span>`:''}</span>
-        ${c?`<span class="pill" style="background:${c.color}">${esc(c.name)}</span>`:''}
-        <span class="pill" style="background:#EFEAF9">📅 ${qMonthLabel(q)}</span>
-        ${q.pdfData?`<a class="pill" style="background:var(--sky);text-decoration:none" href="${q.pdfData}" download="${escAttr(q.pdfName||'devis.pdf')}" target="_blank" onclick="event.stopPropagation()">📄 Devis</a>`:''}
-        ${q.link?`<a class="pill" style="background:#EFEAF9" href="${escAttr(q.link)}" target="_blank" onclick="event.stopPropagation()">🔗</a>`:''}
-        <span class="q-amount">${eur(qAmount(q))}</span>
-      </div>`;
-    }).join('') + `<div class="q-total">Total affiché <span class="q-amount">${eur(sum(qs))}</span></div>`;
-  }
- 
-  /* répartition par catégorie */
-  const groups = data.quoteCats.map(c=>({name:c.name, color:c.color, items:all.filter(q=>q.catId===c.id)}));
-  const orphans = all.filter(q=>!quoteCatById(q.catId));
-  if(orphans.length) groups.push({name:'Sans catégorie', color:'#DDD6EC', items:orphans});
-  const catData = groups.map(g=>({name:g.name, color:g.color, t:sum(g.items), d:sum(g.items.filter(q=>q.done))}))
-    .filter(g=>g.t>0).sort((a,b)=>b.t-a.t);
-  const maxC = Math.max(1, ...catData.map(g=>g.t));
-  document.getElementById('budgetByCat').innerHTML = catData.length
-    ? catData.map(g=>budgetBar(g.name, g.t, g.d, maxC, g.color)).join('')
-    : '<p class="empty-msg" style="padding:10px">Rien à afficher pour l\'instant</p>';
- 
-  /* répartition par mois */
-  const months = [{m:0, lbl:'Toute l’année'}].concat(MONTHS.map((m,i)=>({m:i+1, lbl:m})));
-  const mData = months.map(mo=>{
-    const items = all.filter(q=>(+q.month||0)===mo.m);
-    return {name:mo.lbl, m:mo.m, t:sum(items), d:sum(items.filter(q=>q.done))};
-  }).filter(x=>x.m>0 || x.t>0);
-  const maxM = Math.max(1, ...mData.map(x=>x.t));
-  document.getElementById('budgetByMonth').innerHTML = all.length
-    ? mData.map(x=>budgetBar(x.name, x.t, x.d, maxM, null)).join('')
-    : '<p class="empty-msg" style="padding:10px">Rien à afficher pour l\'instant</p>';
-}
-function toggleQuoteDone(id){
-  const q = data.quotes.find(x=>x.id===id); if(!q) return;
-  q.done = !q.done;
-  q.doneAt = q.done ? new Date().toISOString().slice(0,10) : '';
-  if(q.done) confetti();
-  persist(); renderBudget();
-  toast(q.done ? 'Devis coché comme fait ✅' : 'Devis remis en « pas encore fait »');
-}
- 
-/* ---- Fiche devis ---- */
-function openQuoteModal(id=null){
-  ensureQuotes();
-  editingQuoteId = id;
-  const sel = document.getElementById('q-cat');
-  sel.innerHTML = '<option value="">— Aucune —</option>' + data.quoteCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  document.getElementById('q-month').innerHTML = '<option value="">Toute l’année</option>' + MONTHS.map((m,i)=>`<option value="${i+1}">${m}</option>`).join('');
-  const del = document.getElementById('deleteQuoteBtn');
-  if(id){
-    const q = data.quotes.find(x=>x.id===id); if(!q) return;
-    document.getElementById('quoteModalTitle').textContent = 'Modifier le devis';
-    document.getElementById('q-name').value = q.name || '';
-    document.getElementById('q-supplier').value = q.supplier || '';
-    sel.value = q.catId || '';
-    document.getElementById('q-amount').value = q.amount ?? '';
-    document.getElementById('q-month').value = q.month || '';
-    document.getElementById('q-year').value = q.year || budgetYear;
-    document.getElementById('q-done').checked = !!q.done;
-    document.getElementById('q-notes').value = q.notes || '';
-    document.getElementById('q-link').value = q.link || '';
-    currentQuotePdf = {data:q.pdfData || null, name:q.pdfName || null};
-    del.style.display = 'inline-block';
-  } else {
-    document.getElementById('quoteModalTitle').textContent = 'Nouveau devis';
-    ['q-name','q-supplier','q-amount','q-notes','q-link'].forEach(i=>document.getElementById(i).value='');
-    const cf = document.getElementById('quoteCatFilter').value;
-    sel.value = (cf && cf!=='all') ? cf : '';
-    document.getElementById('q-month').value = '';
-    document.getElementById('q-year').value = budgetYear;
-    document.getElementById('q-done').checked = false;
-    currentQuotePdf = {data:null, name:null};
-    del.style.display = 'none';
-  }
-  document.getElementById('q-pdf').value = '';
-  renderQuotePdfPreview();
-  document.getElementById('quoteOverlay').classList.add('open');
-  document.getElementById('q-name').focus();
-}
-function saveQuote(){
-  const name = document.getElementById('q-name').value.trim();
-  if(!name){ toast('Donne un nom à ton devis 🧾'); return; }
-  const old = editingQuoteId ? data.quotes.find(x=>x.id===editingQuoteId) : null;
-  const done = document.getElementById('q-done').checked;
-  const quote = {
-    id: editingQuoteId || uid(), name,
-    supplier: document.getElementById('q-supplier').value.trim(),
-    catId: document.getElementById('q-cat').value,
-    amount: document.getElementById('q-amount').value,
-    month: document.getElementById('q-month').value,
-    year: +document.getElementById('q-year').value || budgetYear,
-    done,
-    doneAt: done ? ((old && old.done && old.doneAt) || new Date().toISOString().slice(0,10)) : '',
-    notes: document.getElementById('q-notes').value,
-    link: document.getElementById('q-link').value.trim(),
-    pdfData: currentQuotePdf.data,
-    pdfName: currentQuotePdf.name,
-    createdAt: old ? old.createdAt : new Date().toISOString().slice(0,10)
-  };
-  if(editingQuoteId) data.quotes = data.quotes.map(q=>q.id===editingQuoteId?quote:q);
-  else data.quotes.push(quote);
-  if(done && !(old && old.done)) confetti();
-  if(quote.year !== budgetYear) budgetYear = quote.year;
-  persist(); closeOverlays(); renderBudget(); toast('Devis enregistré 💶');
-}
-function deleteQuote(){
-  const q = data.quotes.find(x=>x.id===editingQuoteId); if(!q) return;
-  data.trash.unshift({kind:'quote', label:q.name, deletedAt:new Date().toISOString(), item:q});
-  data.quotes = data.quotes.filter(x=>x.id!==editingQuoteId);
-  persist(); closeOverlays(); renderBudget(); toast('Devis envoyé à la corbeille 🛡️');
-}
-function handleQuotePdfUpload(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.type !== 'application/pdf'){ toast('Merci de choisir un fichier PDF 📄'); e.target.value=''; return; }
-  if(file.size > 8*1024*1024){ toast('Ce PDF est trop lourd (8 Mo max) 😅'); e.target.value=''; return; }
-  const reader = new FileReader();
-  reader.onload = ev=>{ currentQuotePdf = {data:ev.target.result, name:file.name}; renderQuotePdfPreview(); toast('Devis PDF ajouté 📄'); };
-  reader.readAsDataURL(file);
-}
-function removeQuotePdf(){
-  currentQuotePdf = {data:null, name:null};
-  document.getElementById('q-pdf').value = '';
-  renderQuotePdfPreview();
-}
-function renderQuotePdfPreview(){
-  const box = document.getElementById('q-pdf-preview');
-  if(!box) return;
-  box.innerHTML = currentQuotePdf.data
-    ? `<span class="pill" style="background:var(--mint)">📄 ${esc(currentQuotePdf.name)} <button type="button" onclick="removeQuotePdf()" style="border:none;background:transparent;cursor:pointer;font-weight:800;margin-left:6px" aria-label="Retirer le PDF">✕</button></span>`
-    : `<span style="color:var(--muted);font-size:13px">Aucun PDF joint</span>`;
-}
- 
-/* ---- Catégories ---- */
-function toggleQuoteCatManager(){
-  const box = document.getElementById('quoteCatManager');
-  const open = box.style.display !== 'none';
-  box.style.display = open ? 'none' : 'block';
-  document.getElementById('qcatToggleBtn').classList.toggle('active', !open);
-  if(!open) renderQuoteCatManager();
-}
-function renderQuoteCatManager(){
-  const box = document.getElementById('quoteCatManager');
-  if(!box || box.style.display==='none') return;
-  box.innerHTML = `<div class="card" style="box-shadow:var(--clay-in);background:var(--surface-2)">
-    ${data.quoteCats.map(c=>`<div class="tag-row"><span class="swatch" style="background:${c.color}"></span><span class="name">${esc(c.name)}</span>
-      <button class="btn danger small" onclick="removeQuoteCat('${c.id}')">Corbeille</button></div>`).join('') || '<p class="empty-msg">Aucune catégorie</p>'}
-    <label>Nouvelle catégorie</label>
-    <input type="text" id="newQuoteCatName" placeholder="ex: Salons, Presse locale, Sponsoring…">
-    <label>Couleur</label>
-    <div class="color-picks" id="qcatColorPicks"></div>
-    <div class="modal-actions"><button class="btn primary" onclick="addQuoteCat()">+ Ajouter la catégorie</button></div>
-  </div>`;
-  document.getElementById('qcatColorPicks').innerHTML = PALETTE.map(c=>
-    `<button style="background:${c}" class="${c===selectedQuoteCatColor?'sel':''}" onclick="selectedQuoteCatColor='${c}';renderQuoteCatManager()" aria-label="Couleur ${c}"></button>`).join('');
-}
-function addQuoteCat(){
-  const name = document.getElementById('newQuoteCatName').value.trim();
-  if(!name){ toast('Donne un nom à la catégorie 🏷️'); return; }
-  data.quoteCats.push({id:uid(), name, color:selectedQuoteCatColor});
-  persist(); renderQuoteCatManager(); renderBudget(); toast('Catégorie ajoutée 🎨');
-}
-function removeQuoteCat(id){
-  const c = data.quoteCats.find(x=>x.id===id); if(!c) return;
-  if(data.quotes.some(q=>q.catId===id) && !confirm(`La catégorie « ${c.name} » est utilisée par des devis. L'envoyer à la corbeille quand même ?`)) return;
-  data.trash.unshift({kind:'quotecat', label:c.name, deletedAt:new Date().toISOString(), item:c});
-  data.quoteCats = data.quoteCats.filter(x=>x.id!==id);
-  persist(); renderQuoteCatManager(); renderBudget(); toast('Catégorie envoyée à la corbeille 🛡️');
-}
- 
-/* ---- Export PDF ---- */
-function exportBudgetPDF(){
-  ensureQuotes();
-  const all = data.quotes.filter(q=>+q.year===budgetYear)
-    .sort((a,b)=>(+a.month||0)-(+b.month||0) || (a.name||'').localeCompare(b.name||''));
-  if(!all.length){ toast('Aucun devis à exporter pour ' + budgetYear + ' 🌱'); return; }
-  const sum = arr => arr.reduce((s,q)=>s+qAmount(q),0);
-  const total = sum(all), done = sum(all.filter(q=>q.done));
-  const rows = all.map(q=>{
-    const c = quoteCatById(q.catId);
-    return `<tr><td><strong>${esc(q.name)}</strong>${q.notes?`<br><span style="color:#888;font-size:11px">${esc(q.notes)}</span>`:''}</td>
-      <td>${esc(q.supplier)||'—'}</td><td>${c?esc(c.name):'—'}</td><td>${qMonthLabel(q)}</td>
-      <td style="text-align:right"><strong>${eur(qAmount(q))}</strong></td><td>${q.done?'☑ Fait':'☐ À faire'}</td></tr>`;
-  }).join('');
-  const groups = data.quoteCats.map(c=>({name:c.name, items:all.filter(q=>q.catId===c.id)}));
-  const orphans = all.filter(q=>!quoteCatById(q.catId));
-  if(orphans.length) groups.push({name:'Sans catégorie', items:orphans});
-  const catRows = groups.filter(g=>g.items.length).map(g=>
-    `<tr><td>${esc(g.name)}</td><td style="text-align:right">${eur(sum(g.items))}</td><td style="text-align:right">${eur(sum(g.items.filter(q=>q.done)))}</td></tr>`).join('');
-  document.getElementById('printArea').innerHTML = `
-    <h1>Budget communication ${budgetYear}</h1>
-    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}</p>
-    <div class="pstats">
-      <div><b>${eur(total)}</b>budget total</div>
-      <div><b>${eur(done)}</b>déjà fait</div>
-      <div><b>${eur(total-done)}</b>reste à faire</div>
-      <div><b>${all.filter(q=>q.done).length} / ${all.length}</b>devis cochés</div>
-    </div>
-    <h2>Par catégorie</h2>
-    <table><tr><th>Catégorie</th><th style="text-align:right">Total</th><th style="text-align:right">Déjà fait</th></tr>${catRows}</table>
-    <h2>Détail des devis</h2>
-    <table><tr><th>Objet</th><th>Prestataire</th><th>Catégorie</th><th>Mois</th><th style="text-align:right">Montant</th><th>Fait ?</th></tr>${rows}
-      <tr><td colspan="4"><strong>Total</strong></td><td style="text-align:right"><strong>${eur(total)}</strong></td><td></td></tr></table>`;
-  window.print();
-}
- 
-/* ---- Branchement sur le reste de l'appli ---- */
-(function installBudget(){
-  document.getElementById('quoteOverlay').addEventListener('click', e=>{ if(e.target.id==='quoteOverlay') closeOverlays(); });
- 
-  PAGES.budget = {title:'Budget communication', subs:[]};
- 
-  KIND_LABEL.quote = '💶 Devis';
-  KIND_LABEL.quotecat = '🏷️ Catégorie budget';
- 
-  /* données : toujours un tableau de devis et des catégories */
-  const _norm = normalizeData;
-  normalizeData = function(raw){
-    const d = _norm(raw);
-    if(!Array.isArray(d.quotes)) d.quotes = [];
-    if(!Array.isArray(d.quoteCats)) d.quoteCats = JSON.parse(JSON.stringify(QUOTE_CATS_DEFAULT));
-    return d;
-  };
-  ensureQuotes();
- 
-  /* les PDF de devis restent sur l'appareil (pas dans les copies ni dans le cloud) */
-  const _light = lightCopy;
-  lightCopy = function(src){
-    const l = _light(src);
-    (l.quotes||[]).forEach(q=>{ if(q.pdfData) q.pdfData = null; });
-    return l;
-  };
-  const _reattach = reattachBlobs;
-  reattachBlobs = function(nd, from){
-    _reattach(nd, from);
-    (nd.quotes||[]).forEach(q=>{
-      if(!q.pdfData){ const c = (from.quotes||[]).find(x=>x.id===q.id); if(c && c.pdfData) q.pdfData = c.pdfData; }
-    });
-    return nd;
-  };
-  const _restoreBackup = restoreBackup;
-  restoreBackup = function(kind, i){
-    const before = data;
-    _restoreBackup(kind, i);
-    if(data !== before){ reattachBlobs(data, before); persist(); renderAll(); }
-  };
- 
-  /* corbeille */
-  const _restoreTrash = restoreTrash;
-  restoreTrash = function(i){
-    const x = data.trash[i];
-    if(x && (x.kind==='quote' || x.kind==='quotecat')){
-      ensureQuotes();
-      const key = x.kind==='quote' ? 'quotes' : 'quoteCats';
-      if(!data[key].some(o=>o.id===x.item.id)) data[key].push(x.item);
-      data.trash.splice(i, 1);
-      persist(); renderAll(); toast('Restauré ✨');
-      return;
-    }
-    return _restoreTrash(i);
-  };
- 
-  /* import en mode fusion */
-  const _merge = mergeData;
-  mergeData = function(d){
-    let added = _merge(d);
-    ensureQuotes();
-    const norm = s => (s||'').trim().toLowerCase();
-    const idMap = {};
-    (d.quoteCats||[]).forEach(c=>{
-      const m = data.quoteCats.find(x=>norm(x.name)===norm(c.name));
-      if(m) idMap[c.id] = m.id; else { data.quoteCats.push(c); idMap[c.id] = c.id; }
-    });
-    (d.quotes||[]).forEach(q=>{
-      if(!data.quotes.some(x=>x.id===q.id)){
-        if(q.catId && idMap[q.catId]) q.catId = idMap[q.catId];
-        data.quotes.push(q); added++;
-      }
-    });
-    return added;
-  };
- 
-  /* rafraîchissement */
-  const _renderAll = renderAll;
-  renderAll = function(){
-    _renderAll();
-    try{ renderBudget(); }catch(err){ console.warn('Erreur de rendu (budget) :', err); }
-  };
 })();
 </script>
 </body>
