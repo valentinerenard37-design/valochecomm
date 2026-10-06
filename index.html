@@ -587,6 +587,14 @@ input:focus,select:focus,textarea:focus{outline:3px solid var(--lilac)}
 .view.active{display:block;animation:fadein .3s ease}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
+
+ .g-stat-sub{font-size:12px;font-weight:700;color:rgba(69,60,92,.65);margin-top:3px}
+.g-search{max-width:260px}
+#guestList .qtoggles{flex-wrap:wrap}
+.g-export{display:flex;gap:12px;flex-wrap:wrap}
+.g-export .btn{flex:1 1 200px;text-align:left;padding:14px 18px}
+.g-export .btn small{display:block;font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;color:var(--muted);margin-top:3px}
+  
 /* ---------- Impression PDF ---------- */
 #printArea{display:none}
 @media print{
@@ -5355,6 +5363,364 @@ window.addEventListener('beforeunload', flushNow);
   initialPage();
   cloudLoad();
 })();
+
+
+
+DEFAULTS.guests = [];
+if(!ARRAY_KEYS.includes('guests')) ARRAY_KEYS.push('guests');
+if(!Array.isArray(data.guests)) data.guests = [];
+KIND_LABEL.guest = '💌 Invité';
+PAGES.evenement.subs.push(['invites','Invités 💌']);
+SUB_SECTION.invites = 'view-evtinvites';
+ 
+const GST = {
+  attente:  {l:'⏳ Pas encore répondu', t:'Pas encore répondu', bg:'var(--butter)'},
+  oui:      {l:'✅ Vient',               t:'Vient',              bg:'var(--mint)'},
+  peutetre: {l:'🤔 Peut-être',           t:'Peut-être',          bg:'var(--sky)'},
+  non:      {l:'❌ Ne peut pas venir',   t:'Ne peut pas venir',  bg:'var(--rose)'}
+};
+const GST_ORDER = ['oui','peutetre','attente','non'];
+let guestFilter = 'all', editingGuestId = null;
+const gToday = () => new Date().toISOString().slice(0,10);
+const gPeople = g => 1 + Math.max(0, parseInt(g.plus) || 0);
+const gNeedsReminder = g => g.status==='attente' || g.status==='peutetre';
+const gByName = (a,b) => (a.name||'').localeCompare(b.name||'', 'fr');
+function guestsOfProject(){
+  if(!Array.isArray(data.guests)) data.guests = [];
+  const p = getEvtProject();
+  return p ? data.guests.filter(g=>g.projectId===p.id) : [];
+}
+ 
+/* ---------- 2. Écran ---------- */
+document.getElementById('view-evtprestataires').insertAdjacentHTML('afterend', `
+<section id="view-evtinvites" class="view">
+  <div class="card">
+    <h2>💌 Liste des invités
+      <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn small" onclick="exportGuestsCSV()">📊 Export Excel</button>
+        <button class="btn primary small" onclick="openGuestModal()">+ Nouvel invité</button>
+      </span>
+    </h2>
+    <p class="section-hint">Clique sur un invité pour compléter ses coordonnées. Les petits boutons à droite changent sa réponse en un clic.</p>
+    <div id="guestNoProj"></div>
+    <div id="guestTools">
+      <div class="stat-grid" id="guestStats"></div>
+      <div class="composer" style="margin-top:14px">
+        <input type="text" id="gq-name" placeholder="Nom et prénom" onkeydown="if(event.key==='Enter')quickAddGuest()">
+        <input type="text" id="gq-email" inputmode="email" placeholder="Email (optionnel)" onkeydown="if(event.key==='Enter')quickAddGuest()">
+        <input type="text" id="gq-phone" inputmode="tel" placeholder="Téléphone (optionnel)" style="min-width:150px;flex:.6" onkeydown="if(event.key==='Enter')quickAddGuest()">
+        <button class="btn primary" onclick="quickAddGuest()">+ Ajouter</button>
+      </div>
+      <div class="filters" id="guestFilterChips" style="margin-top:18px;margin-bottom:8px"></div>
+      <div class="filters">
+        <input type="text" id="guestSearch" class="g-search" placeholder="🔍 Chercher un nom, une société…" oninput="renderGuestList()">
+        <button class="fchip" onclick="copyGuestEmails()">📋 Copier les emails de la liste affichée</button>
+      </div>
+      <div id="guestList"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🖨️ Sortir une liste en PDF</h2>
+    <p class="section-hint">Dans la fenêtre d'impression, choisis « Enregistrer au format PDF ».</p>
+    <div class="g-export">
+      <button class="btn" style="background:linear-gradient(135deg,var(--mint),#D9F5E7)" onclick="exportGuestsPDF('oui')">✅ Ceux qui viennent<small>Avec le nombre total de personnes et une case « arrivé » pour le jour J</small></button>
+      <button class="btn" style="background:linear-gradient(135deg,var(--butter),#FFF0C2)" onclick="exportGuestsPDF('relancer')">🔔 Ceux à relancer<small>Pas encore répondu + peut-être, avec leurs coordonnées</small></button>
+      <button class="btn" style="background:linear-gradient(135deg,var(--lilac),#E4DAFA)" onclick="exportGuestsPDF('all')">📋 Liste complète<small>Tout le monde, rangé par réponse</small></button>
+    </div>
+  </div>
+</section>`);
+ 
+document.body.insertAdjacentHTML('beforeend', `
+<div class="overlay" id="guestOverlay">
+  <div class="modal">
+    <h3 id="guestModalTitle">Nouvel invité</h3>
+    <label>Nom et prénom</label>
+    <input type="text" id="g-name" placeholder="ex: Marie Dupont">
+    <div class="grid-2">
+      <div><label>Société / lien</label><input type="text" id="g-company" placeholder="ex: partenaire, client, agence…"></div>
+      <div><label>Réponse</label>
+        <select id="g-status">
+          <option value="attente">⏳ Pas encore répondu</option>
+          <option value="oui">✅ Vient</option>
+          <option value="peutetre">🤔 Peut-être</option>
+          <option value="non">❌ Ne peut pas venir</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div><label>Email</label><input type="text" id="g-email" inputmode="email" placeholder="marie@…"></div>
+      <div><label>Téléphone</label><input type="text" id="g-phone" inputmode="tel" placeholder="06…"></div>
+    </div>
+    <div class="grid-3">
+      <div><label>Accompagnants</label><input type="number" id="g-plus" min="0" placeholder="0"></div>
+      <div><label>Invité le</label><input type="date" id="g-invited"></div>
+      <div><label>Dernière relance</label><input type="date" id="g-last"></div>
+    </div>
+    <label>Notes</label>
+    <textarea id="g-notes" placeholder="Allergies, régime, à qui le présenter, adresse…"></textarea>
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteGuestBtn" style="display:none" onclick="deleteGuest()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Annuler</button>
+      <button class="btn primary" onclick="saveGuest()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>`);
+document.getElementById('guestOverlay').addEventListener('click', e=>{ if(e.target.id==='guestOverlay') closeOverlays(); });
+ 
+/* ---------- 3. Affichage ---------- */
+function renderGuests(){
+  const p = getEvtProject();
+  document.getElementById('guestTools').style.display = p ? 'block' : 'none';
+  document.getElementById('guestNoProj').innerHTML = p ? '' : `<p class="empty-msg">Crée d'abord un événement en haut de page pour démarrer sa liste d'invités 🎉</p>`;
+  if(!p) return;
+  const gs = guestsOfProject();
+  const cnt = st => gs.filter(g=>g.status===st).length;
+  const yes = gs.filter(g=>g.status==='oui');
+  const answered = gs.filter(g=>g.status!=='attente').length;
+  const tiles = [
+    {big:gs.length, lbl:'invités', sub:gs.reduce((s,g)=>s+gPeople(g),0)+' personnes avec accompagnants', bg:'var(--lilac)'},
+    {big:yes.reduce((s,g)=>s+gPeople(g),0), lbl:'personnes qui viennent', sub:yes.length+' invité'+(yes.length>1?'s':'')+' ont dit oui', bg:'var(--mint)'},
+    {big:cnt('attente'), lbl:'pas encore répondu', sub:'à relancer', bg:'var(--butter)'},
+    {big:cnt('peutetre'), lbl:'peut-être', sub:'à relancer aussi', bg:'var(--sky)'},
+    {big:cnt('non'), lbl:'ne peuvent pas venir', sub:'', bg:'var(--rose)'},
+    {big:(gs.length?Math.round(answered/gs.length*100):0)+' %', lbl:'taux de réponse', sub:answered+' réponse'+(answered>1?'s':'')+' reçue'+(answered>1?'s':''), bg:'var(--peach)'}
+  ];
+  document.getElementById('guestStats').innerHTML = tiles.map(t=>
+    `<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))"><div class="big">${t.big}</div><div class="lbl">${t.lbl}</div>${t.sub?`<div class="g-stat-sub">${t.sub}</div>`:''}</div>`).join('');
+  const chips = [['all','Tous',gs.length],['attente','⏳ Pas répondu',cnt('attente')],['oui','✅ Viennent',cnt('oui')],['peutetre','🤔 Peut-être',cnt('peutetre')],['non','❌ Ne viennent pas',cnt('non')],['relancer','🔔 À relancer',gs.filter(gNeedsReminder).length]];
+  document.getElementById('guestFilterChips').innerHTML = chips.map(([id,l,n])=>
+    `<button class="fchip a ${guestFilter===id?'active':''}" onclick="setGuestFilter('${id}')">${l} (${n})</button>`).join('');
+  renderGuestList();
+}
+function setGuestFilter(f){ guestFilter = f; renderGuests(); }
+function filteredGuests(){
+  let gs = guestsOfProject();
+  if(guestFilter==='relancer') gs = gs.filter(gNeedsReminder);
+  else if(guestFilter!=='all') gs = gs.filter(g=>g.status===guestFilter);
+  const q = (document.getElementById('guestSearch').value||'').trim().toLowerCase();
+  if(q) gs = gs.filter(g=>[g.name,g.company,g.email,g.phone,g.notes].some(v=>(v||'').toLowerCase().includes(q)));
+  return gs.sort((a,b)=>GST_ORDER.indexOf(a.status)-GST_ORDER.indexOf(b.status) || gByName(a,b));
+}
+function renderGuestList(){
+  const list = document.getElementById('guestList');
+  if(!list || !getEvtProject()) return;
+  const gs = filteredGuests();
+  if(!gs.length){
+    list.innerHTML = `<p class="empty-msg">${guestsOfProject().length ? 'Personne ne correspond à ce filtre.' : 'Aucun invité pour l\'instant — ajoute le premier juste au-dessus 💌'}</p>`;
+    return;
+  }
+  list.innerHTML = gs.map(g=>{
+    const st = GST[g.status] ? g.status : 'attente';
+    const sub = [g.company, g.email, g.phone].filter(Boolean).map(esc).join(' · ');
+    const btn = (s, ic) => `<button class="qtoggle ${st===s?'on':''}" title="${GST[s].t}" onclick="event.stopPropagation();setGuestStatus('${g.id}','${s}')">${ic}</button>`;
+    return `<div class="post-row" onclick="openGuestModal('${g.id}')">
+      <span class="post-title">${esc(g.name)}${sub?`<br><span class="qsub">${sub}</span>`:''}</span>
+      <span class="pill" style="background:${GST[st].bg}">${GST[st].l}</span>
+      ${+g.plus?`<span class="pill" style="background:#EFEAF9">+${+g.plus} accompagnant${+g.plus>1?'s':''}</span>`:''}
+      ${g.reminders?`<span class="pill" style="background:#FFE3D5">🔔 relancé ${g.reminders}×${g.lastReminder?' · '+fmtDate(g.lastReminder):''}</span>`:''}
+      <span class="qtoggles">
+        ${btn('oui','✅')}${btn('peutetre','🤔')}${btn('non','❌')}${btn('attente','⏳')}
+        ${gNeedsReminder(g)?`<button class="qtoggle pay" title="Je viens de le/la relancer" onclick="event.stopPropagation();markGuestReminded('${g.id}')">🔔 Relancé</button>`:''}
+      </span>
+    </div>`;
+  }).join('');
+}
+ 
+/* ---------- 4. Actions ---------- */
+function setGuestStatus(id, st){
+  const g = data.guests.find(x=>x.id===id); if(!g) return;
+  if(g.status===st) return;
+  g.status = st;
+  g.respondedAt = st==='attente' ? '' : gToday();
+  if(st==='oui') confetti();
+  persist(); renderGuests(); renderEvtProjectBar();
+  toast(g.name + ' : ' + GST[st].l);
+}
+function markGuestReminded(id){
+  const g = data.guests.find(x=>x.id===id); if(!g) return;
+  g.reminders = (g.reminders||0) + 1;
+  g.lastReminder = gToday();
+  persist(); renderGuests();
+  toast('Relance notée pour ' + g.name + ' 🔔');
+}
+function quickAddGuest(){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const name = document.getElementById('gq-name').value.trim();
+  if(!name){ toast('Écris au moins le nom de l\'invité 💌'); document.getElementById('gq-name').focus(); return; }
+  data.guests.push({id:uid(), projectId:p.id, name,
+    email:document.getElementById('gq-email').value.trim(),
+    phone:document.getElementById('gq-phone').value.trim(),
+    company:'', plus:0, status:'attente', invitedAt:gToday(), lastReminder:'', reminders:0, notes:''});
+  ['gq-name','gq-email','gq-phone'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('gq-name').focus();
+  persist(); renderGuests(); renderEvtProjectBar(); toast(name + ' ajouté(e) à la liste 💌');
+}
+function openGuestModal(id=null){
+  if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
+  editingGuestId = id;
+  const set = (i,v) => document.getElementById(i).value = v ?? '';
+  if(id){
+    const g = data.guests.find(x=>x.id===id); if(!g) return;
+    document.getElementById('guestModalTitle').textContent = 'Fiche invité';
+    set('g-name',g.name); set('g-company',g.company); set('g-status',g.status||'attente');
+    set('g-email',g.email); set('g-phone',g.phone); set('g-plus',g.plus||'');
+    set('g-invited',g.invitedAt); set('g-last',g.lastReminder); set('g-notes',g.notes);
+    document.getElementById('deleteGuestBtn').style.display = 'inline-block';
+  } else {
+    document.getElementById('guestModalTitle').textContent = 'Nouvel invité';
+    ['g-name','g-company','g-email','g-phone','g-plus','g-last','g-notes'].forEach(i=>set(i,''));
+    set('g-status','attente'); set('g-invited', gToday());
+    document.getElementById('deleteGuestBtn').style.display = 'none';
+  }
+  document.getElementById('guestOverlay').classList.add('open');
+  document.getElementById('g-name').focus();
+}
+function saveGuest(){
+  const p = getEvtProject(); if(!p) return;
+  const name = document.getElementById('g-name').value.trim();
+  if(!name){ toast('Il manque le nom 👀'); return; }
+  const v = i => document.getElementById(i).value;
+  const old = editingGuestId ? data.guests.find(x=>x.id===editingGuestId) : null;
+  const status = v('g-status');
+  const last = v('g-last');
+  let reminders = old ? (old.reminders||0) : 0;
+  if(last && (!old || old.lastReminder!==last) && !reminders) reminders = 1;
+  const guest = {
+    id: editingGuestId || uid(), projectId: old ? old.projectId : p.id, name,
+    company: v('g-company').trim(), email: v('g-email').trim(), phone: v('g-phone').trim(),
+    plus: Math.max(0, parseInt(v('g-plus'))||0), status,
+    invitedAt: v('g-invited'), lastReminder: last, reminders,
+    respondedAt: status==='attente' ? '' : ((old && old.status===status && old.respondedAt) || gToday()),
+    notes: v('g-notes')
+  };
+  if(old) data.guests = data.guests.map(g=>g.id===old.id?guest:g);
+  else data.guests.push(guest);
+  if(status==='oui' && (!old || old.status!=='oui')) confetti();
+  persist(); closeOverlays(); renderGuests(); renderEvtProjectBar(); toast('Invité enregistré 💌');
+}
+function deleteGuest(){
+  const g = data.guests.find(x=>x.id===editingGuestId); if(!g) return;
+  data.trash.unshift({kind:'guest', label:g.name, deletedAt:new Date().toISOString(), item:g});
+  data.guests = data.guests.filter(x=>x.id!==g.id);
+  persist(); closeOverlays(); renderGuests(); renderEvtProjectBar(); toast('Invité envoyé à la corbeille 🛡️');
+}
+function copyGuestEmails(){
+  const mails = [...new Set(filteredGuests().map(g=>(g.email||'').trim()).filter(Boolean))];
+  if(!mails.length){ toast('Aucun email dans la liste affichée 📭'); return; }
+  navigator.clipboard.writeText(mails.join(', '))
+    .then(()=>toast(mails.length + ' email(s) copié(s) — colle-les dans « À » ou « Cci » 📋'))
+    .catch(()=>toast('Copie impossible 🥲'));
+}
+ 
+/* ---------- 5. Exports ---------- */
+function exportGuestsPDF(mode){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const all = guestsOfProject();
+  let gs = mode==='oui' ? all.filter(g=>g.status==='oui') : mode==='relancer' ? all.filter(gNeedsReminder) : all;
+  if(!gs.length){ toast(mode==='oui' ? 'Personne n\'a encore dit oui 🌱' : mode==='relancer' ? 'Personne à relancer, tout le monde a répondu 🎉' : 'La liste est vide 🌱'); return; }
+  gs = [...gs].sort(gByName);
+  const people = arr => arr.reduce((s,g)=>s+gPeople(g),0);
+  const contact = g => [g.phone, g.email].filter(Boolean).map(esc).join('<br>') || '—';
+  const head = `<h1>${{oui:'Ils viennent',relancer:'Invités à relancer',all:'Liste des invités'}[mode]} — ${esc(p.name)}</h1>
+    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}${p.date?' · Jour J : '+fmtDate(p.date):''}${p.location?' · '+esc(p.location):''}</p>
+    <div class="pstats">
+      <div><b>${all.length}</b>invités</div>
+      <div><b>${people(all.filter(g=>g.status==='oui'))}</b>personnes viennent</div>
+      <div><b>${all.filter(g=>g.status==='attente').length}</b>sans réponse</div>
+      <div><b>${all.filter(g=>g.status==='peutetre').length}</b>peut-être</div>
+      <div><b>${all.filter(g=>g.status==='non').length}</b>ne viennent pas</div>
+    </div>`;
+  let body = '';
+  if(mode==='oui'){
+    body = `<table><tr><th>Arrivé</th><th>Nom</th><th>Société</th><th class="r">Pers.</th><th>Contact</th><th>Notes</th></tr>
+      ${gs.map(g=>`<tr><td>☐</td><td><strong>${esc(g.name)}</strong></td><td>${esc(g.company)||'—'}</td><td class="r">${gPeople(g)}</td><td>${contact(g)}</td><td>${esc(g.notes)||''}</td></tr>`).join('')}
+      <tr class="tot"><td></td><td>Total</td><td>${gs.length} invité(s)</td><td class="r">${people(gs)}</td><td colspan="2">personnes attendues</td></tr></table>`;
+  } else if(mode==='relancer'){
+    body = `<table><tr><th>Fait</th><th>Nom</th><th>Réponse</th><th>Téléphone</th><th>Email</th><th>Invité le</th><th>Dernière relance</th></tr>
+      ${gs.map(g=>`<tr><td>☐</td><td><strong>${esc(g.name)}</strong>${g.company?`<br><span style="color:#888;font-size:11px">${esc(g.company)}</span>`:''}</td><td>${GST[g.status].t}</td><td>${esc(g.phone)||'—'}</td><td>${esc(g.email)||'—'}</td><td>${g.invitedAt?fmtDate(g.invitedAt):'—'}</td><td>${g.lastReminder?fmtDate(g.lastReminder)+(g.reminders>1?' ('+g.reminders+'×)':''):'jamais'}</td></tr>`).join('')}
+    </table>`;
+  } else {
+    body = GST_ORDER.map(st=>{
+      const it = gs.filter(g=>g.status===st);
+      if(!it.length) return '';
+      return `<h2>${GST[st].t} — ${it.length} invité(s), ${people(it)} personne(s)</h2>
+        <table><tr><th>Nom</th><th>Société</th><th class="r">Pers.</th><th>Téléphone</th><th>Email</th><th>Notes</th></tr>
+        ${it.map(g=>`<tr><td><strong>${esc(g.name)}</strong></td><td>${esc(g.company)||'—'}</td><td class="r">${gPeople(g)}</td><td>${esc(g.phone)||'—'}</td><td>${esc(g.email)||'—'}</td><td>${esc(g.notes)||''}</td></tr>`).join('')}
+        </table>`;
+    }).join('');
+  }
+  document.getElementById('printArea').innerHTML = head + body;
+  window.print();
+}
+function exportGuestsCSV(){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const gs = guestsOfProject().sort((a,b)=>GST_ORDER.indexOf(a.status)-GST_ORDER.indexOf(b.status) || gByName(a,b));
+  if(!gs.length){ toast('La liste est vide 🌱'); return; }
+  const txt = v => '"' + String(v ?? '').replace(/"/g,'""').replace(/\r?\n/g,' ') + '"';
+  const lines = [['Nom','Société','Réponse','Personnes','Email','Téléphone','Invité le','Dernière relance','Nb relances','Notes'].map(txt).join(';')];
+  gs.forEach(g=>lines.push([txt(g.name),txt(g.company),txt(GST[g.status].t),gPeople(g),txt(g.email),txt(g.phone),txt(g.invitedAt?fmtDate(g.invitedAt):''),txt(g.lastReminder?fmtDate(g.lastReminder):''),g.reminders||0,txt(g.notes)].join(';')));
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'invites-' + (p.name||'evenement').toLowerCase().replace(/[^a-z0-9]+/gi,'-') + '.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  toast('Fichier Excel téléchargé 📊');
+}
+ 
+/* ---------- 6. Branchements sur le reste de l'appli ---------- */
+const _gRenderEvtAll = renderEvtAll;
+renderEvtAll = function(){ _gRenderEvtAll(); try{ renderGuests(); }catch(e){ console.warn('Erreur de rendu (invités) :', e); } };
+ 
+const _gRenderBar = renderEvtProjectBar;
+renderEvtProjectBar = function(){
+  _gRenderBar();
+  const p = getEvtProject(); if(!p) return;
+  const gs = data.guests.filter(g=>g.projectId===p.id);
+  if(!gs.length) return;
+  const yes = gs.filter(g=>g.status==='oui').reduce((s,g)=>s+gPeople(g),0);
+  const wait = gs.filter(g=>g.status==='attente').length;
+  const btn = document.querySelector('#evtProjectBar button[onclick^="openEvtProjectModal(\'"]');
+  if(btn) btn.insertAdjacentHTML('beforebegin', `<span class="pill" style="background:var(--rose);cursor:pointer" onclick="switchPage('evenement','invites')">💌 ${yes} personne${yes>1?'s':''} confirmée${yes>1?'s':''} · ${wait} sans réponse</span>`);
+};
+ 
+const _gDeleteEvtProject = deleteEvtProject;
+deleteEvtProject = function(){
+  const pid = editingEvtProjId;
+  const gs = data.guests.filter(g=>g.projectId===pid);
+  _gDeleteEvtProject();
+  if(!data.evtProjects.some(p=>p.id===pid)){
+    const t = data.trash.find(x=>x.kind==='evtproject' && x.item && x.item.project && x.item.project.id===pid);
+    if(t) t.item.guests = gs;
+    data.guests = data.guests.filter(g=>g.projectId!==pid);
+    persist(); renderEvtAll();
+  }
+};
+ 
+const _gRestoreTrash = restoreTrash;
+restoreTrash = function(i){
+  const x = data.trash[i]; if(!x) return;
+  if(x.kind==='guest'){
+    if(!data.guests.some(g=>g.id===x.item.id)) data.guests.push(x.item);
+    data.trash.splice(i,1);
+    persist(); renderAll(); toast('Restauré ✨');
+    return;
+  }
+  const extra = (x.kind==='evtproject' && x.item && x.item.guests) ? x.item.guests : [];
+  _gRestoreTrash(i);
+  if(extra.length){
+    extra.forEach(g=>{ if(!data.guests.some(o=>o.id===g.id)) data.guests.push(g); });
+    persist(); renderAll();
+  }
+};
+ 
+const _gMergeData = mergeData;
+mergeData = function(d){
+  let n = _gMergeData(d);
+  (d.guests||[]).forEach(g=>{ if(!data.guests.some(x=>x.id===g.id)){ data.guests.push(g); n++; } });
+  return n;
+};
+  
 </script>
 </body>
 </html>
