@@ -6374,6 +6374,213 @@ mergeData = function(d){
   for(const k in (d.guestSettings||{})) if(!data.guestSettings[k]) data.guestSettings[k] = d.guestSettings[k];
   return n;
 };
+
+
+/* ---------- 1. Règle de l'événement & petits outils ---------- */
+const PLUS_MODE = {libre:'👥 Accompagnants libres', max:'👥 Accompagnants limités', aucun:'👤 Invitation nominative'};
+function gPlusRule(){
+  const s = gSet();
+  return {mode: s.plusMode || 'libre', max: Math.max(1, parseInt(s.plusMax) || 1)};
+}
+function gPlusAllowed(g){
+  const r = gPlusRule();
+  if(r.mode==='libre' || (g && g.plusOk)) return Infinity;
+  return r.mode==='aucun' ? 0 : r.max;
+}
+const gPlus = g => Math.max(0, gPeople(g) - 1);
+const gPlusOver = g => { const a = gPlusAllowed(g); return a===Infinity ? 0 : Math.max(0, gPlus(g) - a); };
+const gPlusNames = g => (g.plusNames||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+function gPlusRuleText(){
+  const r = gPlusRule();
+  return r.mode==='libre' ? 'accompagnants libres'
+    : r.mode==='aucun' ? "invitation nominative (pas d'accompagnant)"
+    : r.max + ' accompagnant' + (r.max>1?'s':'') + ' max par invitation';
+}
+function gPlusText(g){
+  const a = gPlusAllowed(g);
+  if(a===0) return 'Cette invitation est strictement nominative.';
+  if(a===Infinity) return 'Vous pouvez bien sûr venir accompagné(e).';
+  return `Vous pouvez venir accompagné(e) de ${a} personne${a>1?'s':''}.`;
+}
+ 
+/* nouveaux champs sur chaque invité */
+const _plNewGuest = newGuest;
+newGuest = function(f){ return Object.assign({plusNames:'', plusOk:false}, _plNewGuest(f)); };
+ 
+/* mot magique {accompagnants} dans les messages */
+DEF_TPL.invite = "Bonjour {prenom},\n\nAeconomia a le plaisir de vous inviter à {evenement}, le {date} à {lieu}. {accompagnants}\n\nPourriez-vous nous confirmer votre présence (et le nombre de personnes) avant le {datelimite} ?\n\nAu plaisir de vous y retrouver,\n{courtier} — Aeconomia";
+const _plFill = gFill;
+gFill = function(tpl, g){ return _plFill((tpl||'').replace(/\{accompagnants\}/g, gPlusText(g)), g); };
+ 
+/* ---------- 2. Écran : réglages + fiche invité ---------- */
+(function(){
+  const help = document.querySelector('#gtab-reglages .g-help');
+  if(help) help.insertAdjacentHTML('beforeend', ' <code>{accompagnants}</code>');
+ 
+  gEl('gr-deadline').closest('.grid-2').insertAdjacentHTML('afterend', `
+    <div class="modal-sec">👥 Accompagnants (+1)</div>
+    <div class="grid-2">
+      <div><label>Les invités peuvent venir accompagnés ?</label>
+        <select id="gr-plusmode" onchange="setPlusRule()">
+          <option value="libre">Oui, sans limite</option>
+          <option value="max">Oui, avec une limite</option>
+          <option value="aucun">Non, invitation nominative</option>
+        </select></div>
+      <div id="gr-plusmax-wrap"><label>Accompagnant(s) max par invitation</label>
+        <input type="number" id="gr-plusmax" min="1" placeholder="1" oninput="setPlusRule()"></div>
+    </div>
+    <p class="section-hint" style="margin:10px 0 0">Les invitations qui dépassent la règle sont signalées ⚠️ en rose dans la liste. Tu peux faire une exception sur la fiche d'un invité (VIP, partenaire…). Le mot magique <b>{accompagnants}</b> écrit la règle dans tes messages.</p>`);
+ 
+  gEl('g-people').closest('.grid-2').insertAdjacentHTML('afterend', `
+    <label>👥 Prénoms des accompagnants <span style="font-weight:400;color:var(--muted);font-size:12px;text-transform:none;letter-spacing:0">(optionnel — séparés par une virgule)</span></label>
+    <input type="text" id="g-plusnames" placeholder="ex: Julien Dupont, Léa">
+    <div id="g-plus-hint" class="g-help" style="display:none"></div>
+    <label class="check-line" style="margin-top:10px"><input type="checkbox" id="g-plusok"><span>✨ Exception : accompagnants en plus autorisés pour cet invité</span></label>`);
+  ['g-people','g-plusnames'].forEach(id=>gEl(id).addEventListener('input', gPlusHint));
+  gEl('g-plusok').addEventListener('change', gPlusHint);
+})();
+ 
+function setPlusRule(){
+  if(!getEvtProject()) return;
+  const s = gSet();
+  s.plusMode = gEl('gr-plusmode').value;
+  s.plusMax = gEl('gr-plusmax').value;
+  if(s.plusMode==='max' && !s.plusMax){ s.plusMax = '1'; gEl('gr-plusmax').value = '1'; }
+  persistSoon(); renderGuests();
+}
+const _plRegl = renderGuestReglages;
+renderGuestReglages = function(){
+  _plRegl();
+  const r = gPlusRule(), s = gSet();
+  gEl('gr-plusmode').value = r.mode;
+  const mx = gEl('gr-plusmax');
+  if(document.activeElement!==mx) mx.value = s.plusMax || '';
+  gEl('gr-plusmax-wrap').style.visibility = r.mode==='max' ? 'visible' : 'hidden';
+};
+ 
+function gPlusHint(){
+  const box = gEl('g-plus-hint'); if(!box) return;
+  const names = gPlusNames({plusNames: gEl('g-plusnames').value});
+  const typed = Math.max(1, parseInt(gEl('g-people').value)||1);
+  const people = Math.max(typed, names.length+1);
+  const fake = {people, plusOk: gEl('g-plusok').checked};
+  const pl = people-1, over = gPlusOver(fake);
+  const msgs = [];
+  if(people > typed) msgs.push(`👥 ${names.length} prénom(s) noté(s) : le nombre de personnes passera à ${people} à l'enregistrement.`);
+  if(over) msgs.push(`⚠️ ${pl} accompagnant${pl>1?'s':''} alors que la règle de l'événement est : ${gPlusRuleText()}. Coche l'exception si c'est validé.`);
+  else if(pl > names.length) msgs.push(`💡 ${pl-names.length} accompagnant${pl-names.length>1?'s':''} sans prénom — pratique à compléter pour les badges et l'accueil.`);
+  box.style.display = msgs.length ? 'block' : 'none';
+  box.innerHTML = msgs.join('<br>');
+}
+const _plOpen = openGuestModal;
+openGuestModal = function(id=null){
+  _plOpen(id);
+  const g = id ? data.guests.find(x=>x.id===id) : null;
+  gEl('g-plusnames').value = g ? (g.plusNames||'') : '';
+  gEl('g-plusok').checked = !!(g && g.plusOk);
+  gPlusHint();
+};
+const _plSave = saveGuest;
+saveGuest = function(){
+  const id = editingGuestId, len = data.guests.length;
+  const plusNames = gEl('g-plusnames').value.trim(), plusOk = gEl('g-plusok').checked;
+  _plSave();
+  if(gEl('guestOverlay').classList.contains('open')) return; /* pas enregistré (nom vide, doublon refusé…) */
+  const g = id ? data.guests.find(x=>x.id===id) : (data.guests.length>len ? data.guests[data.guests.length-1] : null);
+  if(!g) return;
+  g.plusNames = plusNames; g.plusOk = plusOk;
+  const n = gPlusNames(g).length;
+  if(gPeople(g) < n+1) g.people = n+1;
+  persist(); renderGuests(); renderEvtProjectBar();
+  if(gPlusOver(g)) toast(`⚠️ ${g.name} vient avec ${gPlus(g)} accompagnant(s) — règle : ${gPlusRuleText()}`);
+};
+const _plQuick = quickAddGuest;
+quickAddGuest = function(){
+  const len = data.guests.length;
+  _plQuick();
+  if(data.guests.length>len){
+    const g = data.guests[data.guests.length-1];
+    if(gPlusOver(g)) toast(`⚠️ ${g.name} ajouté·e avec ${gPlus(g)} accompagnant(s), mais la règle est : ${gPlusRuleText()}`);
+  }
+};
+ 
+/* ---------- 3. Affichage dans la liste ---------- */
+const _plPills = gPills;
+gPills = function(g, opts={}){
+  const html = _plPills(g, opts);
+  const pl = gPlus(g), over = gPlusOver(g);
+  let txt;
+  if(!pl) txt = '👤 Seul·e';
+  else{
+    const shown = gPlusNames(g).slice(0, pl), rest = pl - shown.length;
+    txt = '👥 1 + ' + [shown.map(esc).join(', '), rest ? (shown.length ? String(rest) : rest+' accompagnant'+(rest>1?'s':'')) : ''].filter(Boolean).join(' + ');
+  }
+  const title = `${gPeople(g)} personne(s) au total` + (over ? ` — ${over} accompagnant(s) de trop (règle : ${gPlusRuleText()})` : '') + (g.plusOk ? ' — exception accordée' : '');
+  const pill = `<span class="pill" style="background:${over?'linear-gradient(135deg,var(--rose),#FFD3E0)':'#EFEAF9'}" title="${escAttr(title)}">${txt}${over?' ⚠️':''}${g.plusOk && pl?' ✨':''}</span>`;
+  return html.replace(/^<span class="pill" style="background:#EFEAF9">👥 \d+ pers\.<\/span>/, pill);
+};
+ 
+const _plFiltered = filteredGuests;
+filteredGuests = function(){
+  if(guestFilter!=='plus' && guestFilter!=='plusover') return _plFiltered();
+  const f = guestFilter; guestFilter = 'all';
+  try{ return _plFiltered().filter(g => f==='plus' ? gPlus(g)>0 : gPlusOver(g)>0); }
+  finally{ guestFilter = f; }
+};
+ 
+const _plListe = renderGuestListe;
+renderGuestListe = function(){
+  _plListe();
+  const gs = guestsOfProject().filter(matchBroker);
+  const yes = gs.filter(g=>g.status==='oui');
+  const plYes = yes.reduce((s,g)=>s+gPlus(g),0);
+  const plAll = gs.reduce((s,g)=>s+gPlus(g),0);
+  const overN = gs.filter(g=>gPlusOver(g)>0).length;
+  gEl('guestStats').insertAdjacentHTML('beforeend',
+    `<div class="stat" style="background:linear-gradient(135deg,var(--peach),var(--surface-2))">
+      <div class="big">${plYes}</div><div class="lbl">accompagnants qui viennent</div>
+      <div class="g-stat-sub">${yes.length} invité${yes.length>1?'s':''} + ${plYes} acc. · ${plAll} acc. invités au total</div></div>`);
+  gEl('guestFilterChips').insertAdjacentHTML('beforeend',
+    `<button class="fchip a ${guestFilter==='plus'?'active':''}" onclick="guestFilter='plus';renderGuests()">👥 Avec accompagnants (${gs.filter(g=>gPlus(g)>0).length})</button>`
+    + ((overN || guestFilter==='plusover') ? `<button class="fchip a ${guestFilter==='plusover'?'active':''}" onclick="guestFilter='plusover';renderGuests()">⚠️ Hors règle +1 (${overN})</button>` : ''));
+};
+ 
+const _plHead = renderGuestHead;
+renderGuestHead = function(){
+  _plHead();
+  const r = gPlusRule();
+  gEl('guestHeadInfo').insertAdjacentHTML('beforeend',
+    `<button class="fchip" onclick="setGuestTab('reglages')" title="Changer la règle dans Réglages">${PLUS_MODE[r.mode]}${r.mode==='max'?' : '+r.max+' max':''}</button>`);
+};
+ 
+/* ---------- 4. Exports : prénoms des accompagnants ---------- */
+function withPlusInNotes(fn){
+  const saved = [];
+  guestsOfProject().forEach(g=>{
+    const n = gPlusNames(g);
+    if(n.length){ saved.push([g, g.notes]); g.notes = 'Accompagné·e de : ' + n.join(', ') + (g.notes ? ' · ' + g.notes : ''); }
+  });
+  try{ fn(); } finally { saved.forEach(([g, n])=>{ g.notes = n; }); }
+}
+const _plPDF = exportGuestsPDF;
+exportGuestsPDF = function(mode){
+  if(mode!=='badges') return withPlusInNotes(()=>_plPDF(mode));
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const gs = guestsOfProject().filter(matchBroker).filter(g=>g.status==='oui').sort(gByName);
+  if(!gs.length){ toast("Personne n'a encore dit oui 🌱"); return; }
+  const card = (name, co) => `<div class="g-badge"><div class="g-b-evt">${esc(p.name)}</div>${name?`<div class="g-b-name">${esc(name)}</div>`:'<div class="g-b-line"></div>'}<div class="g-b-co">${co}</div></div>`;
+  const cards = [];
+  gs.forEach(g=>{
+    cards.push(card(g.name, esc(g.company||'')));
+    const names = gPlusNames(g);
+    for(let i=1;i<gPeople(g);i++) cards.push(card(names[i-1]||'', 'avec ' + esc(g.name)));
+  });
+  document.getElementById('printArea').innerHTML = `<div class="g-badges">${cards.join('')}</div>`;
+  window.print();
+};
+const _plCSV = exportGuestsCSV;
+exportGuestsCSV = function(){ withPlusInNotes(_plCSV); };
+  
 </script>
 <!-- ===================== FIN DU MODULE INVITÉS ===================== -->
 
