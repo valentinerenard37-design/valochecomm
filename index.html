@@ -5357,12 +5357,24 @@ window.addEventListener('beforeunload', flushNow);
 })();
 </script>
 
-<!-- =====================================================================
-     💌 MODULE « LISTE DES INVITÉS » — Événementiel
-     Liste & réponses · courtiers · nombre de personnes · relances · messages
-     prêts à envoyer · import en masse · accueil le jour J · suivi après
-     l'événement · exports PDF (accueil, traiteur, badges, plan de table…)
-     ===================================================================== -->
+
+
+  <!-- =========================================================================
+     📦 MODULES ÉVÉNEMENTIEL — version propre et complète
+     -------------------------------------------------------------------------
+     Ce bloc remplace TOUT ce qui se trouvait après la fin du code principal.
+     Il contient, dans l'ordre :
+       1. 💌 Invités  (liste, réponses, accompagnants +1, relances, messages,
+                       import, accueil jour J, suivi, exports)
+       2. 🧮 Besoins & budget  (lignes simples + lots 🎁 avec sous-éléments,
+                       quantités par personne, budget, exports)
+     Chaque module = un bloc de style + un bloc de script, rien d'autre.
+     ========================================================================= -->
+
+
+<!-- =========================================================================
+     1. 💌 MODULE « INVITÉS » (accompagnants +1 intégrés)
+     ========================================================================= -->
 <style>
 .g-stat-sub{font-size:12px;font-weight:700;color:rgba(69,60,92,.65);margin-top:3px}
 .g-search{max-width:260px}
@@ -5416,9 +5428,10 @@ const GDIET = {'':'Aucun', vege:'Végétarien', vegan:'Vegan', sansgluten:'Sans 
 const GVIA = {'':'—', email:'Email', carton:'Carton / courrier', sms:'SMS', tel:'Téléphone', main:'En main propre', linkedin:'LinkedIn'};
 const GFOLLOW = {'':'⚪ Pas encore trié', recontacter:'📞 À recontacter', rdv:'📅 RDV pris', client:'🤝 Devenu client', rien:'— Rien à faire'};
 const GFOLLOW_BG = {'':'#EFEAF9', recontacter:'var(--butter)', rdv:'var(--sky)', client:'var(--mint)', rien:'#EFEAF9'};
+const PLUS_MODE = {libre:'👥 Accompagnants libres', max:'👥 Accompagnants limités', aucun:'👤 Invitation nominative'};
 const NO_BROKER = '— Sans courtier —';
 const DEF_TPL = {
-  invite: "Bonjour {prenom},\n\nAeconomia a le plaisir de vous inviter à {evenement}, le {date} à {lieu}.\n\nPourriez-vous nous confirmer votre présence (et le nombre de personnes) avant le {datelimite} ?\n\nAu plaisir de vous y retrouver,\n{courtier} — Aeconomia",
+  invite: "Bonjour {prenom},\n\nAeconomia a le plaisir de vous inviter à {evenement}, le {date} à {lieu}. {accompagnants}\n\nPourriez-vous nous confirmer votre présence (et le nombre de personnes) avant le {datelimite} ?\n\nAu plaisir de vous y retrouver,\n{courtier} — Aeconomia",
   relance: "Bonjour {prenom}, petit rappel pour {evenement} le {date} à {lieu} 😊 Pouvez-vous me dire si vous serez des nôtres, et combien vous serez ? Merci ! {courtier} — Aeconomia",
   merci: "Bonjour {prenom},\n\nMerci encore d'être venu(e) à {evenement} ! Ce fut un vrai plaisir d'échanger avec vous.\n\nN'hésitez pas à revenir vers moi pour tout projet, je reste à votre disposition.\n\n{courtier} — Aeconomia"
 };
@@ -5443,13 +5456,13 @@ function guestsOfProject(){
 }
 function gSet(){
   const p = getEvtProject(); if(!p) return {};
-  if(!data.guestSettings[p.id]) data.guestSettings[p.id] = {capacity:'', deadline:'', tpl:{...DEF_TPL}};
+  if(!data.guestSettings[p.id]) data.guestSettings[p.id] = {capacity:'', deadline:'', plusMode:'libre', plusMax:'', tpl:{...DEF_TPL}};
   const s = data.guestSettings[p.id];
   if(!s.tpl) s.tpl = {...DEF_TPL};
   return s;
 }
 function newGuest(f){
-  return Object.assign({id:uid(), projectId:(getEvtProject()||{}).id, name:'', company:'', broker:'', people:1, type:'', vip:false,
+  return Object.assign({id:uid(), projectId:(getEvtProject()||{}).id, name:'', company:'', broker:'', people:1, plusNames:'', plusOk:false, type:'', vip:false,
     status:'attente', email:'', phone:'', inviteSent:false, inviteVia:'', invitedAt:'', lastReminder:'', reminders:0, respondedAt:'',
     diet:'', dietNote:'', table:'', arrived:0, followUp:'', thanked:false, notes:''}, f||{});
 }
@@ -5464,18 +5477,57 @@ function brokerNames(){
   return out;
 }
 function matchBroker(g){ return guestBrokerFilter==='all' || gBroker(g).toLowerCase()===guestBrokerFilter.toLowerCase(); }
+function gCame(list){
+  const any = list.some(g=>+g.arrived>0);
+  return list.filter(g=> any ? +g.arrived>0 : g.status==='oui');
+}
+
+/* ---- Accompagnants (+1) ---- */
+function gPlusRule(){
+  const s = gSet();
+  return {mode: s.plusMode || 'libre', max: Math.max(1, parseInt(s.plusMax) || 1)};
+}
+function gPlusAllowed(g){
+  const r = gPlusRule();
+  if(r.mode==='libre' || (g && g.plusOk)) return Infinity;
+  return r.mode==='aucun' ? 0 : r.max;
+}
+const gPlus = g => Math.max(0, gPeople(g) - 1);
+const gPlusOver = g => { const a = gPlusAllowed(g); return a===Infinity ? 0 : Math.max(0, gPlus(g) - a); };
+const gPlusNames = g => (g.plusNames||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+function gPlusRuleText(){
+  const r = gPlusRule();
+  return r.mode==='libre' ? 'accompagnants libres'
+    : r.mode==='aucun' ? "invitation nominative (pas d'accompagnant)"
+    : r.max + ' accompagnant' + (r.max>1?'s':'') + ' max par invitation';
+}
+function gPlusText(g){
+  const a = gPlusAllowed(g);
+  if(a===0) return 'Cette invitation est strictement nominative.';
+  if(a===Infinity) return 'Vous pouvez bien sûr venir accompagné(e).';
+  return `Vous pouvez venir accompagné(e) de ${a} personne${a>1?'s':''}.`;
+}
+function gPlusPill(g){
+  const pl = gPlus(g), over = gPlusOver(g);
+  let txt;
+  if(!pl) txt = '👤 Seul·e';
+  else{
+    const shown = gPlusNames(g).slice(0, pl), rest = pl - shown.length;
+    txt = '👥 1 + ' + [shown.map(esc).join(', '), rest ? (shown.length ? String(rest) : rest+' accompagnant'+(rest>1?'s':'')) : ''].filter(Boolean).join(' + ');
+  }
+  const title = `${gPeople(g)} personne(s) au total` + (over ? ` — ${over} accompagnant(s) de trop (règle : ${gPlusRuleText()})` : '') + (g.plusOk ? ' — exception accordée' : '');
+  return `<span class="pill" style="background:${over?'linear-gradient(135deg,var(--rose),#FFD3E0)':'#EFEAF9'}" title="${escAttr(title)}">${txt}${over?' ⚠️':''}${g.plusOk && pl?' ✨':''}</span>`;
+}
+
 function gFill(tpl, g){
   const p = getEvtProject() || {}, s = gSet();
   const d = p.date ? new Date(p.date+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long'}) : 'la date à venir';
   const dl = s.deadline ? new Date(s.deadline+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'long', day:'numeric', month:'long'}) : 'dès que possible';
-  return (tpl||'').replace(/\{prenom\}/g, gFirst(g)).replace(/\{nom\}/g, g.name||'')
+  return (tpl||'').replace(/\{accompagnants\}/g, gPlusText(g))
+    .replace(/\{prenom\}/g, gFirst(g)).replace(/\{nom\}/g, g.name||'')
     .replace(/\{evenement\}/g, p.name||'notre événement').replace(/\{date\}/g, d)
     .replace(/\{lieu\}/g, p.location||'(lieu à venir)').replace(/\{datelimite\}/g, dl)
     .replace(/\{courtier\}/g, g.broker||'L\'équipe').replace(/\{personnes\}/g, gPeople(g));
-}
-function gCame(list){
-  const any = list.some(g=>+g.arrived>0);
-  return list.filter(g=> any ? +g.arrived>0 : g.status==='oui');
 }
 
 /* ---------- 2. Écran ---------- */
@@ -5510,7 +5562,7 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
             <button class="btn primary small" onclick="openGuestModal()">+ Nouvel invité</button>
           </span>
         </h2>
-        <p class="section-hint">Clique sur un invité pour sa fiche complète. Les petits boutons changent sa réponse en un clic, 💬 prépare un message tout écrit.</p>
+        <p class="section-hint">Clique sur un invité pour sa fiche complète (accompagnants, régime, table…). Les petits boutons changent sa réponse en un clic, 💬 prépare un message tout écrit.</p>
         <div class="stat-grid" id="guestStats"></div>
         <div class="composer" style="margin-top:14px">
           <input type="text" id="gq-name" placeholder="Nom et prénom" onkeydown="if(event.key==='Enter')quickAddGuest()">
@@ -5521,7 +5573,7 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
           <input type="text" id="gq-phone" inputmode="tel" placeholder="Téléphone (optionnel)" style="min-width:150px;flex:.6" onkeydown="if(event.key==='Enter')quickAddGuest()">
           <button class="btn primary" onclick="quickAddGuest()">+ Ajouter</button>
         </div>
-        <p class="section-hint" style="margin:8px 0 0">Le chiffre = nombre total de personnes pour l'invitation (2 pour un couple). Le courtier et le type restent remplis pour enchaîner. Une grosse liste à rentrer ? → onglet ⚙️ Réglages & import.</p>
+        <p class="section-hint" style="margin:8px 0 0">Le chiffre = nombre total de personnes pour l'invitation (2 = l'invité + 1 accompagnant). Le courtier et le type restent remplis pour enchaîner. Une grosse liste à rentrer ? → onglet ⚙️ Réglages & import.</p>
         <div class="filters" id="guestFilterChips" style="margin-top:18px;margin-bottom:8px"></div>
         <div class="filters">
           <select id="guestTypeFilter" class="fselect" onchange="renderGuests()" aria-label="Type">${typeOpts(true)}</select>
@@ -5540,7 +5592,7 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
       </div>
       <div class="card">
         <h2>👔 Par courtier</h2>
-        <p class="section-hint">Qui a invité combien de monde, et combien de personnes viennent de chez chacun (en personnes). Clique sur une ligne pour filtrer sur ce courtier.</p>
+        <p class="section-hint">Qui a invité combien de monde, et combien de personnes viennent de chez chacun. Clique sur une ligne pour filtrer sur ce courtier.</p>
         <div style="overflow-x:auto"><table class="btable" id="guestBrokerTable" style="min-width:700px"></table></div>
       </div>
       <div class="card">
@@ -5553,7 +5605,7 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
     <div id="gtab-accueil" style="display:none">
       <div class="card">
         <h2>🚪 Accueil le jour J</h2>
-        <p class="section-hint">À ouvrir sur le téléphone ou la tablette à l'entrée : tape un nom, coche l'arrivée. Pour un groupe, les boutons − / + comptent les personnes une par une.</p>
+        <p class="section-hint">À ouvrir sur le téléphone ou la tablette à l'entrée : tape un nom (même celui d'un accompagnant), coche l'arrivée. Pour un groupe, − / + comptent les personnes une par une.</p>
         <div class="stat-grid" id="gaStats"></div>
         <div class="filters" style="margin-top:14px">
           <input type="text" id="gaSearch" class="g-big-search" placeholder="🔍 Tape un nom ou une société…" oninput="renderGuestAccueil()">
@@ -5601,11 +5653,23 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
           <div><label>🪑 Nombre de places maximum</label><input type="number" id="gr-capacity" min="0" placeholder="ex: 80" oninput="gSet().capacity=this.value;persistSoon();renderGuestHead()"></div>
           <div><label>📮 Date limite de réponse</label><input type="date" id="gr-deadline" onchange="gSet().deadline=this.value;persist();renderGuestHead()"></div>
         </div>
+        <div class="modal-sec">👥 Accompagnants (+1)</div>
+        <div class="grid-2">
+          <div><label>Les invités peuvent venir accompagnés ?</label>
+            <select id="gr-plusmode" onchange="setPlusRule()">
+              <option value="libre">Oui, sans limite</option>
+              <option value="max">Oui, avec une limite</option>
+              <option value="aucun">Non, invitation nominative</option>
+            </select></div>
+          <div id="gr-plusmax-wrap"><label>Accompagnant(s) max par invitation</label>
+            <input type="number" id="gr-plusmax" min="1" placeholder="1" oninput="setPlusRule()"></div>
+        </div>
+        <p class="section-hint" style="margin:10px 0 0">Les invitations qui dépassent la règle sont signalées ⚠️ en rose dans la liste. Tu peux faire une exception sur la fiche d'un invité (VIP, partenaire…). Le mot magique <b>{accompagnants}</b> écrit la règle dans tes messages.</p>
       </div>
       <div class="card">
         <h2>💬 Messages tout prêts</h2>
         <p class="section-hint">Utilisés par le bouton 💬 de chaque invité : le message se remplit tout seul avec son prénom, et tu n'as plus qu'à copier ou envoyer.</p>
-        <div class="g-help">Mots magiques remplacés automatiquement : <code>{prenom}</code> <code>{nom}</code> <code>{evenement}</code> <code>{date}</code> <code>{lieu}</code> <code>{datelimite}</code> <code>{courtier}</code> <code>{personnes}</code></div>
+        <div class="g-help">Mots magiques remplacés automatiquement : <code>{prenom}</code> <code>{nom}</code> <code>{evenement}</code> <code>{date}</code> <code>{lieu}</code> <code>{datelimite}</code> <code>{courtier}</code> <code>{personnes}</code> <code>{accompagnants}</code></div>
         <label>📨 Invitation</label><textarea id="gr-tpl-invite" style="min-height:140px" oninput="gSet().tpl.invite=this.value;persistSoon()"></textarea>
         <label>🔔 Relance</label><textarea id="gr-tpl-relance" style="min-height:90px" oninput="gSet().tpl.relance=this.value;persistSoon()"></textarea>
         <label>💐 Remerciement</label><textarea id="gr-tpl-merci" style="min-height:120px" oninput="gSet().tpl.merci=this.value;persistSoon()"></textarea>
@@ -5636,7 +5700,7 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
       <h2>🖨️ Sortir une liste en PDF</h2>
       <p class="section-hint">Si un courtier est choisi dans le filtre tout en haut, le PDF ne reprend que ses invités. Dans la fenêtre d'impression, choisis « Enregistrer au format PDF ».</p>
       <div class="g-export">
-        <button class="btn" style="background:linear-gradient(135deg,var(--mint),#D9F5E7)" onclick="exportGuestsPDF('oui')">✅ Ceux qui viennent<small>Nombre de personnes, courtier, total attendu</small></button>
+        <button class="btn" style="background:linear-gradient(135deg,var(--mint),#D9F5E7)" onclick="exportGuestsPDF('oui')">✅ Ceux qui viennent<small>Nombre de personnes, accompagnants, total attendu</small></button>
         <button class="btn" style="background:linear-gradient(135deg,var(--butter),#FFF0C2)" onclick="exportGuestsPDF('relancer')">🔔 Ceux à relancer<small>Pas répondu + peut-être, avec téléphone et email</small></button>
         <button class="btn" style="background:linear-gradient(135deg,var(--rose),#FFE0EC)" onclick="exportGuestsPDF('noninvites')">📭 Invitations pas envoyées<small>Ceux qu'il reste à inviter</small></button>
         <button class="btn" style="background:linear-gradient(135deg,var(--peach),#FFE3D5)" onclick="exportGuestsPDF('courtier')">👔 Par courtier<small>Une partie par courtier avec ses totaux</small></button>
@@ -5644,7 +5708,7 @@ gEl('view-evtprestataires').insertAdjacentHTML('afterend', `
         <button class="btn" style="background:linear-gradient(135deg,var(--sky),#D6EAFF)" onclick="exportGuestsPDF('accueil')">🚪 Liste d'accueil<small>Par ordre alphabétique, avec cases à cocher</small></button>
         <button class="btn" style="background:linear-gradient(135deg,var(--butter),#FFF0C2)" onclick="exportGuestsPDF('traiteur')">🍽️ Récap traiteur<small>Nombre de couverts et régimes alimentaires</small></button>
         <button class="btn" style="background:linear-gradient(135deg,var(--mint),#D9F5E7)" onclick="exportGuestsPDF('tables')">🪑 Plan de table<small>Qui est à quelle table</small></button>
-        <button class="btn" style="background:linear-gradient(135deg,var(--rose),#FFE0EC)" onclick="exportGuestsPDF('badges')">🏷️ Badges nominatifs<small>À découper, un par personne</small></button>
+        <button class="btn" style="background:linear-gradient(135deg,var(--rose),#FFE0EC)" onclick="exportGuestsPDF('badges')">🏷️ Badges nominatifs<small>Un par personne, accompagnants compris</small></button>
         <button class="btn" style="background:linear-gradient(135deg,var(--lilac),#E4DAFA)" onclick="exportGuestsPDF('suivi')">📈 Suivi après l'événement<small>Qui recontacter, par courtier</small></button>
       </div>
     </div>
@@ -5661,6 +5725,10 @@ document.body.insertAdjacentHTML('beforeend', `
       <div><label>👔 Invité par (courtier)</label><input type="text" id="g-broker" list="brokerList" placeholder="ex: Adrien"></div>
       <div><label>👥 Nombre de personnes</label><input type="number" id="g-people" min="1" placeholder="1"></div>
     </div>
+    <label>👥 Prénoms des accompagnants <span style="font-weight:400;color:var(--muted);font-size:12px;text-transform:none;letter-spacing:0">(optionnel — séparés par une virgule)</span></label>
+    <input type="text" id="g-plusnames" placeholder="ex: Julien Dupont, Léa">
+    <div id="g-plus-hint" class="g-help" style="display:none"></div>
+    <label class="check-line" style="margin-top:10px"><input type="checkbox" id="g-plusok"><span>✨ Exception : accompagnants en plus autorisés pour cet invité</span></label>
     <div class="grid-2">
       <div><label>Société / lien</label><input type="text" id="g-company" placeholder="ex: Agence du Centre"></div>
       <div><label>🏷️ Type d'invité</label><select id="g-type">${typeOpts(false)}</select></div>
@@ -5702,7 +5770,7 @@ document.body.insertAdjacentHTML('beforeend', `
     </div>
 
     <label>Notes</label>
-    <textarea id="g-notes" placeholder="Prénoms des accompagnants, projet en cours, à qui le présenter…"></textarea>
+    <textarea id="g-notes" placeholder="Projet en cours, à qui le présenter…"></textarea>
     <div class="modal-actions">
       <button class="btn danger" id="deleteGuestBtn" style="display:none" onclick="deleteGuest()">🗑️ Corbeille</button>
       <button class="btn sky" id="msgGuestBtn" style="display:none" onclick="openGuestMsg(editingGuestId)">💬 Message</button>
@@ -5722,6 +5790,10 @@ document.body.insertAdjacentHTML('beforeend', `
   </div>
 </div>`);
 ['guestOverlay','guestMsgOverlay'].forEach(id=>gEl(id).addEventListener('click', e=>{ if(e.target.id===id) closeOverlays(); }));
+gEl('g-email').addEventListener('input', gContactLinks);
+gEl('g-phone').addEventListener('input', gContactLinks);
+['g-people','g-plusnames'].forEach(id=>gEl(id).addEventListener('input', gPlusHint));
+gEl('g-plusok').addEventListener('change', gPlusHint);
 
 /* ---------- 3. Affichage ---------- */
 function setGuestTab(t){ guestTab = t; renderGuests(); window.scrollTo({top:0, behavior:'smooth'}); }
@@ -5760,6 +5832,8 @@ function renderGuestHead(){
     out.push(`<span class="countdown ${n<0?'late':n<=3?'today':''}">📮 Réponses avant le ${fmtDate(s.deadline)}${n<0?' — date dépassée':n===0?" — c'est aujourd'hui":' — J-'+n}</span>`);
   }
   if(!cap && !s.deadline) out.push(`<button class="fchip" onclick="setGuestTab('reglages')">⚙️ Fixe un nombre de places et une date limite de réponse</button>`);
+  const r = gPlusRule();
+  out.push(`<button class="fchip" onclick="setGuestTab('reglages')" title="Changer la règle dans Réglages">${PLUS_MODE[r.mode]}${r.mode==='max'?' : '+r.max+' max':''}</button>`);
   if(guestBrokerFilter!=='all') out.push(`<span class="pill" style="background:linear-gradient(135deg,var(--peach),#FFE3D5)">👔 Filtré sur : ${esc(guestBrokerFilter)} <button onclick="guestBrokerFilter='all';renderGuests()" style="border:none;background:none;cursor:pointer;font-weight:800;margin-left:4px" aria-label="Retirer le filtre">✕</button></span>`);
   gEl('guestHeadInfo').innerHTML = out.join('');
 }
@@ -5770,18 +5844,23 @@ function renderGuestListe(){
   const of = st => gs.filter(g=>g.status===st);
   const answered = gs.filter(g=>g.status!=='attente').length;
   const sent = gs.filter(gSent).length;
+  const plYes = of('oui').reduce((s,g)=>s+gPlus(g),0);
+  const plAll = gs.reduce((s,g)=>s+gPlus(g),0);
   const tiles = [
     {big:gSum(gs), lbl:'personnes invitées', sub:gs.length+' invitation'+(gs.length>1?'s':''), bg:'var(--lilac)'},
-    {big:gSum(of('oui')), lbl:'personnes qui viennent', sub:of('oui').length+' invitation'+(of('oui').length>1?'s':'')+' acceptée'+(of('oui').length>1?'s':''), bg:'var(--mint)'},
+    {big:gSum(of('oui')), lbl:'personnes qui viennent', sub:of('oui').length+' invité'+(of('oui').length>1?'s':'')+' + '+plYes+' accompagnant'+(plYes>1?'s':''), bg:'var(--mint)'},
     {big:gSum(of('attente')), lbl:'pers. sans réponse', sub:of('attente').length+' à relancer', bg:'var(--butter)'},
     {big:gSum(of('peutetre')), lbl:'pers. peut-être', sub:of('peutetre').length+' invitation'+(of('peutetre').length>1?'s':''), bg:'var(--sky)'},
     {big:gSum(of('non')), lbl:'pers. ne viennent pas', sub:of('non').length+' invitation'+(of('non').length>1?'s':''), bg:'var(--rose)'},
+    {big:plYes, lbl:'accompagnants qui viennent', sub:plAll+' accompagnant'+(plAll>1?'s':'')+' invité'+(plAll>1?'s':'')+' au total', bg:'var(--peach)'},
     {big:sent+' / '+gs.length, lbl:'invitations envoyées', sub:(gs.length-sent)?(gs.length-sent)+' à envoyer':'tout est parti ✓', bg:'var(--peach)'},
     {big:(gs.length?Math.round(answered/gs.length*100):0)+' %', lbl:'taux de réponse', sub:answered+' réponse'+(answered>1?'s':'')+' reçue'+(answered>1?'s':''), bg:'var(--mint)'}
   ];
   gEl('guestStats').innerHTML = tiles.map(t=>
     `<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))"><div class="big">${t.big}</div><div class="lbl">${t.lbl}</div>${t.sub?`<div class="g-stat-sub">${t.sub}</div>`:''}</div>`).join('');
-  const chips = [['all','Tous',gs.length],['attente','⏳ Pas répondu',of('attente').length],['oui','✅ Viennent',of('oui').length],['peutetre','🤔 Peut-être',of('peutetre').length],['non','❌ Ne viennent pas',of('non').length],['relancer','🔔 À relancer',gs.filter(gNeedsReminder).length],['vip','⭐ VIP',gs.filter(g=>g.vip).length]];
+  const overN = gs.filter(g=>gPlusOver(g)>0).length;
+  const chips = [['all','Tous',gs.length],['attente','⏳ Pas répondu',of('attente').length],['oui','✅ Viennent',of('oui').length],['peutetre','🤔 Peut-être',of('peutetre').length],['non','❌ Ne viennent pas',of('non').length],['relancer','🔔 À relancer',gs.filter(gNeedsReminder).length],['vip','⭐ VIP',gs.filter(g=>g.vip).length],['plus','👥 Avec accompagnants',gs.filter(g=>gPlus(g)>0).length]];
+  if(overN || guestFilter==='plusover') chips.push(['plusover','⚠️ Hors règle +1',overN]);
   gEl('guestFilterChips').innerHTML = chips.map(([id,l,n])=>
     `<button class="fchip a ${guestFilter===id?'active':''}" onclick="guestFilter='${id}';renderGuests()">${l} (${n})</button>`).join('');
   renderGuestList();
@@ -5792,18 +5871,20 @@ function filteredGuests(){
   let gs = guestsOfProject().filter(matchBroker);
   if(guestFilter==='relancer') gs = gs.filter(gNeedsReminder);
   else if(guestFilter==='vip') gs = gs.filter(g=>g.vip);
+  else if(guestFilter==='plus') gs = gs.filter(g=>gPlus(g)>0);
+  else if(guestFilter==='plusover') gs = gs.filter(g=>gPlusOver(g)>0);
   else if(guestFilter!=='all') gs = gs.filter(g=>g.status===guestFilter);
   const tf = gEl('guestTypeFilter').value;
   if(tf==='__none') gs = gs.filter(g=>!g.type); else if(tf!=='all') gs = gs.filter(g=>g.type===tf);
   const inv = gEl('guestInvFilter').value;
   if(inv==='sent') gs = gs.filter(gSent); else if(inv==='notsent') gs = gs.filter(g=>!gSent(g));
   const q = gNorm(gEl('guestSearch').value);
-  if(q) gs = gs.filter(g=>[g.name,g.company,g.email,g.phone,g.notes,g.broker,g.type,g.table].some(v=>gNorm(v).includes(q)));
+  if(q) gs = gs.filter(g=>[g.name,g.company,g.email,g.phone,g.notes,g.broker,g.type,g.table,g.plusNames].some(v=>gNorm(v).includes(q)));
   return gs.sort((a,b)=>GST_ORDER.indexOf(a.status)-GST_ORDER.indexOf(b.status) || gByName(a,b));
 }
 function gPills(g, opts={}){
   const st = GST[g.status] ? g.status : 'attente';
-  let out = `<span class="pill" style="background:#EFEAF9">👥 ${gPeople(g)} pers.</span>`;
+  let out = gPlusPill(g);
   if(g.vip) out += `<span class="pill" style="background:linear-gradient(135deg,var(--butter),#FFF3CE)">⭐ VIP</span>`;
   if(g.broker) out += `<span class="pill" style="background:linear-gradient(135deg,var(--peach),#FFE3D5)">👔 ${esc(g.broker)}</span>`;
   if(g.type && !opts.noType) out += `<span class="pill" style="background:#F1ECFB">🏷️ ${esc(g.type)}</span>`;
@@ -5899,12 +5980,13 @@ function renderGuestAccueil(){
   gEl('gaStats').innerHTML = tiles.map(t=>`<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))"><div class="big">${t.big}</div><div class="lbl">${t.lbl}</div>${t.sub?`<div class="g-stat-sub">${t.sub}</div>`:''}</div>`).join('');
   let gs = gEl('gaAll').checked ? all : all.filter(g=>g.status==='oui' || +g.arrived>0);
   const q = gNorm(gEl('gaSearch').value);
-  if(q) gs = gs.filter(g=>[g.name,g.company,g.broker,g.table].some(v=>gNorm(v).includes(q)));
+  if(q) gs = gs.filter(g=>[g.name,g.company,g.broker,g.table,g.plusNames].some(v=>gNorm(v).includes(q)));
   gs = [...gs].sort(gByName);
   if(!gs.length){ gEl('gaList').innerHTML = `<p class="empty-msg">${q?'Personne à ce nom… pas sur la liste ? Ajoute-le juste en dessous 🎈':'Personne n\'a encore confirmé sa venue 🌱'}</p>`; return; }
   gEl('gaList').innerHTML = gs.map(g=>{
     const n = gPeople(g), a = +g.arrived||0, full = a>=n;
-    const sub = [g.company, g.dietNote].filter(Boolean).map(esc).join(' · ');
+    const acc = gPlusNames(g);
+    const sub = [g.company ? esc(g.company) : '', acc.length ? 'avec ' + acc.map(esc).join(', ') : '', g.dietNote ? esc(g.dietNote) : ''].filter(Boolean).join(' · ');
     const ctrl = n===1
       ? `<button class="qtoggle ${a?'on':''}" onclick="event.stopPropagation();setArrived('${g.id}',${a?0:1})">${a?'✅ Arrivé·e':'☐ Arrivé·e ?'}</button>`
       : `<button class="qtoggle" onclick="event.stopPropagation();setArrived('${g.id}',${a-1})" ${a?'':'disabled'} aria-label="Une personne en moins">−</button>
@@ -6001,11 +6083,23 @@ function renderGuestReglages(){
   const setIf = (id, v) => { const el = gEl(id); if(document.activeElement!==el) el.value = v ?? ''; };
   setIf('gr-capacity', s.capacity); setIf('gr-deadline', s.deadline);
   setIf('gr-tpl-invite', s.tpl.invite); setIf('gr-tpl-relance', s.tpl.relance); setIf('gr-tpl-merci', s.tpl.merci);
+  const r = gPlusRule();
+  gEl('gr-plusmode').value = r.mode;
+  setIf('gr-plusmax', s.plusMax);
+  gEl('gr-plusmax-wrap').style.visibility = r.mode==='max' ? 'visible' : 'hidden';
   const p = getEvtProject();
   const others = data.evtProjects.filter(x=>x.id!==p.id).map(x=>({x, n:data.guests.filter(g=>g.projectId===x.id).length})).filter(o=>o.n);
   gEl('gi-from').innerHTML = others.length
     ? others.map(o=>`<option value="${o.x.id}">${esc(o.x.name)} — ${o.n} invité${o.n>1?'s':''}</option>`).join('')
     : '<option value="">Aucun autre événement avec des invités</option>';
+}
+function setPlusRule(){
+  if(!getEvtProject()) return;
+  const s = gSet();
+  s.plusMode = gEl('gr-plusmode').value;
+  s.plusMax = gEl('gr-plusmax').value;
+  if(s.plusMode==='max' && !s.plusMax){ s.plusMax = '1'; gEl('gr-plusmax').value = '1'; }
+  persistSoon(); renderGuests();
 }
 function resetGuestTemplates(){
   if(!confirm('Remettre les 3 messages comme à l\'origine ?')) return;
@@ -6037,9 +6131,8 @@ function importGuestList(){
     const g = newGuest({name, company:rest.slice(1).join(', '), email, phone, people, broker, type, inviteSent:sent, invitedAt:sent?gToday():''});
     data.guests.push(g); existing.push(g); added++;
   });
-  if(added){ gEl('gi-text').value = ''; persist(); renderGuests(); renderEvtProjectBar(); }
+  if(added){ gEl('gi-text').value = ''; guestTab = 'liste'; persist(); renderGuests(); renderEvtProjectBar(); }
   toast(`📥 ${added} invité(s) ajouté(s)` + (dup?` · ${dup} doublon(s) ignoré(s)`:'') + (skipped?` · ${skipped} ligne(s) vide(s)`:''));
-  if(added){ guestTab = 'liste'; renderGuests(); }
 }
 function copyGuestsFromEvent(){
   const from = gEl('gi-from').value; if(!from) return;
@@ -6048,7 +6141,7 @@ function copyGuestsFromEvent(){
   let added = 0, dup = 0;
   src.forEach(o=>{
     if(gIsDup(o.name, o.email, existing)){ dup++; return; }
-    const g = newGuest({name:o.name, company:o.company, email:o.email, phone:o.phone, people:gPeople(o), broker:o.broker, type:o.type, vip:o.vip, diet:o.diet, dietNote:o.dietNote, notes:o.notes});
+    const g = newGuest({name:o.name, company:o.company, email:o.email, phone:o.phone, people:gPeople(o), plusNames:o.plusNames||'', plusOk:!!o.plusOk, broker:o.broker, type:o.type, vip:o.vip, diet:o.diet, dietNote:o.dietNote, notes:o.notes});
     data.guests.push(g); existing.push(g); added++;
   });
   persist(); renderGuests(); renderEvtProjectBar();
@@ -6091,19 +6184,33 @@ function quickAddGuest(){
   const dup = gIsDup(name, email, guestsOfProject());
   if(dup && !confirm(`« ${dup.name} » est déjà dans la liste${dup.broker?' (invité par '+dup.broker+')':''}. L'ajouter quand même ?`)) return;
   const people = Math.max(1, parseInt(gEl('gq-people').value)||1);
-  data.guests.push(newGuest({name, people, email, broker:gEl('gq-broker').value.trim(), type:gEl('gq-type').value, phone:gEl('gq-phone').value.trim()}));
+  const g = newGuest({name, people, email, broker:gEl('gq-broker').value.trim(), type:gEl('gq-type').value, phone:gEl('gq-phone').value.trim()});
+  data.guests.push(g);
   ['gq-name','gq-email','gq-phone'].forEach(i=>gEl(i).value='');
   gEl('gq-people').value = 1;
   gEl('gq-name').focus();
-  persist(); renderGuests(); renderEvtProjectBar(); toast(name + ' ajouté(e) — ' + people + ' pers. 💌');
+  persist(); renderGuests(); renderEvtProjectBar();
+  toast(gPlusOver(g) ? `⚠️ ${name} ajouté·e avec ${gPlus(g)} accompagnant(s), mais la règle est : ${gPlusRuleText()}` : name + ' ajouté(e) — ' + people + ' pers. 💌');
 }
 function gContactLinks(){
   const e = gEl('g-email').value.trim(), t = gEl('g-phone').value.replace(/[^\d+]/g,'');
   gEl('g-contact-links').innerHTML = (t?`<a class="fchip" style="text-decoration:none" href="tel:${t}">📞 Appeler</a><a class="fchip" style="text-decoration:none" href="sms:${t}">💬 SMS</a>`:'')
     + (e?`<a class="fchip" style="text-decoration:none" href="mailto:${escAttr(e)}">✉️ Écrire</a>`:'');
 }
-gEl('g-email').addEventListener('input', gContactLinks);
-gEl('g-phone').addEventListener('input', gContactLinks);
+function gPlusHint(){
+  const box = gEl('g-plus-hint'); if(!box) return;
+  const names = gPlusNames({plusNames: gEl('g-plusnames').value});
+  const typed = Math.max(1, parseInt(gEl('g-people').value)||1);
+  const people = Math.max(typed, names.length+1);
+  const fake = {people, plusOk: gEl('g-plusok').checked};
+  const pl = people-1, over = gPlusOver(fake);
+  const msgs = [];
+  if(people > typed) msgs.push(`👥 ${names.length} prénom(s) noté(s) : le nombre de personnes passera à ${people} à l'enregistrement.`);
+  if(over) msgs.push(`⚠️ ${pl} accompagnant${pl>1?'s':''} alors que la règle de l'événement est : ${gPlusRuleText()}. Coche l'exception si c'est validé.`);
+  else if(pl > names.length) msgs.push(`💡 ${pl-names.length} accompagnant${pl-names.length>1?'s':''} sans prénom — pratique à compléter pour les badges et l'accueil.`);
+  box.style.display = msgs.length ? 'block' : 'none';
+  box.innerHTML = msgs.join('<br>');
+}
 function openGuestModal(id=null){
   if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
   editingGuestId = id;
@@ -6113,6 +6220,7 @@ function openGuestModal(id=null){
   if(!g) return;
   gEl('guestModalTitle').textContent = id ? 'Fiche invité' : 'Nouvel invité';
   set('g-name',g.name); set('g-broker',g.broker); set('g-people',gPeople(g));
+  set('g-plusnames',g.plusNames); chk('g-plusok',g.plusOk);
   set('g-company',g.company); set('g-type',g.type); set('g-status',g.status||'attente'); chk('g-vip',g.vip);
   set('g-email',g.email); set('g-phone',g.phone);
   chk('g-sent',gSent(g)); set('g-via',g.inviteVia); set('g-invited',g.invitedAt); set('g-last',g.lastReminder);
@@ -6121,6 +6229,7 @@ function openGuestModal(id=null){
   gEl('deleteGuestBtn').style.display = id ? 'inline-block' : 'none';
   gEl('msgGuestBtn').style.display = id ? 'inline-block' : 'none';
   gContactLinks();
+  gPlusHint();
   gEl('guestOverlay').classList.add('open');
   gEl('g-name').focus();
 }
@@ -6135,11 +6244,14 @@ function saveGuest(){
     if(dup && !confirm(`« ${dup.name} » est déjà dans la liste. L'ajouter quand même ?`)) return;
   }
   const status = v('g-status'), last = v('g-last'), sent = c('g-sent');
+  const plusNames = v('g-plusnames').trim();
+  const nbNames = gPlusNames({plusNames}).length;
   let reminders = old ? (old.reminders||0) : 0;
   if(last && (!old || old.lastReminder!==last) && !reminders) reminders = 1;
   const guest = Object.assign(old ? {...old} : newGuest(), {
     projectId: old ? old.projectId : p.id, name,
-    broker: v('g-broker').trim(), people: Math.max(1, parseInt(v('g-people'))||1),
+    broker: v('g-broker').trim(), people: Math.max(1, parseInt(v('g-people'))||1, nbNames+1),
+    plusNames, plusOk: c('g-plusok'),
     company: v('g-company').trim(), type: v('g-type'), vip: c('g-vip'), status,
     email: v('g-email').trim(), phone: v('g-phone').trim(),
     inviteSent: sent, inviteVia: v('g-via'), invitedAt: v('g-invited') || (sent ? gToday() : ''),
@@ -6152,7 +6264,8 @@ function saveGuest(){
   if(old) data.guests = data.guests.map(g=>g.id===old.id?guest:g);
   else data.guests.push(guest);
   if(status==='oui' && (!old || old.status!=='oui')) confetti();
-  persist(); closeOverlays(); renderGuests(); renderEvtProjectBar(); toast('Invité enregistré 💌');
+  persist(); closeOverlays(); renderGuests(); renderEvtProjectBar();
+  toast(gPlusOver(guest) ? `⚠️ ${guest.name} vient avec ${gPlus(guest)} accompagnant(s) — règle : ${gPlusRuleText()}` : 'Invité enregistré 💌');
 }
 function deleteGuest(){
   const g = data.guests.find(x=>x.id===editingGuestId); if(!g) return;
@@ -6220,15 +6333,32 @@ function exportGuestsPDF(mode){
   }[mode];
   if(!pick.length){ toast({oui:'Personne n\'a encore dit oui 🌱', relancer:'Personne à relancer 🎉', noninvites:'Toutes les invitations sont parties ✓', suivi:'Personne n\'est marqué comme venu 🌱'}[mode] || 'La liste est vide 🌱'); return; }
   const gs = [...pick].sort(gByName);
+
+  if(mode==='badges'){
+    const card = (name, co) => `<div class="g-badge"><div class="g-b-evt">${esc(p.name)}</div>${name?`<div class="g-b-name">${esc(name)}</div>`:'<div class="g-b-line"></div>'}<div class="g-b-co">${co}</div></div>`;
+    const cards = [];
+    gs.forEach(g=>{
+      cards.push(card(g.name, esc(g.company||'')));
+      const names = gPlusNames(g);
+      for(let i=1;i<gPeople(g);i++) cards.push(card(names[i-1]||'', 'avec ' + esc(g.name)));
+    });
+    document.getElementById('printArea').innerHTML = `<div class="g-badges">${cards.join('')}</div>`;
+    window.print();
+    return;
+  }
+
   const who = guestBrokerFilter!=='all' ? ' — invités de ' + esc(guestBrokerFilter) : '';
-  const titles = {oui:'Ils viennent', relancer:'Invités à relancer', noninvites:'Invitations à envoyer', courtier:'Invités par courtier', all:'Liste des invités', accueil:"Liste d'accueil", traiteur:'Récap traiteur', tables:'Plan de table', badges:'Badges', suivi:"Suivi après l'événement"};
-  const rem = g => [g.vip?'⭐ VIP':'', g.diet?(GDIET[g.diet]+(g.dietNote?' : '+esc(g.dietNote):'')):(g.dietNote?esc(g.dietNote):''), esc(g.notes||'')].filter(Boolean).join(' · ');
+  const titles = {oui:'Ils viennent', relancer:'Invités à relancer', noninvites:'Invitations à envoyer', courtier:'Invités par courtier', all:'Liste des invités', accueil:"Liste d'accueil", traiteur:'Récap traiteur', tables:'Plan de table', suivi:"Suivi après l'événement"};
+  const acc = g => gPlusNames(g).length ? 'Accompagné·e de : ' + gPlusNames(g).map(esc).join(', ') : '';
+  const rem = g => [g.vip?'⭐ VIP':'', acc(g), g.diet?(GDIET[g.diet]+(g.dietNote?' : '+esc(g.dietNote):'')):(g.dietNote?esc(g.dietNote):''), esc(g.notes||'')].filter(Boolean).join(' · ');
   const nm = g => `<strong>${esc(g.name)}</strong>${g.vip?' ⭐':''}${g.company?`<br><span style="color:#888;font-size:11px">${esc(g.company)}</span>`:''}`;
+  const plYes = yesL.reduce((s,g)=>s+gPlus(g),0);
   const head = `<h1>${titles[mode]} — ${esc(p.name)}${who}</h1>
     <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}${p.date?' · Jour J : '+fmtDate(p.date):''}${p.location?' · '+esc(p.location):''}</p>
     <div class="pstats">
       <div><b>${gSum(all)}</b>personnes invitées</div>
       <div><b>${gSum(yesL)}</b>personnes viennent</div>
+      <div><b>${plYes}</b>dont accompagnants</div>
       <div><b>${gSum(all.filter(g=>g.status==='attente'))}</b>sans réponse</div>
       <div><b>${gSum(all.filter(g=>g.status==='peutetre'))}</b>peut-être</div>
       <div><b>${gSum(all.filter(g=>g.status==='non'))}</b>ne viennent pas</div>
@@ -6283,16 +6413,6 @@ function exportGuestsPDF(mode){
     body = gGroups(gs, g=>g.table ? 'Table ' + g.table.replace(/^table\s*/i,'') : '', 'Sans table attribuée').map(gr=>
       `<h2>🪑 ${esc(gr.name)} — ${gSum(gr.items)} personne(s)</h2><table><tr><th>Nom</th><th class="r">Pers.</th><th>Courtier</th><th>Remarques</th></tr>
       ${[...gr.items].sort(gByName).map(g=>`<tr><td>${nm(g)}</td><td class="r">${gPeople(g)}</td><td>${esc(g.broker)||'—'}</td><td>${rem(g)}</td></tr>`).join('')}</table>`).join('');
-  } else if(mode==='badges'){
-    const card = (name, co, blank) => `<div class="g-badge"><div class="g-b-evt">${esc(p.name)}</div>${blank?'<div class="g-b-line"></div>':`<div class="g-b-name">${esc(name)}</div>`}<div class="g-b-co">${co}</div></div>`;
-    const cards = [];
-    gs.forEach(g=>{
-      cards.push(card(g.name, esc(g.company||'')));
-      for(let i=1;i<gPeople(g);i++) cards.push(card('', 'avec ' + esc(g.name), true));
-    });
-    document.getElementById('printArea').innerHTML = `<div class="g-badges">${cards.join('')}</div>`;
-    window.print();
-    return;
   } else if(mode==='suivi'){
     body = brokerGroups(gs).map(gr=>`<h2>👔 ${esc(gr.name)} — ${gr.items.length} invitation(s) venue(s)</h2>
       <table><tr><th>Nom</th><th>Téléphone</th><th>Email</th><th>Suivi</th><th>Remercié</th><th>Notes</th></tr>
@@ -6307,8 +6427,8 @@ function exportGuestsCSV(){
   if(!gs.length){ toast('La liste est vide 🌱'); return; }
   const txt = v => '"' + String(v ?? '').replace(/"/g,'""').replace(/\r?\n/g,' ') + '"';
   const yn = b => b ? 'Oui' : 'Non';
-  const lines = [['Nom','Société','Courtier','Type','VIP','Nombre de personnes','Réponse','Email','Téléphone','Invitation envoyée','Envoyée par','Invité le','Dernière relance','Nb relances','Régime','Précision régime','Table','Personnes arrivées','Suivi','Remercié','Notes'].map(txt).join(';')];
-  gs.forEach(g=>lines.push([txt(g.name),txt(g.company),txt(g.broker),txt(g.type),txt(yn(g.vip)),gPeople(g),txt(GST[g.status].t),txt(g.email),txt(g.phone),txt(yn(gSent(g))),txt(GVIA[g.inviteVia||'']),txt(g.invitedAt?fmtDate(g.invitedAt):''),txt(g.lastReminder?fmtDate(g.lastReminder):''),g.reminders||0,txt(GDIET[g.diet||'']),txt(g.dietNote),txt(g.table),+g.arrived||0,txt(GFOLLOW[g.followUp||'']),txt(yn(g.thanked)),txt(g.notes)].join(';')));
+  const lines = [['Nom','Société','Courtier','Type','VIP','Nombre de personnes','Accompagnants','Prénoms des accompagnants','Exception +1','Réponse','Email','Téléphone','Invitation envoyée','Envoyée par','Invité le','Dernière relance','Nb relances','Régime','Précision régime','Table','Personnes arrivées','Suivi','Remercié','Notes'].map(txt).join(';')];
+  gs.forEach(g=>lines.push([txt(g.name),txt(g.company),txt(g.broker),txt(g.type),txt(yn(g.vip)),gPeople(g),gPlus(g),txt(gPlusNames(g).join(', ')),txt(yn(g.plusOk)),txt(GST[g.status].t),txt(g.email),txt(g.phone),txt(yn(gSent(g))),txt(GVIA[g.inviteVia||'']),txt(g.invitedAt?fmtDate(g.invitedAt):''),txt(g.lastReminder?fmtDate(g.lastReminder):''),g.reminders||0,txt(GDIET[g.diet||'']),txt(g.dietNote),txt(g.table),+g.arrived||0,txt(GFOLLOW[g.followUp||'']),txt(yn(g.thanked)),txt(g.notes)].join(';')));
   lines.push('');
   lines.push([txt('TOTAL personnes invitées'),'','','','',gSum(gs)].join(';'));
   lines.push([txt('TOTAL personnes qui viennent'),'','','','',gSum(gs.filter(g=>g.status==='oui'))].join(';'));
@@ -6374,717 +6494,42 @@ mergeData = function(d){
   for(const k in (d.guestSettings||{})) if(!data.guestSettings[k]) data.guestSettings[k] = d.guestSettings[k];
   return n;
 };
-
-
-/* ---------- 1. Règle de l'événement & petits outils ---------- */
-const PLUS_MODE = {libre:'👥 Accompagnants libres', max:'👥 Accompagnants limités', aucun:'👤 Invitation nominative'};
-function gPlusRule(){
-  const s = gSet();
-  return {mode: s.plusMode || 'libre', max: Math.max(1, parseInt(s.plusMax) || 1)};
-}
-function gPlusAllowed(g){
-  const r = gPlusRule();
-  if(r.mode==='libre' || (g && g.plusOk)) return Infinity;
-  return r.mode==='aucun' ? 0 : r.max;
-}
-const gPlus = g => Math.max(0, gPeople(g) - 1);
-const gPlusOver = g => { const a = gPlusAllowed(g); return a===Infinity ? 0 : Math.max(0, gPlus(g) - a); };
-const gPlusNames = g => (g.plusNames||'').split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
-function gPlusRuleText(){
-  const r = gPlusRule();
-  return r.mode==='libre' ? 'accompagnants libres'
-    : r.mode==='aucun' ? "invitation nominative (pas d'accompagnant)"
-    : r.max + ' accompagnant' + (r.max>1?'s':'') + ' max par invitation';
-}
-function gPlusText(g){
-  const a = gPlusAllowed(g);
-  if(a===0) return 'Cette invitation est strictement nominative.';
-  if(a===Infinity) return 'Vous pouvez bien sûr venir accompagné(e).';
-  return `Vous pouvez venir accompagné(e) de ${a} personne${a>1?'s':''}.`;
-}
- 
-/* nouveaux champs sur chaque invité */
-const _plNewGuest = newGuest;
-newGuest = function(f){ return Object.assign({plusNames:'', plusOk:false}, _plNewGuest(f)); };
- 
-/* mot magique {accompagnants} dans les messages */
-DEF_TPL.invite = "Bonjour {prenom},\n\nAeconomia a le plaisir de vous inviter à {evenement}, le {date} à {lieu}. {accompagnants}\n\nPourriez-vous nous confirmer votre présence (et le nombre de personnes) avant le {datelimite} ?\n\nAu plaisir de vous y retrouver,\n{courtier} — Aeconomia";
-const _plFill = gFill;
-gFill = function(tpl, g){ return _plFill((tpl||'').replace(/\{accompagnants\}/g, gPlusText(g)), g); };
- 
-/* ---------- 2. Écran : réglages + fiche invité ---------- */
-(function(){
-  const help = document.querySelector('#gtab-reglages .g-help');
-  if(help) help.insertAdjacentHTML('beforeend', ' <code>{accompagnants}</code>');
- 
-  gEl('gr-deadline').closest('.grid-2').insertAdjacentHTML('afterend', `
-    <div class="modal-sec">👥 Accompagnants (+1)</div>
-    <div class="grid-2">
-      <div><label>Les invités peuvent venir accompagnés ?</label>
-        <select id="gr-plusmode" onchange="setPlusRule()">
-          <option value="libre">Oui, sans limite</option>
-          <option value="max">Oui, avec une limite</option>
-          <option value="aucun">Non, invitation nominative</option>
-        </select></div>
-      <div id="gr-plusmax-wrap"><label>Accompagnant(s) max par invitation</label>
-        <input type="number" id="gr-plusmax" min="1" placeholder="1" oninput="setPlusRule()"></div>
-    </div>
-    <p class="section-hint" style="margin:10px 0 0">Les invitations qui dépassent la règle sont signalées ⚠️ en rose dans la liste. Tu peux faire une exception sur la fiche d'un invité (VIP, partenaire…). Le mot magique <b>{accompagnants}</b> écrit la règle dans tes messages.</p>`);
- 
-  gEl('g-people').closest('.grid-2').insertAdjacentHTML('afterend', `
-    <label>👥 Prénoms des accompagnants <span style="font-weight:400;color:var(--muted);font-size:12px;text-transform:none;letter-spacing:0">(optionnel — séparés par une virgule)</span></label>
-    <input type="text" id="g-plusnames" placeholder="ex: Julien Dupont, Léa">
-    <div id="g-plus-hint" class="g-help" style="display:none"></div>
-    <label class="check-line" style="margin-top:10px"><input type="checkbox" id="g-plusok"><span>✨ Exception : accompagnants en plus autorisés pour cet invité</span></label>`);
-  ['g-people','g-plusnames'].forEach(id=>gEl(id).addEventListener('input', gPlusHint));
-  gEl('g-plusok').addEventListener('change', gPlusHint);
-})();
- 
-function setPlusRule(){
-  if(!getEvtProject()) return;
-  const s = gSet();
-  s.plusMode = gEl('gr-plusmode').value;
-  s.plusMax = gEl('gr-plusmax').value;
-  if(s.plusMode==='max' && !s.plusMax){ s.plusMax = '1'; gEl('gr-plusmax').value = '1'; }
-  persistSoon(); renderGuests();
-}
-const _plRegl = renderGuestReglages;
-renderGuestReglages = function(){
-  _plRegl();
-  const r = gPlusRule(), s = gSet();
-  gEl('gr-plusmode').value = r.mode;
-  const mx = gEl('gr-plusmax');
-  if(document.activeElement!==mx) mx.value = s.plusMax || '';
-  gEl('gr-plusmax-wrap').style.visibility = r.mode==='max' ? 'visible' : 'hidden';
-};
- 
-function gPlusHint(){
-  const box = gEl('g-plus-hint'); if(!box) return;
-  const names = gPlusNames({plusNames: gEl('g-plusnames').value});
-  const typed = Math.max(1, parseInt(gEl('g-people').value)||1);
-  const people = Math.max(typed, names.length+1);
-  const fake = {people, plusOk: gEl('g-plusok').checked};
-  const pl = people-1, over = gPlusOver(fake);
-  const msgs = [];
-  if(people > typed) msgs.push(`👥 ${names.length} prénom(s) noté(s) : le nombre de personnes passera à ${people} à l'enregistrement.`);
-  if(over) msgs.push(`⚠️ ${pl} accompagnant${pl>1?'s':''} alors que la règle de l'événement est : ${gPlusRuleText()}. Coche l'exception si c'est validé.`);
-  else if(pl > names.length) msgs.push(`💡 ${pl-names.length} accompagnant${pl-names.length>1?'s':''} sans prénom — pratique à compléter pour les badges et l'accueil.`);
-  box.style.display = msgs.length ? 'block' : 'none';
-  box.innerHTML = msgs.join('<br>');
-}
-const _plOpen = openGuestModal;
-openGuestModal = function(id=null){
-  _plOpen(id);
-  const g = id ? data.guests.find(x=>x.id===id) : null;
-  gEl('g-plusnames').value = g ? (g.plusNames||'') : '';
-  gEl('g-plusok').checked = !!(g && g.plusOk);
-  gPlusHint();
-};
-const _plSave = saveGuest;
-saveGuest = function(){
-  const id = editingGuestId, len = data.guests.length;
-  const plusNames = gEl('g-plusnames').value.trim(), plusOk = gEl('g-plusok').checked;
-  _plSave();
-  if(gEl('guestOverlay').classList.contains('open')) return; /* pas enregistré (nom vide, doublon refusé…) */
-  const g = id ? data.guests.find(x=>x.id===id) : (data.guests.length>len ? data.guests[data.guests.length-1] : null);
-  if(!g) return;
-  g.plusNames = plusNames; g.plusOk = plusOk;
-  const n = gPlusNames(g).length;
-  if(gPeople(g) < n+1) g.people = n+1;
-  persist(); renderGuests(); renderEvtProjectBar();
-  if(gPlusOver(g)) toast(`⚠️ ${g.name} vient avec ${gPlus(g)} accompagnant(s) — règle : ${gPlusRuleText()}`);
-};
-const _plQuick = quickAddGuest;
-quickAddGuest = function(){
-  const len = data.guests.length;
-  _plQuick();
-  if(data.guests.length>len){
-    const g = data.guests[data.guests.length-1];
-    if(gPlusOver(g)) toast(`⚠️ ${g.name} ajouté·e avec ${gPlus(g)} accompagnant(s), mais la règle est : ${gPlusRuleText()}`);
-  }
-};
- 
-/* ---------- 3. Affichage dans la liste ---------- */
-const _plPills = gPills;
-gPills = function(g, opts={}){
-  const html = _plPills(g, opts);
-  const pl = gPlus(g), over = gPlusOver(g);
-  let txt;
-  if(!pl) txt = '👤 Seul·e';
-  else{
-    const shown = gPlusNames(g).slice(0, pl), rest = pl - shown.length;
-    txt = '👥 1 + ' + [shown.map(esc).join(', '), rest ? (shown.length ? String(rest) : rest+' accompagnant'+(rest>1?'s':'')) : ''].filter(Boolean).join(' + ');
-  }
-  const title = `${gPeople(g)} personne(s) au total` + (over ? ` — ${over} accompagnant(s) de trop (règle : ${gPlusRuleText()})` : '') + (g.plusOk ? ' — exception accordée' : '');
-  const pill = `<span class="pill" style="background:${over?'linear-gradient(135deg,var(--rose),#FFD3E0)':'#EFEAF9'}" title="${escAttr(title)}">${txt}${over?' ⚠️':''}${g.plusOk && pl?' ✨':''}</span>`;
-  return html.replace(/^<span class="pill" style="background:#EFEAF9">👥 \d+ pers\.<\/span>/, pill);
-};
- 
-const _plFiltered = filteredGuests;
-filteredGuests = function(){
-  if(guestFilter!=='plus' && guestFilter!=='plusover') return _plFiltered();
-  const f = guestFilter; guestFilter = 'all';
-  try{ return _plFiltered().filter(g => f==='plus' ? gPlus(g)>0 : gPlusOver(g)>0); }
-  finally{ guestFilter = f; }
-};
- 
-const _plListe = renderGuestListe;
-renderGuestListe = function(){
-  _plListe();
-  const gs = guestsOfProject().filter(matchBroker);
-  const yes = gs.filter(g=>g.status==='oui');
-  const plYes = yes.reduce((s,g)=>s+gPlus(g),0);
-  const plAll = gs.reduce((s,g)=>s+gPlus(g),0);
-  const overN = gs.filter(g=>gPlusOver(g)>0).length;
-  gEl('guestStats').insertAdjacentHTML('beforeend',
-    `<div class="stat" style="background:linear-gradient(135deg,var(--peach),var(--surface-2))">
-      <div class="big">${plYes}</div><div class="lbl">accompagnants qui viennent</div>
-      <div class="g-stat-sub">${yes.length} invité${yes.length>1?'s':''} + ${plYes} acc. · ${plAll} acc. invités au total</div></div>`);
-  gEl('guestFilterChips').insertAdjacentHTML('beforeend',
-    `<button class="fchip a ${guestFilter==='plus'?'active':''}" onclick="guestFilter='plus';renderGuests()">👥 Avec accompagnants (${gs.filter(g=>gPlus(g)>0).length})</button>`
-    + ((overN || guestFilter==='plusover') ? `<button class="fchip a ${guestFilter==='plusover'?'active':''}" onclick="guestFilter='plusover';renderGuests()">⚠️ Hors règle +1 (${overN})</button>` : ''));
-};
- 
-const _plHead = renderGuestHead;
-renderGuestHead = function(){
-  _plHead();
-  const r = gPlusRule();
-  gEl('guestHeadInfo').insertAdjacentHTML('beforeend',
-    `<button class="fchip" onclick="setGuestTab('reglages')" title="Changer la règle dans Réglages">${PLUS_MODE[r.mode]}${r.mode==='max'?' : '+r.max+' max':''}</button>`);
-};
- 
-/* ---------- 4. Exports : prénoms des accompagnants ---------- */
-function withPlusInNotes(fn){
-  const saved = [];
-  guestsOfProject().forEach(g=>{
-    const n = gPlusNames(g);
-    if(n.length){ saved.push([g, g.notes]); g.notes = 'Accompagné·e de : ' + n.join(', ') + (g.notes ? ' · ' + g.notes : ''); }
-  });
-  try{ fn(); } finally { saved.forEach(([g, n])=>{ g.notes = n; }); }
-}
-const _plPDF = exportGuestsPDF;
-exportGuestsPDF = function(mode){
-  if(mode!=='badges') return withPlusInNotes(()=>_plPDF(mode));
-  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
-  const gs = guestsOfProject().filter(matchBroker).filter(g=>g.status==='oui').sort(gByName);
-  if(!gs.length){ toast("Personne n'a encore dit oui 🌱"); return; }
-  const card = (name, co) => `<div class="g-badge"><div class="g-b-evt">${esc(p.name)}</div>${name?`<div class="g-b-name">${esc(name)}</div>`:'<div class="g-b-line"></div>'}<div class="g-b-co">${co}</div></div>`;
-  const cards = [];
-  gs.forEach(g=>{
-    cards.push(card(g.name, esc(g.company||'')));
-    const names = gPlusNames(g);
-    for(let i=1;i<gPeople(g);i++) cards.push(card(names[i-1]||'', 'avec ' + esc(g.name)));
-  });
-  document.getElementById('printArea').innerHTML = `<div class="g-badges">${cards.join('')}</div>`;
-  window.print();
-};
-const _plCSV = exportGuestsCSV;
-exportGuestsCSV = function(){ withPlusInNotes(_plCSV); };
-
-
-.btable input.nin{width:84px;padding:6px 8px;font-size:13px;border-radius:10px;text-align:right;box-shadow:var(--clay-soft);background:var(--surface)}
-.btable select.nsel{width:auto;padding:6px 10px;font-size:12px;border-radius:10px;box-shadow:var(--clay-soft);font-family:'Nunito',sans-serif;font-weight:800}
-.btable tr.ngroup td{background:transparent!important;text-align:left;padding:16px 4px 4px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px}
-.btable tr.ngroup td span.sub{font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:800;color:var(--muted);margin-left:8px}
-.btable tr.nstock td{opacity:.6}
-</style>
- 
-<script>
-/* ---------- 1. Données ---------- */
-DEFAULTS.evtNeeds = [];
-if(!ARRAY_KEYS.includes('evtNeeds')) ARRAY_KEYS.push('evtNeeds');
-if(!Array.isArray(data.evtNeeds)) data.evtNeeds = [];
-KIND_LABEL.need = '🧮 Besoin';
-PAGES.evenement.subs.push(['besoins','Besoins & budget 🧮']);
-SUB_SECTION.besoins = 'view-evtbesoins';
- 
-const NST = {
-  aprevoir: {l:'📝 À prévoir',          t:'À prévoir',          bg:'#EFEAF9'},
-  devis:    {l:'📨 Devis demandé',      t:'Devis demandé',      bg:'var(--butter)'},
-  commande: {l:'🛒 Commandé / réservé', t:'Commandé / réservé', bg:'var(--sky)'},
-  recu:     {l:'✅ Reçu / acheté',      t:'Reçu / acheté',      bg:'var(--mint)'},
-  stock:    {l:'📦 Déjà en stock',      t:'Déjà en stock',      bg:'#E6F8EE'}
-};
-const NFILT = [['all','Tout'],['aprevoir','📝 À prévoir'],['devis','📨 Devis demandé'],['commande','🛒 Commandé'],['recu','✅ Reçu'],['stock','📦 En stock'],['apayer','💳 À payer']];
-let needFilter = 'all', editingNeedId = null;
-const nEl = id => document.getElementById(id);
-const nNum = v => { const n = parseFloat(String(v ?? '').replace(/\s/g,'').replace(',','.')); return isNaN(n) ? 0 : n; };
-const nFmtQ = q => (Math.round(q*100)/100).toLocaleString('fr-FR');
- 
-function needsOfProject(){
-  if(!Array.isArray(data.evtNeeds)) data.evtNeeds = [];
-  const p = getEvtProject();
-  return p ? data.evtNeeds.filter(n=>n.projectId===p.id) : [];
-}
-function newNeed(f){
-  return Object.assign({id:uid(), projectId:(getEvtProject()||{}).id, name:'', catId:'', status:'aprevoir',
-    qtyMode:'fixe', qty:1, perHead:1, extra:0, unit:'', price:'', supplier:'', paid:false,
-    dueDate:'', link:'', notes:'', retroId:''}, f||{});
-}
-/* Nombre de personnes utilisé pour les lignes « par personne » */
-function nPeopleInfo(){
-  if(typeof guestsOfProject==='function' && typeof gSum==='function'){
-    const yes = guestsOfProject().filter(g=>g.status==='oui');
-    if(yes.length) return {n:gSum(yes), src:'personnes qui viennent (liste d\'invités)'};
-    const cap = parseInt(gSet().capacity)||0;
-    if(cap) return {n:cap, src:'places max (personne n\'a encore confirmé)'};
-  }
-  return {n:0, src:'aucun invité confirmé pour l\'instant'};
-}
-function nQty(n){
-  if(n.qtyMode==='pers') return Math.max(0, nPeopleInfo().n * (nNum(n.perHead) || 1) + nNum(n.extra));
-  return nNum(n.qty);
-}
-const nCounted = n => n.status!=='stock';
-const nTotal = n => r2(nQty(n) * nNum(n.price));
-const nSum = arr => r2(arr.filter(nCounted).reduce((s,n)=>s+nTotal(n),0));
-function nBudget(p){ const v = parseFloat(String((p||{}).budget||'').replace(/\s/g,'').replace(',','.').replace(/[^\d.]/g,'')); return isNaN(v) ? 0 : v; }
-const nCat = id => data.retroCats.find(c=>c.id===id);
-function nGroups(list){
-  const map = {};
-  list.forEach(n=>{ const c = nCat(n.catId); const k = c ? c.id : '__none'; (map[k] = map[k] || {cat:c, items:[]}).items.push(n); });
-  const order = [...data.retroCats.map(c=>c.id), '__none'];
-  return order.filter(k=>map[k]).map(k=>map[k]);
-}
- 
-/* ---------- 2. Écran ---------- */
-nEl('view-evtprestataires').insertAdjacentHTML('afterend', `
-<section id="view-evtbesoins" class="view">
-  <datalist id="needSupplierList"></datalist>
-  <div id="needNoProj"></div>
-  <div id="needWrap">
-    <div class="card">
-      <h2>🧮 Besoins & budget
-        <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn sky small" onclick="exportNeedsPDF()">🖨️ Export PDF</button>
-          <button class="btn small" onclick="exportNeedsCSV()">📊 Export Excel</button>
-          <button class="btn primary small" onclick="openNeedModal()">+ Nouveau besoin</button>
-        </span>
-      </h2>
-      <p class="section-hint">Tout ce qu'il faut prévoir (matériel, déco, boissons, impressions, location…) avec quantités et prix. Les lignes « par personne » se recalculent toutes seules avec le nombre d'invités qui viennent. Les catégories sont celles du rétroplanning.</p>
-      <div class="stat-grid" id="needStats"></div>
-      <div id="needProgress"></div>
-      <div class="composer" style="margin-top:16px">
-        <input type="text" id="nq-name" placeholder="ex: Nappes blanches, Champagne, Kakémono…" onkeydown="if(event.key==='Enter')quickAddNeed()">
-        <input type="number" id="nq-qty" class="g-num" min="0" step="any" value="1" title="Quantité" aria-label="Quantité" onkeydown="if(event.key==='Enter')quickAddNeed()">
-        <input type="number" id="nq-price" class="g-num" style="width:120px" min="0" step="0.01" placeholder="Prix unit. €" aria-label="Prix unitaire" onkeydown="if(event.key==='Enter')quickAddNeed()">
-        <select id="nq-cat" class="fselect" aria-label="Catégorie"></select>
-        <label class="check-line" style="width:auto;padding:10px 12px;flex:none"><input type="checkbox" id="nq-pers"><span>× par personne</span></label>
-        <button class="btn primary" onclick="quickAddNeed()">+ Ajouter</button>
-      </div>
-      <p class="section-hint" style="margin:8px 0 0">Coche « × par personne » pour que la quantité suive les invités : avec 2 et 40 personnes qui viennent, ça fera 80. Clique sur un nom dans le tableau pour tous les détails (fournisseur, date limite, marge de sécurité…).</p>
-      <div class="filters" id="needFilterChips" style="margin-top:18px;margin-bottom:8px"></div>
-      <div class="filters">
-        <select id="needCatFilter" class="fselect" onchange="renderNeeds()" aria-label="Catégorie"></select>
-        <input type="text" id="needSearch" class="g-search" placeholder="🔍 Chercher…" oninput="renderNeedTable()">
-      </div>
-      <div style="overflow-x:auto"><table class="btable" id="needTable"></table></div>
-    </div>
-    <div class="card">
-      <h2>📊 Par catégorie</h2>
-      <div style="overflow-x:auto"><table class="btable" id="needCatTable"></table></div>
-    </div>
-    <div class="card">
-      <h2>♻️ Reprendre la liste d'un autre événement</h2>
-      <p class="section-hint">Pratique pour un événement qui revient : tout est copié (quantités, prix, fournisseurs), les statuts repartent à « À prévoir ».</p>
-      <div class="composer"><select id="needCopyFrom" class="fselect" style="flex:1"></select><button class="btn primary" onclick="copyNeedsFromEvent()">♻️ Reprendre cette liste</button></div>
-    </div>
-  </div>
-</section>`);
- 
-document.body.insertAdjacentHTML('beforeend', `
-<div class="overlay" id="needOverlay">
-  <div class="modal" style="max-width:600px">
-    <h3 id="needModalTitle">Nouveau besoin</h3>
-    <label>Quoi ?</label>
-    <input type="text" id="n-name" placeholder="ex: Location de mange-debout">
-    <div class="grid-2">
-      <div><label>Catégorie</label><select id="n-cat"></select></div>
-      <div><label>Statut</label><select id="n-status">${Object.entries(NST).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></div>
-    </div>
- 
-    <div class="modal-sec">🔢 Quantité & prix</div>
-    <div class="grid-2">
-      <div><label>Calcul de la quantité</label>
-        <select id="n-qtymode" onchange="updateNeedForm()">
-          <option value="fixe">Quantité fixe</option>
-          <option value="pers">Par personne (suit les invités)</option>
-        </select></div>
-      <div><label>Unité</label><input type="text" id="n-unit" placeholder="pièces, bouteilles, lots…"></div>
-    </div>
-    <div id="n-fixe-wrap"><label>Quantité</label><input type="number" id="n-qty" min="0" step="any" oninput="updateNeedForm()"></div>
-    <div id="n-pers-wrap">
-      <div class="grid-2">
-        <div><label>Quantité par personne</label><input type="number" id="n-perhead" min="0" step="any" placeholder="1" oninput="updateNeedForm()"></div>
-        <div><label>+ Marge de sécurité</label><input type="number" id="n-extra" min="0" step="any" placeholder="0" oninput="updateNeedForm()"></div>
-      </div>
-      <div class="g-help" id="n-pers-info"></div>
-    </div>
-    <div class="grid-2">
-      <div><label>Prix unitaire (€)</label><input type="number" id="n-price" min="0" step="0.01" placeholder="ex: 4.50" oninput="updateNeedForm()"></div>
-      <div><label>Total</label><div class="ttc-box" id="n-total">—</div></div>
-    </div>
- 
-    <div class="modal-sec">🛒 Commande</div>
-    <div class="grid-2">
-      <div><label>Fournisseur / où l'acheter</label><input type="text" id="n-supplier" list="needSupplierList" placeholder="ex: Metro, un prestataire…"></div>
-      <div><label>À commander avant le</label><input type="date" id="n-due"></div>
-    </div>
-    <div class="check-grid" style="grid-template-columns:1fr 1fr">
-      <label class="check-line"><input type="checkbox" id="n-paid"><span>💳 Payé</span></label>
-      <label class="check-line" id="n-retro-line"><input type="checkbox" id="n-retro"><span>🗓️ Ajouter au rétroplanning</span></label>
-    </div>
-    <label>Lien</label>
-    <input type="url" id="n-link" placeholder="https://…">
-    <label>Notes</label>
-    <textarea id="n-notes" placeholder="Couleur, référence, taille, qui va le chercher…"></textarea>
-    <div class="modal-actions">
-      <button class="btn danger" id="deleteNeedBtn" style="display:none" onclick="deleteNeed()">🗑️ Corbeille</button>
-      <button class="btn" onclick="closeOverlays()">Annuler</button>
-      <button class="btn primary" onclick="saveNeed()">💾 Enregistrer</button>
-    </div>
-  </div>
-</div>`);
-nEl('needOverlay').addEventListener('click', e=>{ if(e.target.id==='needOverlay') closeOverlays(); });
- 
-/* ---------- 3. Affichage ---------- */
-function renderNeeds(){
-  const p = getEvtProject();
-  nEl('needWrap').style.display = p ? 'block' : 'none';
-  nEl('needNoProj').innerHTML = p ? '' : `<div class="card"><p class="empty-msg">Crée d'abord un événement en haut de page pour lister ses besoins 🎉</p></div>`;
-  if(!p) return;
-  const catOpts = data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  const qc = nEl('nq-cat'), qcv = qc.value;
-  qc.innerHTML = '<option value="">— Catégorie —</option>' + catOpts;
-  if([...qc.options].some(o=>o.value===qcv)) qc.value = qcv;
-  const cf = nEl('needCatFilter'), cfv = cf.value || 'all';
-  cf.innerHTML = '<option value="all">🏷️ Toutes les catégories</option>' + catOpts + '<option value="__none">Sans catégorie</option>';
-  cf.value = [...cf.options].some(o=>o.value===cfv) ? cfv : 'all';
-  const sups = [...new Set([...data.vendors.filter(v=>v.projectId===p.id).map(v=>v.name), ...data.evtNeeds.map(n=>(n.supplier||'').trim())].filter(Boolean))];
-  nEl('needSupplierList').innerHTML = sups.map(s=>`<option value="${escAttr(s)}">`).join('');
-  renderNeedStats();
-  renderNeedChips();
-  renderNeedTable();
-  renderNeedCatTable();
-  const others = data.evtProjects.filter(x=>x.id!==p.id).map(x=>({x, n:data.evtNeeds.filter(n=>n.projectId===x.id).length})).filter(o=>o.n);
-  nEl('needCopyFrom').innerHTML = others.length
-    ? others.map(o=>`<option value="${o.x.id}">${esc(o.x.name)} — ${o.n} ligne${o.n>1?'s':''}</option>`).join('')
-    : '<option value="">Aucun autre événement avec une liste</option>';
-}
-function renderNeedStats(){
-  const p = getEvtProject(), all = needsOfProject();
-  const total = nSum(all);
-  const engaged = nSum(all.filter(n=>n.status==='commande' || n.status==='recu'));
-  const paid = nSum(all.filter(n=>n.paid));
-  const budget = nBudget(p);
-  const pi = nPeopleInfo();
-  const todo = all.filter(n=>n.status==='aprevoir' || n.status==='devis').length;
-  const tiles = [
-    {lbl:'Total estimé', big:eur(total), sub:all.length+' ligne'+(all.length>1?'s':'')+' (hors stock)', bg:'var(--lilac)'},
-    budget
-      ? {lbl:'Reste dans le budget', big:eur(budget-total), sub: budget-total<0 ? '⚠️ budget dépassé' : 'sur '+eur(budget)+' prévus', bg: budget-total<0 ? 'var(--rose)' : 'var(--mint)'}
-      : {lbl:'Budget de l’événement', big:'À définir', sub:'« ✏️ Modifier l’événement » en haut', bg:'#EFEAF9'},
-    {lbl:'Commandé / acheté', big:eur(engaged), sub:'déjà engagé', bg:'var(--sky)'},
-    {lbl:'Déjà payé', big:eur(paid), sub:'reste '+eur(r2(total-paid))+' à payer', bg:'var(--peach)'},
-    {lbl:'Coût par personne', big: pi.n ? eur(r2(total/pi.n)) : '—', sub: pi.n ? 'pour '+pi.n+' '+pi.src : pi.src, bg:'var(--butter)'},
-    {lbl:'Encore à commander', big:todo, sub:'lignes à prévoir ou en devis', bg:'var(--rose)'}
-  ];
-  nEl('needStats').innerHTML = tiles.map(t=>
-    `<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))">
-      <div class="lbl" style="margin:0 0 4px">${t.lbl}</div><div class="big mid">${t.big}</div><div class="sub">${t.sub}</div></div>`).join('');
-  const pr = nEl('needProgress');
-  if(!total && !budget){ pr.innerHTML = ''; return; }
-  const base = Math.max(budget, total, 1);
-  pr.innerHTML = `<div class="bar-track" style="height:22px;margin-top:14px;display:flex">
-      <span class="bar-fill" style="width:${paid/base*100}%;border-radius:0;background:linear-gradient(90deg,var(--mint),#7FD9BD)"></span>
-      <span class="bar-fill" style="width:${(total-paid)/base*100}%;border-radius:0"></span>
-    </div>
-    <p class="section-hint" style="margin:8px 0 0">${budget ? `${eur(total)} prévus sur un budget de ${eur(budget)} (${Math.round(total/budget*100)} %).` : `${eur(total)} prévus.`} <span style="white-space:nowrap">🟩 payé · 🟪 pas encore payé${budget?' · vide = reste du budget':''}</span></p>`;
-}
-function matchNeedFilter(n){
-  if(needFilter==='all') return true;
-  if(needFilter==='apayer') return nCounted(n) && !n.paid && nTotal(n)>0;
-  return n.status===needFilter;
-}
-function renderNeedChips(){
-  const all = needsOfProject();
-  nEl('needFilterChips').innerHTML = NFILT.map(([id,l])=>{
-    const save = needFilter; needFilter = id;
-    const c = all.filter(matchNeedFilter).length;
-    needFilter = save;
-    return `<button class="fchip a ${needFilter===id?'active':''}" onclick="needFilter='${id}';renderNeeds()">${l} (${c})</button>`;
-  }).join('');
-}
-function filteredNeeds(){
-  let ns = needsOfProject().filter(matchNeedFilter);
-  const cf = nEl('needCatFilter').value;
-  if(cf==='__none') ns = ns.filter(n=>!nCat(n.catId)); else if(cf && cf!=='all') ns = ns.filter(n=>n.catId===cf);
-  const q = (nEl('needSearch').value||'').toLowerCase().trim();
-  if(q) ns = ns.filter(n=>[n.name,n.supplier,n.notes,n.unit].some(v=>(v||'').toLowerCase().includes(q)));
-  return ns.sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
-}
-function needRow(n){
-  const st = NST[n.status] || NST.aprevoir;
-  const unit = n.unit ? ` <small style="color:var(--muted)">${esc(n.unit)}</small>` : '';
-  const qty = n.qtyMode==='pers'
-    ? `<span title="${escAttr(nPeopleInfo().n+' pers. × '+(nNum(n.perHead)||1)+(nNum(n.extra)?' + '+nNum(n.extra)+' de marge':''))}">${nFmtQ(nQty(n))}${unit} <small style="color:var(--muted)">👥 auto</small></span>`
-    : `<input class="nin" type="number" min="0" step="any" value="${escAttr(String(n.qty ?? ''))}" onchange="setNeedField('${n.id}','qty',this.value)" aria-label="Quantité">${unit}`;
-  const due = n.dueDate && !['recu','stock'].includes(n.status) ? countdownChip(n.dueDate, false) : '';
-  const sub = [n.supplier ? '🛒 '+esc(n.supplier) : '', n.notes ? esc(n.notes.slice(0,60))+(n.notes.length>60?'…':'') : ''].filter(Boolean).join(' · ');
-  return `<tr class="${n.status==='stock'?'nstock':''}">
-    <td style="cursor:pointer;white-space:normal;min-width:190px" onclick="openNeedModal('${n.id}')"><b>${esc(n.name)}</b>${n.retroId?' 🗓️':''} ${due}${sub?`<br><span class="qsub">${sub}</span>`:''}</td>
-    <td>${qty}</td>
-    <td><input class="nin" type="number" min="0" step="0.01" value="${escAttr(String(n.price ?? ''))}" onchange="setNeedField('${n.id}','price',this.value)" aria-label="Prix unitaire"> €</td>
-    <td><b>${n.status==='stock' ? '<span class="z">en stock</span>' : eur(nTotal(n))}</b></td>
-    <td><select class="nsel" style="background:${st.bg}" onchange="setNeedField('${n.id}','status',this.value)" aria-label="Statut">${Object.entries(NST).map(([k,v])=>`<option value="${k}" ${n.status===k?'selected':''}>${v.l}</option>`).join('')}</select></td>
-    <td><button class="qtoggle pay ${n.paid?'on':''}" role="checkbox" aria-checked="${n.paid?'true':'false'}" onclick="toggleNeedPaid('${n.id}')">${n.paid?'☑':'☐'} Payé</button></td>
-  </tr>`;
-}
-function renderNeedTable(){
-  const el = nEl('needTable');
-  if(!el || !getEvtProject()) return;
-  const ns = filteredNeeds();
-  if(!ns.length){
-    el.innerHTML = `<tr><td style="text-align:center;border-radius:14px" class="z">${needsOfProject().length ? 'Rien ne correspond à ces filtres.' : 'Aucun besoin noté pour l’instant — ajoute le premier juste au-dessus 🧮'}</td></tr>`;
-    return;
-  }
-  el.innerHTML = `<tr><th>Besoin</th><th>Quantité</th><th>Prix unit.</th><th>Total</th><th>Statut</th><th>Payé</th></tr>`
-    + nGroups(ns).map(gr=>`<tr class="ngroup"><td colspan="6"><span class="ndot" style="background:${gr.cat?gr.cat.color:'#DDD6EC'}"></span>${gr.cat?esc(gr.cat.name):'Sans catégorie'}<span class="sub">${gr.items.length} ligne${gr.items.length>1?'s':''} · ${eur(nSum(gr.items))}</span></td></tr>`
-      + gr.items.map(needRow).join('')).join('')
-    + `<tr class="tot"><td>Total affiché</td><td></td><td></td><td>${eur(nSum(ns))}</td><td>payé : ${eur(nSum(ns.filter(n=>n.paid)))}</td><td></td></tr>`;
-}
-function renderNeedCatTable(){
-  const all = needsOfProject(), el = nEl('needCatTable');
-  if(!all.length){ el.innerHTML = '<tr><td style="text-align:center;border-radius:14px" class="z">Aucun besoin pour l’instant</td></tr>'; return; }
-  const total = nSum(all);
-  const rows = nGroups(all).map(gr=>({name:gr.cat?gr.cat.name:'Sans catégorie', color:gr.cat?gr.cat.color:'#DDD6EC', it:gr.items, t:nSum(gr.items)})).sort((a,b)=>b.t-a.t);
-  el.innerHTML = `<tr><th>Catégorie</th><th>Lignes</th><th>Total</th><th>Commandé / reçu</th><th>Payé</th><th>Part</th></tr>`
-    + rows.map(r=>{
-      const pct = total ? Math.round(r.t/total*100) : 0;
-      return `<tr><td><span class="ndot" style="background:${r.color}"></span>${esc(r.name)}</td><td>${r.it.length}</td><td><b>${eur(r.t)}</b></td>
-        <td>${eur(nSum(r.it.filter(n=>n.status==='commande'||n.status==='recu')))}</td><td>${eur(nSum(r.it.filter(n=>n.paid)))}</td>
-        <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="bar-track" style="width:90px;height:12px;display:inline-block"><span class="bar-fill" style="display:block;width:${pct}%"></span></span>${pct} %</span></td></tr>`;
-    }).join('')
-    + `<tr class="tot"><td>Total</td><td>${all.length}</td><td>${eur(total)}</td><td>${eur(nSum(all.filter(n=>n.status==='commande'||n.status==='recu')))}</td><td>${eur(nSum(all.filter(n=>n.paid)))}</td><td></td></tr>`;
-}
- 
-/* ---------- 4. Actions ---------- */
-function setNeedField(id, f, v){
-  const n = data.evtNeeds.find(x=>x.id===id); if(!n) return;
-  const was = n.status;
-  n[f] = v;
-  if(f==='status' && v==='recu' && was!=='recu') confetti();
-  persist(); renderNeeds(); renderEvtProjectBar();
-}
-function toggleNeedPaid(id){
-  const n = data.evtNeeds.find(x=>x.id===id); if(!n) return;
-  n.paid = !n.paid;
-  if(n.paid) confetti();
-  persist(); renderNeeds(); renderEvtProjectBar();
-}
-function quickAddNeed(){
-  if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
-  const name = nEl('nq-name').value.trim();
-  if(!name){ toast('Écris ce dont tu as besoin 🧮'); nEl('nq-name').focus(); return; }
-  const pers = nEl('nq-pers').checked, q = nEl('nq-qty').value || 1;
-  data.evtNeeds.push(newNeed({name, catId:nEl('nq-cat').value, price:nEl('nq-price').value,
-    qtyMode: pers ? 'pers' : 'fixe', qty: pers ? 1 : q, perHead: pers ? q : 1}));
-  nEl('nq-name').value = ''; nEl('nq-price').value = ''; nEl('nq-qty').value = 1; nEl('nq-pers').checked = false;
-  nEl('nq-name').focus();
-  persist(); renderNeeds(); renderEvtProjectBar(); toast(name + ' ajouté 🧮');
-}
-function updateNeedForm(){
-  const pers = nEl('n-qtymode').value==='pers';
-  nEl('n-fixe-wrap').style.display = pers ? 'none' : 'block';
-  nEl('n-pers-wrap').style.display = pers ? 'block' : 'none';
-  const tmp = {qtyMode: nEl('n-qtymode').value, qty: nEl('n-qty').value, perHead: nEl('n-perhead').value, extra: nEl('n-extra').value, price: nEl('n-price').value, status:'aprevoir'};
-  const pi = nPeopleInfo();
-  nEl('n-pers-info').innerHTML = `👥 ${pi.n} ${pi.src} × ${nNum(tmp.perHead)||1}${nNum(tmp.extra)?' + '+nNum(tmp.extra)+' de marge':''} = <b>${nFmtQ(nQty(tmp))}</b>. La quantité se mettra à jour toute seule quand les réponses arrivent.`;
-  nEl('n-total').textContent = nNum(tmp.price) ? nFmtQ(nQty(tmp)) + ' × ' + eur(nNum(tmp.price)) + ' = ' + eur(nTotal(tmp)) : '—';
-}
-function openNeedModal(id=null){
-  if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
-  editingNeedId = id;
-  const n = id ? data.evtNeeds.find(x=>x.id===id) : newNeed({catId: (nEl('needCatFilter').value!=='all' && nEl('needCatFilter').value!=='__none') ? nEl('needCatFilter').value : ''});
-  if(!n) return;
-  nEl('n-cat').innerHTML = '<option value="">— Aucune —</option>' + data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  const set = (i,v) => nEl(i).value = v ?? '';
-  nEl('needModalTitle').textContent = id ? 'Modifier le besoin' : 'Nouveau besoin';
-  set('n-name',n.name); set('n-cat',n.catId); set('n-status',n.status||'aprevoir');
-  set('n-qtymode',n.qtyMode||'fixe'); set('n-unit',n.unit); set('n-qty',n.qty); set('n-perhead',n.perHead); set('n-extra',n.extra||'');
-  set('n-price',n.price); set('n-supplier',n.supplier); set('n-due',n.dueDate); set('n-link',n.link); set('n-notes',n.notes);
-  nEl('n-paid').checked = !!n.paid;
-  const linked = n.retroId && data.evtTasks.some(t=>t.id===n.retroId);
-  nEl('n-retro').checked = false;
-  nEl('n-retro-line').style.display = linked ? 'none' : 'flex';
-  nEl('deleteNeedBtn').style.display = id ? 'inline-block' : 'none';
-  updateNeedForm();
-  nEl('needOverlay').classList.add('open');
-  nEl('n-name').focus();
-}
-function saveNeed(){
-  const p = getEvtProject(); if(!p) return;
-  const name = nEl('n-name').value.trim();
-  if(!name){ toast('Il manque le nom du besoin 👀'); return; }
-  const v = i => nEl(i).value;
-  const old = editingNeedId ? data.evtNeeds.find(x=>x.id===editingNeedId) : null;
-  const n = Object.assign(old ? {...old} : newNeed(), {
-    name, catId:v('n-cat'), status:v('n-status'), qtyMode:v('n-qtymode'), unit:v('n-unit').trim(),
-    qty:v('n-qty'), perHead:v('n-perhead') || 1, extra:v('n-extra'), price:v('n-price'),
-    supplier:v('n-supplier').trim(), dueDate:v('n-due'), paid:nEl('n-paid').checked, link:v('n-link').trim(), notes:v('n-notes')
-  });
-  let addedRetro = false;
-  if(nEl('n-retro').checked && !(n.retroId && data.evtTasks.some(t=>t.id===n.retroId))){
-    const t = {id:uid(), projectId:p.id, name:'Commander : ' + name + (n.supplier ? ' (' + n.supplier + ')' : ''), catId:n.catId, dueDate:n.dueDate, status:'afaire', priority:'', note:'Ajouté depuis Besoins & budget'};
-    data.evtTasks.push(t); n.retroId = t.id; addedRetro = true;
-  }
-  if(old) data.evtNeeds = data.evtNeeds.map(x=>x.id===old.id?n:x);
-  else data.evtNeeds.push(n);
-  if(n.status==='recu' && (!old || old.status!=='recu')) confetti();
-  persist(); closeOverlays(); renderEvtAll();
-  toast(addedRetro ? 'Enregistré + ajouté au rétroplanning 🗓️' : 'Besoin enregistré 🧮');
-}
-function deleteNeed(){
-  const n = data.evtNeeds.find(x=>x.id===editingNeedId); if(!n) return;
-  data.trash.unshift({kind:'need', label:n.name, deletedAt:new Date().toISOString(), item:n});
-  data.evtNeeds = data.evtNeeds.filter(x=>x.id!==n.id);
-  persist(); closeOverlays(); renderNeeds(); renderEvtProjectBar(); toast('Envoyé à la corbeille 🛡️');
-}
-function copyNeedsFromEvent(){
-  const from = nEl('needCopyFrom').value; if(!from) return;
-  const p = getEvtProject(); if(!p) return;
-  const src = data.evtNeeds.filter(n=>n.projectId===from);
-  src.forEach(o=>data.evtNeeds.push(Object.assign({}, o, {id:uid(), projectId:p.id, status:'aprevoir', paid:false, dueDate:'', retroId:''})));
-  persist(); renderNeeds(); renderEvtProjectBar(); toast('♻️ ' + src.length + ' ligne(s) reprise(s)');
-}
- 
-/* ---------- 5. Exports ---------- */
-function exportNeedsPDF(){
-  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
-  const ns = filteredNeeds();
-  if(!ns.length){ toast('Rien à exporter ici 🌱'); return; }
-  const all = needsOfProject(), total = nSum(all), budget = nBudget(p), pi = nPeopleInfo();
-  const body = nGroups(ns).map(gr=>`
-    <h2>${gr.cat?esc(gr.cat.name):'Sans catégorie'} — ${eur(nSum(gr.items))}</h2>
-    <table><tr><th>✓</th><th>Besoin</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Total</th><th>Statut</th><th>Fournisseur</th><th>Payé</th></tr>
-    ${gr.items.map(n=>`<tr><td>${n.status==='recu'||n.status==='stock'?'☑':'☐'}</td>
-      <td><strong>${esc(n.name)}</strong>${n.notes?`<br><span style="color:#888;font-size:11px">${esc(n.notes)}</span>`:''}</td>
-      <td class="r">${nFmtQ(nQty(n))} ${esc(n.unit||'')}${n.qtyMode==='pers'?'<br><span style="color:#888;font-size:10px">par pers.</span>':''}</td>
-      <td class="r">${nNum(n.price)?eur(nNum(n.price)):'—'}</td>
-      <td class="r">${n.status==='stock'?'en stock':eur(nTotal(n))}</td>
-      <td>${(NST[n.status]||NST.aprevoir).t}${n.dueDate?'<br><span style="color:#888;font-size:11px">avant le '+fmtDate(n.dueDate)+'</span>':''}</td>
-      <td>${esc(n.supplier)||'—'}</td><td>${n.paid?'☑':'☐'}</td></tr>`).join('')}
-    </table>`).join('');
-  document.getElementById('printArea').innerHTML = `
-    <h1>Besoins & budget — ${esc(p.name)}</h1>
-    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}${p.date?' · Jour J : '+fmtDate(p.date):''}${p.location?' · '+esc(p.location):''}</p>
-    <div class="pstats">
-      <div><b>${eur(total)}</b>total estimé</div>
-      ${budget?`<div><b>${eur(budget)}</b>budget</div><div><b>${eur(budget-total)}</b>reste</div>`:''}
-      <div><b>${eur(nSum(all.filter(n=>n.paid)))}</b>déjà payé</div>
-      ${pi.n?`<div><b>${eur(r2(total/pi.n))}</b>par personne (${pi.n})</div>`:''}
-    </div>
-    ${body}
-    <table style="margin-top:14px"><tr class="tot"><td>Total ${ns.length!==all.length?'de la sélection':'général'}</td><td class="r">${eur(nSum(ns))}</td></tr></table>`;
-  window.print();
-}
-function exportNeedsCSV(){
-  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
-  const ns = filteredNeeds();
-  if(!ns.length){ toast('Rien à exporter ici 🌱'); return; }
-  const num = n => String(r2(n)).replace('.',',');
-  const txt = v => '"' + String(v ?? '').replace(/"/g,'""').replace(/\r?\n/g,' ') + '"';
-  const lines = [['Catégorie','Besoin','Quantité','Unité','Calcul','Prix unitaire','Total','Statut','Payé','Fournisseur','À commander avant le','Lien','Notes'].map(txt).join(';')];
-  nGroups(ns).forEach(gr=>gr.items.forEach(n=>lines.push([
-    txt(gr.cat?gr.cat.name:'Sans catégorie'), txt(n.name), num(nQty(n)), txt(n.unit),
-    txt(n.qtyMode==='pers' ? (nNum(n.perHead)||1)+' par personne'+(nNum(n.extra)?' + '+nNum(n.extra):'') : 'fixe'),
-    num(nNum(n.price)), n.status==='stock' ? '0' : num(nTotal(n)), txt((NST[n.status]||NST.aprevoir).t),
-    txt(n.paid?'Oui':'Non'), txt(n.supplier), txt(n.dueDate?fmtDate(n.dueDate):''), txt(n.link), txt(n.notes)
-  ].join(';'))));
-  lines.push('');
-  lines.push([txt('TOTAL'),'','','','','',num(nSum(ns))].join(';'));
-  const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'besoins-' + (p.name||'evenement').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-') + '.csv';
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
-  toast('Fichier Excel téléchargé 📊');
-}
- 
-/* ---------- 6. Branchements ---------- */
-const _nRenderEvtAll = renderEvtAll;
-renderEvtAll = function(){ _nRenderEvtAll(); try{ renderNeeds(); }catch(e){ console.warn('Erreur de rendu (besoins) :', e); } };
- 
-const _nRenderBar = renderEvtProjectBar;
-renderEvtProjectBar = function(){
-  _nRenderBar();
-  const p = getEvtProject(); if(!p) return;
-  const ns = data.evtNeeds.filter(n=>n.projectId===p.id);
-  if(!ns.length) return;
-  const total = nSum(ns), budget = nBudget(p);
-  const btn = document.querySelector('#evtProjectBar button[onclick^="openEvtProjectModal(\'"]');
-  if(btn) btn.insertAdjacentHTML('beforebegin', `<span class="pill" style="background:${budget && total>budget?'var(--rose)':'var(--peach)'};cursor:pointer" onclick="switchPage('evenement','besoins')">🧮 ${eur(total)}${budget?' / '+eur(budget)+' de budget':' prévus'}</span>`);
-};
- 
-const _nDeleteEvtProject = deleteEvtProject;
-deleteEvtProject = function(){
-  const pid = editingEvtProjId;
-  const ns = data.evtNeeds.filter(n=>n.projectId===pid);
-  _nDeleteEvtProject();
-  if(!data.evtProjects.some(p=>p.id===pid)){
-    const t = data.trash.find(x=>x.kind==='evtproject' && x.item && x.item.project && x.item.project.id===pid);
-    if(t) t.item.needs = ns;
-    data.evtNeeds = data.evtNeeds.filter(n=>n.projectId!==pid);
-    persist(); renderEvtAll();
-  }
-};
- 
-const _nRestoreTrash = restoreTrash;
-restoreTrash = function(i){
-  const x = data.trash[i]; if(!x) return;
-  if(x.kind==='need'){
-    if(!data.evtNeeds.some(n=>n.id===x.item.id)) data.evtNeeds.push(x.item);
-    data.trash.splice(i,1);
-    persist(); renderAll(); toast('Restauré ✨');
-    return;
-  }
-  const extra = (x.kind==='evtproject' && x.item && x.item.needs) ? x.item.needs : [];
-  _nRestoreTrash(i);
-  if(extra.length){
-    extra.forEach(n=>{ if(!data.evtNeeds.some(o=>o.id===n.id)) data.evtNeeds.push(n); });
-    persist(); renderAll();
-  }
-};
- 
-const _nMergeData = mergeData;
-mergeData = function(d){
-  let c = _nMergeData(d);
-  (d.evtNeeds||[]).forEach(n=>{ if(!data.evtNeeds.some(x=>x.id===n.id)){ data.evtNeeds.push(n); c++; } });
-  return c;
-};
-
-  
 </script>
+<!-- ======================= FIN DU MODULE INVITÉS ======================= -->
 
 
+<!-- =========================================================================
+     2. 🧮 MODULE « BESOINS & BUDGET » (lignes simples + lots 🎁)
+     ========================================================================= -->
 <style>
 .btable input.nin{width:84px;padding:6px 8px;font-size:13px;border-radius:10px;text-align:right;box-shadow:var(--clay-soft);background:var(--surface)}
+.btable input.nin.nname{width:190px;text-align:left;font-weight:800}
 .btable select.nsel{width:auto;padding:6px 10px;font-size:12px;border-radius:10px;box-shadow:var(--clay-soft);font-family:'Nunito',sans-serif;font-weight:800}
 .btable tr.ngroup td{background:transparent!important;text-align:left;padding:16px 4px 4px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px}
 .btable tr.ngroup td span.sub{font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:800;color:var(--muted);margin-left:8px}
 .btable tr.nstock td{opacity:.6}
+.btable tr.nkit td{background:linear-gradient(135deg,#F1EAFE,#FBF8FF)}
+.btable tr.npart td{background:#FBF9FE;font-size:12.5px}
+.btable tr.npart td:first-child{padding-left:30px}
+.nindent{color:var(--lilac);font-weight:800;margin-right:4px}
+.nfold{border:none;background:var(--surface);box-shadow:var(--clay-soft);border-radius:8px;width:24px;height:24px;cursor:pointer;font-size:12px;color:var(--ink);margin-right:4px}
+input.nadd{width:min(420px,100%);padding:7px 12px;font-size:13px;border-radius:12px;background:var(--surface);box-shadow:var(--clay-in)}
+.nparts-tbl{width:100%;border-collapse:separate;border-spacing:0 6px;min-width:620px}
+.nparts-tbl th{font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase;text-align:left;padding:2px 4px}
+.nparts-tbl td{padding:0 3px}
+.nparts-tbl input,.nparts-tbl select{padding:8px 10px;font-size:13px;border-radius:10px}
 </style>
- 
+
 <script>
 /* ---------- 1. Données ---------- */
 DEFAULTS.evtNeeds = [];
 if(!ARRAY_KEYS.includes('evtNeeds')) ARRAY_KEYS.push('evtNeeds');
 if(!Array.isArray(data.evtNeeds)) data.evtNeeds = [];
 KIND_LABEL.need = '🧮 Besoin';
+KIND_LABEL.needpart = '🎁 Élément de lot';
 PAGES.evenement.subs.push(['besoins','Besoins & budget 🧮']);
 SUB_SECTION.besoins = 'view-evtbesoins';
- 
+
 const NST = {
   aprevoir: {l:'📝 À prévoir',          t:'À prévoir',          bg:'#EFEAF9'},
   devis:    {l:'📨 Devis demandé',      t:'Devis demandé',      bg:'var(--butter)'},
@@ -7092,12 +6537,16 @@ const NST = {
   recu:     {l:'✅ Reçu / acheté',      t:'Reçu / acheté',      bg:'var(--mint)'},
   stock:    {l:'📦 Déjà en stock',      t:'Déjà en stock',      bg:'#E6F8EE'}
 };
-const NFILT = [['all','Tout'],['aprevoir','📝 À prévoir'],['devis','📨 Devis demandé'],['commande','🛒 Commandé'],['recu','✅ Reçu'],['stock','📦 En stock'],['apayer','💳 À payer']];
-let needFilter = 'all', editingNeedId = null;
+const NST_ORDER = ['aprevoir','devis','commande','recu'];
+const NENG = ['commande','recu'];
+const NFILT = [['all','Tout'],['aprevoir','📝 À prévoir'],['devis','📨 Devis demandé'],['commande','🛒 Commandé'],['recu','✅ Reçu'],['stock','📦 En stock'],['apayer','💳 À payer'],['lots','🎁 Lots']];
+let needFilter = 'all', editingNeedId = null, draftParts = [];
+const nClosed = new Set();
 const nEl = id => document.getElementById(id);
 const nNum = v => { const n = parseFloat(String(v ?? '').replace(/\s/g,'').replace(',','.')); return isNaN(n) ? 0 : n; };
 const nFmtQ = q => (Math.round(q*100)/100).toLocaleString('fr-FR');
- 
+const nStSel = (cur, onch) => `<select class="nsel" style="background:${(NST[cur]||NST.aprevoir).bg}" onchange="${onch}" aria-label="Statut">${Object.entries(NST).map(([k,v])=>`<option value="${k}" ${cur===k?'selected':''}>${v.l}</option>`).join('')}</select>`;
+
 function needsOfProject(){
   if(!Array.isArray(data.evtNeeds)) data.evtNeeds = [];
   const p = getEvtProject();
@@ -7106,36 +6555,73 @@ function needsOfProject(){
 function newNeed(f){
   return Object.assign({id:uid(), projectId:(getEvtProject()||{}).id, name:'', catId:'', status:'aprevoir',
     qtyMode:'fixe', qty:1, perHead:1, extra:0, unit:'', price:'', supplier:'', paid:false,
-    dueDate:'', link:'', notes:'', retroId:''}, f||{});
+    dueDate:'', link:'', notes:'', retroId:'', kit:false, parts:[]}, f||{});
 }
-/* Nombre de personnes utilisé pour les lignes « par personne » */
+const newPart = f => Object.assign({id:uid(), name:'', qty:1, price:'', supplier:'', status:'aprevoir', paid:false, notes:''}, f||{});
+
+/* Nombre de personnes utilisé pour les lignes « par personne » (vient du module Invités) */
 function nPeopleInfo(){
-  if(typeof guestsOfProject==='function' && typeof gSum==='function'){
-    const yes = guestsOfProject().filter(g=>g.status==='oui');
-    if(yes.length) return {n:gSum(yes), src:'personnes qui viennent (liste d\'invités)'};
-    const cap = parseInt(gSet().capacity)||0;
-    if(cap) return {n:cap, src:'places max (personne n\'a encore confirmé)'};
-  }
+  const yes = guestsOfProject().filter(g=>g.status==='oui');
+  if(yes.length) return {n:gSum(yes), src:'personnes qui viennent (liste d\'invités)'};
+  const cap = parseInt(gSet().capacity)||0;
+  if(cap) return {n:cap, src:'places max (personne n\'a encore confirmé)'};
   return {n:0, src:'aucun invité confirmé pour l\'instant'};
 }
 function nQty(n){
   if(n.qtyMode==='pers') return Math.max(0, nPeopleInfo().n * (nNum(n.perHead) || 1) + nNum(n.extra));
   return nNum(n.qty);
 }
-const nCounted = n => n.status!=='stock';
-const nTotal = n => r2(nQty(n) * nNum(n.price));
-const nSum = arr => r2(arr.filter(nCounted).reduce((s,n)=>s+nTotal(n),0));
+/* ---- Lots (kits) ---- */
+const nParts = n => Array.isArray(n.parts) ? n.parts : [];
+const isKit = n => !!n.kit || nParts(n).length > 0;
+const pPer = p => (p.qty === '' || p.qty == null) ? 1 : nNum(p.qty);      /* quantité par lot */
+const pBuy = (n,p) => nQty(n) * pPer(p);                                     /* quantité à acheter */
+const pTotal = (n,p) => r2(pBuy(n,p) * nNum(p.price));
+const nUnit = n => isKit(n) ? r2(nParts(n).reduce((s,p)=>s + pPer(p)*nNum(p.price), 0)) : nNum(n.price);
+const nTotal = n => r2(nQty(n) * nUnit(n));
+const nPer = n => esc(n.unit || 'lot');
+function nStatus(n){
+  if(!isKit(n)) return n.status || 'aprevoir';
+  const ps = nParts(n);
+  if(!ps.length) return 'aprevoir';
+  const act = ps.filter(p=>p.status!=='stock');
+  if(!act.length) return 'stock';
+  return NST_ORDER[Math.min(...act.map(p=>Math.max(0, NST_ORDER.indexOf(p.status))))];
+}
+function nCost(n){
+  if(isKit(n)) return r2(nParts(n).filter(p=>p.status!=='stock').reduce((s,p)=>s+pTotal(n,p),0));
+  return n.status==='stock' ? 0 : nTotal(n);
+}
+function nPaidAmt(n){
+  if(isKit(n)) return r2(nParts(n).filter(p=>p.status!=='stock' && p.paid).reduce((s,p)=>s+pTotal(n,p),0));
+  return (n.paid && n.status!=='stock') ? nTotal(n) : 0;
+}
+function nEngAmt(n){
+  if(isKit(n)) return r2(nParts(n).filter(p=>NENG.includes(p.status)).reduce((s,p)=>s+pTotal(n,p),0));
+  return NENG.includes(n.status) ? nTotal(n) : 0;
+}
+const nSumCost = arr => r2(arr.reduce((s,n)=>s+nCost(n),0));
+const nSumPaid = arr => r2(arr.reduce((s,n)=>s+nPaidAmt(n),0));
+const nSumEng  = arr => r2(arr.reduce((s,n)=>s+nEngAmt(n),0));
+/* toutes les « choses à acheter » (lignes simples + éléments de lots) */
+function nBuyItems(arr){
+  const out = [];
+  arr.forEach(n=>{
+    if(isKit(n)) nParts(n).forEach(p=>out.push({name:p.name, kit:n.name, qty:pBuy(n,p), unit:'', total:pTotal(n,p), status:p.status||'aprevoir', supplier:p.supplier||''}));
+    else out.push({name:n.name, kit:'', qty:nQty(n), unit:n.unit||'', total:nTotal(n), status:n.status||'aprevoir', supplier:n.supplier||''});
+  });
+  return out;
+}
 function nBudget(p){ const v = parseFloat(String((p||{}).budget||'').replace(/\s/g,'').replace(',','.').replace(/[^\d.]/g,'')); return isNaN(v) ? 0 : v; }
 const nCat = id => data.retroCats.find(c=>c.id===id);
 function nGroups(list){
   const map = {};
   list.forEach(n=>{ const c = nCat(n.catId); const k = c ? c.id : '__none'; (map[k] = map[k] || {cat:c, items:[]}).items.push(n); });
-  const order = [...data.retroCats.map(c=>c.id), '__none'];
-  return order.filter(k=>map[k]).map(k=>map[k]);
+  return [...data.retroCats.map(c=>c.id), '__none'].filter(k=>map[k]).map(k=>map[k]);
 }
- 
+
 /* ---------- 2. Écran ---------- */
-nEl('view-evtprestataires').insertAdjacentHTML('afterend', `
+nEl('view-evtinvites').insertAdjacentHTML('afterend', `
 <section id="view-evtbesoins" class="view">
   <datalist id="needSupplierList"></datalist>
   <div id="needNoProj"></div>
@@ -7148,18 +6634,19 @@ nEl('view-evtprestataires').insertAdjacentHTML('afterend', `
           <button class="btn primary small" onclick="openNeedModal()">+ Nouveau besoin</button>
         </span>
       </h2>
-      <p class="section-hint">Tout ce qu'il faut prévoir (matériel, déco, boissons, impressions, location…) avec quantités et prix. Les lignes « par personne » se recalculent toutes seules avec le nombre d'invités qui viennent. Les catégories sont celles du rétroplanning.</p>
+      <p class="section-hint">Tout ce qu'il faut prévoir avec quantités et prix. Pour un sac de goodies, un coffret ou un kit, coche « 🎁 Lot » : tu ajoutes ensuite ce qu'il y a dedans, et le prix d'un sac se calcule tout seul. Les catégories sont celles du rétroplanning.</p>
       <div class="stat-grid" id="needStats"></div>
       <div id="needProgress"></div>
       <div class="composer" style="margin-top:16px">
-        <input type="text" id="nq-name" placeholder="ex: Nappes blanches, Champagne, Kakémono…" onkeydown="if(event.key==='Enter')quickAddNeed()">
+        <input type="text" id="nq-name" placeholder="ex: Nappes blanches, Sac de goodies…" onkeydown="if(event.key==='Enter')quickAddNeed()">
         <input type="number" id="nq-qty" class="g-num" min="0" step="any" value="1" title="Quantité" aria-label="Quantité" onkeydown="if(event.key==='Enter')quickAddNeed()">
         <input type="number" id="nq-price" class="g-num" style="width:120px" min="0" step="0.01" placeholder="Prix unit. €" aria-label="Prix unitaire" onkeydown="if(event.key==='Enter')quickAddNeed()">
         <select id="nq-cat" class="fselect" aria-label="Catégorie"></select>
         <label class="check-line" style="width:auto;padding:10px 12px;flex:none"><input type="checkbox" id="nq-pers"><span>× par personne</span></label>
+        <label class="check-line" style="width:auto;padding:10px 12px;flex:none"><input type="checkbox" id="nq-kit" onchange="nKitToggle(this.checked)"><span>🎁 Lot</span></label>
         <button class="btn primary" onclick="quickAddNeed()">+ Ajouter</button>
       </div>
-      <p class="section-hint" style="margin:8px 0 0">Coche « × par personne » pour que la quantité suive les invités : avec 2 et 40 personnes qui viennent, ça fera 80. Clique sur un nom dans le tableau pour tous les détails (fournisseur, date limite, marge de sécurité…).</p>
+      <p class="section-hint" style="margin:8px 0 0">« × par personne » : la quantité suit les invités (ex : 1 sac × 40 personnes qui viennent = 40 sacs). « 🎁 Lot » : la ligne devient un sac / coffret, ajoute son contenu juste en dessous dans le tableau.</p>
       <div class="filters" id="needFilterChips" style="margin-top:18px;margin-bottom:8px"></div>
       <div class="filters">
         <select id="needCatFilter" class="fselect" onchange="renderNeeds()" aria-label="Catégorie"></select>
@@ -7173,31 +6660,31 @@ nEl('view-evtprestataires').insertAdjacentHTML('afterend', `
     </div>
     <div class="card">
       <h2>♻️ Reprendre la liste d'un autre événement</h2>
-      <p class="section-hint">Pratique pour un événement qui revient : tout est copié (quantités, prix, fournisseurs), les statuts repartent à « À prévoir ».</p>
+      <p class="section-hint">Tout est copié (quantités, prix, contenu des lots, fournisseurs), les statuts repartent à « À prévoir ».</p>
       <div class="composer"><select id="needCopyFrom" class="fselect" style="flex:1"></select><button class="btn primary" onclick="copyNeedsFromEvent()">♻️ Reprendre cette liste</button></div>
     </div>
   </div>
 </section>`);
- 
+
 document.body.insertAdjacentHTML('beforeend', `
 <div class="overlay" id="needOverlay">
-  <div class="modal" style="max-width:600px">
+  <div class="modal" style="max-width:700px">
     <h3 id="needModalTitle">Nouveau besoin</h3>
     <label>Quoi ?</label>
-    <input type="text" id="n-name" placeholder="ex: Location de mange-debout">
+    <input type="text" id="n-name" placeholder="ex: Sac de goodies, Location de mange-debout…">
     <div class="grid-2">
       <div><label>Catégorie</label><select id="n-cat"></select></div>
-      <div><label>Statut</label><select id="n-status">${Object.entries(NST).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></div>
+      <div id="n-status-wrap"><label>Statut</label><select id="n-status">${Object.entries(NST).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></div>
     </div>
- 
-    <div class="modal-sec">🔢 Quantité & prix</div>
+
+    <div class="modal-sec">🔢 Combien ?</div>
     <div class="grid-2">
       <div><label>Calcul de la quantité</label>
         <select id="n-qtymode" onchange="updateNeedForm()">
           <option value="fixe">Quantité fixe</option>
           <option value="pers">Par personne (suit les invités)</option>
         </select></div>
-      <div><label>Unité</label><input type="text" id="n-unit" placeholder="pièces, bouteilles, lots…"></div>
+      <div><label>Unité</label><input type="text" id="n-unit" placeholder="sac, coffret, bouteilles…" oninput="updateNeedForm()"></div>
     </div>
     <div id="n-fixe-wrap"><label>Quantité</label><input type="number" id="n-qty" min="0" step="any" oninput="updateNeedForm()"></div>
     <div id="n-pers-wrap">
@@ -7207,18 +6694,25 @@ document.body.insertAdjacentHTML('beforeend', `
       </div>
       <div class="g-help" id="n-pers-info"></div>
     </div>
+
+    <div class="modal-sec">🎁 Contenu du lot <span style="font-weight:400;font-size:12px;color:var(--muted)">(seulement si c'est un sac, un coffret, un kit…)</span></div>
+    <p class="section-hint" style="margin:8px 0 0">Une ligne par chose à acheter. La quantité est « par lot » (ex : 2 stickers par sac). Chaque élément a son fournisseur, son statut et sa case payé.</p>
+    <div id="n-parts" style="overflow-x:auto"></div>
+    <button class="btn small" type="button" style="margin-top:8px" onclick="addDraftPart()">+ Ajouter un élément dans le lot</button>
+
+    <div class="modal-sec">💶 Prix</div>
     <div class="grid-2">
-      <div><label>Prix unitaire (€)</label><input type="number" id="n-price" min="0" step="0.01" placeholder="ex: 4.50" oninput="updateNeedForm()"></div>
+      <div><label id="n-price-lbl">Prix unitaire (€)</label><input type="number" id="n-price" min="0" step="0.01" placeholder="ex: 4.50" oninput="updateNeedForm()"></div>
       <div><label>Total</label><div class="ttc-box" id="n-total">—</div></div>
     </div>
- 
+
     <div class="modal-sec">🛒 Commande</div>
     <div class="grid-2">
-      <div><label>Fournisseur / où l'acheter</label><input type="text" id="n-supplier" list="needSupplierList" placeholder="ex: Metro, un prestataire…"></div>
+      <div id="n-supplier-wrap"><label>Fournisseur / où l'acheter</label><input type="text" id="n-supplier" list="needSupplierList" placeholder="ex: Metro, un prestataire…"></div>
       <div><label>À commander avant le</label><input type="date" id="n-due"></div>
     </div>
     <div class="check-grid" style="grid-template-columns:1fr 1fr">
-      <label class="check-line"><input type="checkbox" id="n-paid"><span>💳 Payé</span></label>
+      <label class="check-line" id="n-paid-line"><input type="checkbox" id="n-paid"><span>💳 Payé</span></label>
       <label class="check-line" id="n-retro-line"><input type="checkbox" id="n-retro"><span>🗓️ Ajouter au rétroplanning</span></label>
     </div>
     <label>Lien</label>
@@ -7233,7 +6727,7 @@ document.body.insertAdjacentHTML('beforeend', `
   </div>
 </div>`);
 nEl('needOverlay').addEventListener('click', e=>{ if(e.target.id==='needOverlay') closeOverlays(); });
- 
+
 /* ---------- 3. Affichage ---------- */
 function renderNeeds(){
   const p = getEvtProject();
@@ -7247,7 +6741,7 @@ function renderNeeds(){
   const cf = nEl('needCatFilter'), cfv = cf.value || 'all';
   cf.innerHTML = '<option value="all">🏷️ Toutes les catégories</option>' + catOpts + '<option value="__none">Sans catégorie</option>';
   cf.value = [...cf.options].some(o=>o.value===cfv) ? cfv : 'all';
-  const sups = [...new Set([...data.vendors.filter(v=>v.projectId===p.id).map(v=>v.name), ...data.evtNeeds.map(n=>(n.supplier||'').trim())].filter(Boolean))];
+  const sups = [...new Set([...data.vendors.filter(v=>v.projectId===p.id).map(v=>v.name), ...nBuyItems(data.evtNeeds).map(b=>b.supplier.trim())].filter(Boolean))];
   nEl('needSupplierList').innerHTML = sups.map(s=>`<option value="${escAttr(s)}">`).join('');
   renderNeedStats();
   renderNeedChips();
@@ -7260,12 +6754,9 @@ function renderNeeds(){
 }
 function renderNeedStats(){
   const p = getEvtProject(), all = needsOfProject();
-  const total = nSum(all);
-  const engaged = nSum(all.filter(n=>n.status==='commande' || n.status==='recu'));
-  const paid = nSum(all.filter(n=>n.paid));
-  const budget = nBudget(p);
-  const pi = nPeopleInfo();
-  const todo = all.filter(n=>n.status==='aprevoir' || n.status==='devis').length;
+  const total = nSumCost(all), engaged = nSumEng(all), paid = nSumPaid(all);
+  const budget = nBudget(p), pi = nPeopleInfo();
+  const todo = nBuyItems(all).filter(b=>b.status==='aprevoir' || b.status==='devis').length;
   const tiles = [
     {lbl:'Total estimé', big:eur(total), sub:all.length+' ligne'+(all.length>1?'s':'')+' (hors stock)', bg:'var(--lilac)'},
     budget
@@ -7274,7 +6765,7 @@ function renderNeedStats(){
     {lbl:'Commandé / acheté', big:eur(engaged), sub:'déjà engagé', bg:'var(--sky)'},
     {lbl:'Déjà payé', big:eur(paid), sub:'reste '+eur(r2(total-paid))+' à payer', bg:'var(--peach)'},
     {lbl:'Coût par personne', big: pi.n ? eur(r2(total/pi.n)) : '—', sub: pi.n ? 'pour '+pi.n+' '+pi.src : pi.src, bg:'var(--butter)'},
-    {lbl:'Encore à commander', big:todo, sub:'lignes à prévoir ou en devis', bg:'var(--rose)'}
+    {lbl:'Encore à commander', big:todo, sub:'choses à prévoir ou en devis', bg:'var(--rose)'}
   ];
   nEl('needStats').innerHTML = tiles.map(t=>
     `<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))">
@@ -7288,44 +6779,74 @@ function renderNeedStats(){
     </div>
     <p class="section-hint" style="margin:8px 0 0">${budget ? `${eur(total)} prévus sur un budget de ${eur(budget)} (${Math.round(total/budget*100)} %).` : `${eur(total)} prévus.`} <span style="white-space:nowrap">🟩 payé · 🟪 pas encore payé${budget?' · vide = reste du budget':''}</span></p>`;
 }
-function matchNeedFilter(n){
-  if(needFilter==='all') return true;
-  if(needFilter==='apayer') return nCounted(n) && !n.paid && nTotal(n)>0;
-  return n.status===needFilter;
+function matchNeedFilter(n, f=needFilter){
+  if(f==='all') return true;
+  if(f==='lots') return isKit(n);
+  if(isKit(n)){
+    const ps = nParts(n);
+    if(f==='apayer') return ps.some(p=>p.status!=='stock' && !p.paid && pTotal(n,p)>0);
+    return ps.some(p=>p.status===f) || (!ps.length && f==='aprevoir');
+  }
+  if(f==='apayer') return n.status!=='stock' && !n.paid && nTotal(n)>0;
+  return n.status===f;
 }
 function renderNeedChips(){
   const all = needsOfProject();
-  nEl('needFilterChips').innerHTML = NFILT.map(([id,l])=>{
-    const save = needFilter; needFilter = id;
-    const c = all.filter(matchNeedFilter).length;
-    needFilter = save;
-    return `<button class="fchip a ${needFilter===id?'active':''}" onclick="needFilter='${id}';renderNeeds()">${l} (${c})</button>`;
-  }).join('');
+  nEl('needFilterChips').innerHTML = NFILT.map(([id,l])=>
+    `<button class="fchip a ${needFilter===id?'active':''}" onclick="needFilter='${id}';renderNeeds()">${l} (${all.filter(n=>matchNeedFilter(n,id)).length})</button>`).join('');
 }
 function filteredNeeds(){
-  let ns = needsOfProject().filter(matchNeedFilter);
+  let ns = needsOfProject().filter(n=>matchNeedFilter(n));
   const cf = nEl('needCatFilter').value;
   if(cf==='__none') ns = ns.filter(n=>!nCat(n.catId)); else if(cf && cf!=='all') ns = ns.filter(n=>n.catId===cf);
   const q = (nEl('needSearch').value||'').toLowerCase().trim();
-  if(q) ns = ns.filter(n=>[n.name,n.supplier,n.notes,n.unit].some(v=>(v||'').toLowerCase().includes(q)));
+  if(q) ns = ns.filter(n=>[n.name,n.supplier,n.notes,n.unit,...nParts(n).flatMap(p=>[p.name,p.supplier])].some(v=>(v||'').toLowerCase().includes(q)));
   return ns.sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
 }
-function needRow(n){
-  const st = NST[n.status] || NST.aprevoir;
+function nQtyCell(n){
   const unit = n.unit ? ` <small style="color:var(--muted)">${esc(n.unit)}</small>` : '';
-  const qty = n.qtyMode==='pers'
+  return n.qtyMode==='pers'
     ? `<span title="${escAttr(nPeopleInfo().n+' pers. × '+(nNum(n.perHead)||1)+(nNum(n.extra)?' + '+nNum(n.extra)+' de marge':''))}">${nFmtQ(nQty(n))}${unit} <small style="color:var(--muted)">👥 auto</small></span>`
     : `<input class="nin" type="number" min="0" step="any" value="${escAttr(String(n.qty ?? ''))}" onchange="setNeedField('${n.id}','qty',this.value)" aria-label="Quantité">${unit}`;
-  const due = n.dueDate && !['recu','stock'].includes(n.status) ? countdownChip(n.dueDate, false) : '';
-  const sub = [n.supplier ? '🛒 '+esc(n.supplier) : '', n.notes ? esc(n.notes.slice(0,60))+(n.notes.length>60?'…':'') : ''].filter(Boolean).join(' · ');
+}
+function nSubLine(n){
+  const due = n.dueDate && !['recu','stock'].includes(nStatus(n)) ? ' ' + countdownChip(n.dueDate, false) : '';
+  const sub = [n.supplier && !isKit(n) ? '🛒 '+esc(n.supplier) : '', n.notes ? esc(n.notes.slice(0,60))+(n.notes.length>60?'…':'') : ''].filter(Boolean).join(' · ');
+  return (n.retroId?' 🗓️':'') + due + (sub?`<br><span class="qsub">${sub}</span>`:'');
+}
+function simpleRow(n){
   return `<tr class="${n.status==='stock'?'nstock':''}">
-    <td style="cursor:pointer;white-space:normal;min-width:190px" onclick="openNeedModal('${n.id}')"><b>${esc(n.name)}</b>${n.retroId?' 🗓️':''} ${due}${sub?`<br><span class="qsub">${sub}</span>`:''}</td>
-    <td>${qty}</td>
+    <td style="cursor:pointer;white-space:normal;min-width:200px" onclick="openNeedModal('${n.id}')"><b>${esc(n.name)}</b>${nSubLine(n)}</td>
+    <td>${nQtyCell(n)}</td>
     <td><input class="nin" type="number" min="0" step="0.01" value="${escAttr(String(n.price ?? ''))}" onchange="setNeedField('${n.id}','price',this.value)" aria-label="Prix unitaire"> €</td>
     <td><b>${n.status==='stock' ? '<span class="z">en stock</span>' : eur(nTotal(n))}</b></td>
-    <td><select class="nsel" style="background:${st.bg}" onchange="setNeedField('${n.id}','status',this.value)" aria-label="Statut">${Object.entries(NST).map(([k,v])=>`<option value="${k}" ${n.status===k?'selected':''}>${v.l}</option>`).join('')}</select></td>
+    <td>${nStSel(n.status||'aprevoir', `setNeedField('${n.id}','status',this.value)`)}</td>
     <td><button class="qtoggle pay ${n.paid?'on':''}" role="checkbox" aria-checked="${n.paid?'true':'false'}" onclick="toggleNeedPaid('${n.id}')">${n.paid?'☑':'☐'} Payé</button></td>
   </tr>`;
+}
+function kitRows(n){
+  const ps = nParts(n), st = NST[nStatus(n)] || NST.aprevoir, open = !nClosed.has(n.id);
+  const done = ps.filter(p=>p.status==='recu'||p.status==='stock').length;
+  const paidN = ps.filter(p=>p.paid||p.status==='stock').length;
+  let html = `<tr class="nkit">
+    <td style="white-space:normal;min-width:200px"><button class="nfold" onclick="toggleKitFold('${n.id}')" aria-label="${open?'Replier':'Déplier'}">${open?'▾':'▸'}</button><span style="cursor:pointer" onclick="openNeedModal('${n.id}')"><b>🎁 ${esc(n.name)}</b> <small class="qsub">(${ps.length} élément${ps.length>1?'s':''} par ${nPer(n)})</small></span>${nSubLine(n)}</td>
+    <td>${nQtyCell(n)}</td>
+    <td><b>${eur(nUnit(n))}</b> <small class="qsub">/ ${nPer(n)}</small></td>
+    <td><b>${eur(nCost(n))}</b></td>
+    <td><span class="pill" style="background:${st.bg}">${st.l}</span><br><small class="qsub">${done}/${ps.length} reçu${done>1?'s':''}</small></td>
+    <td><small class="qsub">${paidN}/${ps.length} payé${paidN>1?'s':''}</small></td>
+  </tr>`;
+  if(!open) return html;
+  html += ps.map(p=>`<tr class="npart ${p.status==='stock'?'nstock':''}">
+    <td style="white-space:normal"><span class="nindent">↳</span><input class="nin nname" value="${escAttr(p.name)}" onchange="setPartField('${n.id}','${p.id}','name',this.value)" aria-label="Élément">${p.supplier?`<br><span class="qsub" style="margin-left:22px">🛒 ${esc(p.supplier)}</span>`:''}</td>
+    <td><input class="nin" type="number" min="0" step="any" value="${escAttr(String(p.qty ?? ''))}" onchange="setPartField('${n.id}','${p.id}','qty',this.value)" aria-label="Quantité par lot"> <small class="qsub">/ ${nPer(n)}</small><br><small class="qsub">= ${nFmtQ(pBuy(n,p))} à acheter</small></td>
+    <td><input class="nin" type="number" min="0" step="0.01" value="${escAttr(String(p.price ?? ''))}" onchange="setPartField('${n.id}','${p.id}','price',this.value)" aria-label="Prix unitaire"> €</td>
+    <td>${p.status==='stock' ? '<span class="z">en stock</span>' : eur(pTotal(n,p))}</td>
+    <td>${nStSel(p.status||'aprevoir', `setPartField('${n.id}','${p.id}','status',this.value)`)}</td>
+    <td><button class="qtoggle pay ${p.paid?'on':''}" role="checkbox" aria-checked="${p.paid?'true':'false'}" onclick="togglePartPaid('${n.id}','${p.id}')">${p.paid?'☑':'☐'} Payé</button> <button class="tiny-del" onclick="delPart('${n.id}','${p.id}')" aria-label="Retirer cet élément">✕</button></td>
+  </tr>`).join('');
+  html += `<tr class="npart"><td colspan="6"><span class="nindent">↳</span><input class="nadd" data-kitadd="${n.id}" placeholder="+ Ajouter un élément dans « ${escAttr(n.name)} » puis Entrée (ex : stickers)" onkeydown="if(event.key==='Enter')addPartInline('${n.id}',this.value)"></td></tr>`;
+  return html;
 }
 function renderNeedTable(){
   const el = nEl('needTable');
@@ -7336,75 +6857,151 @@ function renderNeedTable(){
     return;
   }
   el.innerHTML = `<tr><th>Besoin</th><th>Quantité</th><th>Prix unit.</th><th>Total</th><th>Statut</th><th>Payé</th></tr>`
-    + nGroups(ns).map(gr=>`<tr class="ngroup"><td colspan="6"><span class="ndot" style="background:${gr.cat?gr.cat.color:'#DDD6EC'}"></span>${gr.cat?esc(gr.cat.name):'Sans catégorie'}<span class="sub">${gr.items.length} ligne${gr.items.length>1?'s':''} · ${eur(nSum(gr.items))}</span></td></tr>`
-      + gr.items.map(needRow).join('')).join('')
-    + `<tr class="tot"><td>Total affiché</td><td></td><td></td><td>${eur(nSum(ns))}</td><td>payé : ${eur(nSum(ns.filter(n=>n.paid)))}</td><td></td></tr>`;
+    + nGroups(ns).map(gr=>`<tr class="ngroup"><td colspan="6"><span class="ndot" style="background:${gr.cat?gr.cat.color:'#DDD6EC'}"></span>${gr.cat?esc(gr.cat.name):'Sans catégorie'}<span class="sub">${gr.items.length} ligne${gr.items.length>1?'s':''} · ${eur(nSumCost(gr.items))}</span></td></tr>`
+      + gr.items.map(n=>isKit(n) ? kitRows(n) : simpleRow(n)).join('')).join('')
+    + `<tr class="tot"><td>Total affiché</td><td></td><td></td><td>${eur(nSumCost(ns))}</td><td>payé : ${eur(nSumPaid(ns))}</td><td></td></tr>`;
 }
 function renderNeedCatTable(){
   const all = needsOfProject(), el = nEl('needCatTable');
   if(!all.length){ el.innerHTML = '<tr><td style="text-align:center;border-radius:14px" class="z">Aucun besoin pour l’instant</td></tr>'; return; }
-  const total = nSum(all);
-  const rows = nGroups(all).map(gr=>({name:gr.cat?gr.cat.name:'Sans catégorie', color:gr.cat?gr.cat.color:'#DDD6EC', it:gr.items, t:nSum(gr.items)})).sort((a,b)=>b.t-a.t);
+  const total = nSumCost(all);
+  const rows = nGroups(all).map(gr=>({name:gr.cat?gr.cat.name:'Sans catégorie', color:gr.cat?gr.cat.color:'#DDD6EC', it:gr.items, t:nSumCost(gr.items)})).sort((a,b)=>b.t-a.t);
   el.innerHTML = `<tr><th>Catégorie</th><th>Lignes</th><th>Total</th><th>Commandé / reçu</th><th>Payé</th><th>Part</th></tr>`
     + rows.map(r=>{
       const pct = total ? Math.round(r.t/total*100) : 0;
       return `<tr><td><span class="ndot" style="background:${r.color}"></span>${esc(r.name)}</td><td>${r.it.length}</td><td><b>${eur(r.t)}</b></td>
-        <td>${eur(nSum(r.it.filter(n=>n.status==='commande'||n.status==='recu')))}</td><td>${eur(nSum(r.it.filter(n=>n.paid)))}</td>
+        <td>${eur(nSumEng(r.it))}</td><td>${eur(nSumPaid(r.it))}</td>
         <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="bar-track" style="width:90px;height:12px;display:inline-block"><span class="bar-fill" style="display:block;width:${pct}%"></span></span>${pct} %</span></td></tr>`;
     }).join('')
-    + `<tr class="tot"><td>Total</td><td>${all.length}</td><td>${eur(total)}</td><td>${eur(nSum(all.filter(n=>n.status==='commande'||n.status==='recu')))}</td><td>${eur(nSum(all.filter(n=>n.paid)))}</td><td></td></tr>`;
+    + `<tr class="tot"><td>Total</td><td>${all.length}</td><td>${eur(total)}</td><td>${eur(nSumEng(all))}</td><td>${eur(nSumPaid(all))}</td><td></td></tr>`;
 }
- 
-/* ---------- 4. Actions ---------- */
+
+/* ---------- 4. Actions (tableau) ---------- */
+function nRefresh(){ persist(); renderNeeds(); renderEvtProjectBar(); }
+function nKitToggle(on){ const pr = nEl('nq-price'); pr.disabled = on; pr.placeholder = on ? 'calculé' : 'Prix unit. €'; if(on) pr.value = ''; }
 function setNeedField(id, f, v){
   const n = data.evtNeeds.find(x=>x.id===id); if(!n) return;
   const was = n.status;
   n[f] = v;
   if(f==='status' && v==='recu' && was!=='recu') confetti();
-  persist(); renderNeeds(); renderEvtProjectBar();
+  nRefresh();
 }
 function toggleNeedPaid(id){
   const n = data.evtNeeds.find(x=>x.id===id); if(!n) return;
-  n.paid = !n.paid;
-  if(n.paid) confetti();
-  persist(); renderNeeds(); renderEvtProjectBar();
+  n.paid = !n.paid; if(n.paid) confetti();
+  nRefresh();
+}
+function toggleKitFold(id){ nClosed.has(id) ? nClosed.delete(id) : nClosed.add(id); renderNeedTable(); }
+function findPart(nid, pid){ const n = data.evtNeeds.find(x=>x.id===nid); return n ? {n, p:nParts(n).find(x=>x.id===pid)} : {}; }
+function setPartField(nid, pid, f, v){
+  const {p} = findPart(nid, pid); if(!p) return;
+  const was = p.status;
+  p[f] = v;
+  if(f==='status' && v==='recu' && was!=='recu') confetti();
+  nRefresh();
+}
+function togglePartPaid(nid, pid){
+  const {p} = findPart(nid, pid); if(!p) return;
+  p.paid = !p.paid; if(p.paid) confetti();
+  nRefresh();
+}
+function addPartInline(nid, val){
+  const n = data.evtNeeds.find(x=>x.id===nid); if(!n) return;
+  const name = (val||'').trim();
+  if(!name){ toast('Écris le nom de l’élément 🎁'); return; }
+  if(!Array.isArray(n.parts)) n.parts = [];
+  n.parts.push(newPart({name})); n.kit = true;
+  nClosed.delete(nid);
+  nRefresh();
+  const inp = document.querySelector(`[data-kitadd="${nid}"]`); if(inp) inp.focus();
+  toast(name + ' ajouté au lot — mets son prix dans le tableau 🎁');
+}
+function delPart(nid, pid){
+  const {n, p} = findPart(nid, pid); if(!p) return;
+  data.trash.unshift({kind:'needpart', label:p.name + ' (dans ' + n.name + ')', deletedAt:new Date().toISOString(), item:{needId:nid, part:p}});
+  n.parts = nParts(n).filter(x=>x.id!==pid);
+  nRefresh(); toast('Élément retiré (restaurable dans le coffre-fort) 🛡️');
 }
 function quickAddNeed(){
   if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
   const name = nEl('nq-name').value.trim();
   if(!name){ toast('Écris ce dont tu as besoin 🧮'); nEl('nq-name').focus(); return; }
-  const pers = nEl('nq-pers').checked, q = nEl('nq-qty').value || 1;
-  data.evtNeeds.push(newNeed({name, catId:nEl('nq-cat').value, price:nEl('nq-price').value,
-    qtyMode: pers ? 'pers' : 'fixe', qty: pers ? 1 : q, perHead: pers ? q : 1}));
-  nEl('nq-name').value = ''; nEl('nq-price').value = ''; nEl('nq-qty').value = 1; nEl('nq-pers').checked = false;
-  nEl('nq-name').focus();
-  persist(); renderNeeds(); renderEvtProjectBar(); toast(name + ' ajouté 🧮');
+  const pers = nEl('nq-pers').checked, kit = nEl('nq-kit').checked, q = nEl('nq-qty').value || 1;
+  const n = newNeed({name, catId:nEl('nq-cat').value, price: kit ? '' : nEl('nq-price').value, kit,
+    qtyMode: pers ? 'pers' : 'fixe', qty: pers ? 1 : q, perHead: pers ? q : 1});
+  data.evtNeeds.push(n);
+  nEl('nq-name').value = ''; nEl('nq-price').value = ''; nEl('nq-qty').value = 1;
+  nEl('nq-pers').checked = false; nEl('nq-kit').checked = false; nKitToggle(false);
+  nRefresh();
+  if(kit){
+    const inp = document.querySelector(`[data-kitadd="${n.id}"]`); if(inp) inp.focus();
+    toast('🎁 Lot créé — ajoute ce qu’il y a dedans juste en dessous');
+  } else { nEl('nq-name').focus(); toast(name + ' ajouté 🧮'); }
 }
+
+/* ---------- 5. Fiche (modale) ---------- */
+function renderDraftParts(){
+  const box = nEl('n-parts');
+  if(!draftParts.length){ box.innerHTML = '<p class="section-hint" style="margin:8px 0 0">Pas de contenu : c’est une ligne simple.</p>'; return; }
+  const per = esc(nEl('n-unit').value || 'lot');
+  box.innerHTML = `<table class="nparts-tbl"><tr><th>Élément</th><th id="n-parts-per">Qté / ${per}</th><th>Prix unit. €</th><th>Fournisseur</th><th>Statut</th><th>Payé</th><th></th></tr>
+    ${draftParts.map(p=>`<tr>
+      <td><input type="text" value="${escAttr(p.name)}" placeholder="ex: Tote bag personnalisé" oninput="updDraftPart('${p.id}','name',this.value)"></td>
+      <td><input type="number" min="0" step="any" style="width:80px" value="${escAttr(String(p.qty ?? ''))}" oninput="updDraftPart('${p.id}','qty',this.value)"></td>
+      <td><input type="number" min="0" step="0.01" style="width:95px" value="${escAttr(String(p.price ?? ''))}" oninput="updDraftPart('${p.id}','price',this.value)"></td>
+      <td><input type="text" list="needSupplierList" value="${escAttr(p.supplier||'')}" placeholder="ex: épicerie fine" oninput="updDraftPart('${p.id}','supplier',this.value)"></td>
+      <td><select onchange="updDraftPart('${p.id}','status',this.value)">${Object.entries(NST).map(([k,v])=>`<option value="${k}" ${p.status===k?'selected':''}>${v.l}</option>`).join('')}</select></td>
+      <td style="text-align:center"><input type="checkbox" ${p.paid?'checked':''} onchange="updDraftPart('${p.id}','paid',this.checked)" style="width:20px;height:20px" aria-label="Payé"></td>
+      <td><button type="button" class="tiny-del" onclick="delDraftPart('${p.id}')" aria-label="Retirer">✕</button></td>
+    </tr>`).join('')}</table>`;
+}
+function addDraftPart(){
+  draftParts.push(newPart());
+  renderDraftParts(); updateNeedForm();
+  const inputs = nEl('n-parts').querySelectorAll('tr:last-child input[type=text]');
+  if(inputs[0]) inputs[0].focus();
+}
+function updDraftPart(id, f, v){ const p = draftParts.find(x=>x.id===id); if(p){ p[f] = v; updateNeedForm(); } }
+function delDraftPart(id){ draftParts = draftParts.filter(x=>x.id!==id); renderDraftParts(); updateNeedForm(); }
 function updateNeedForm(){
   const pers = nEl('n-qtymode').value==='pers';
   nEl('n-fixe-wrap').style.display = pers ? 'none' : 'block';
   nEl('n-pers-wrap').style.display = pers ? 'block' : 'none';
-  const tmp = {qtyMode: nEl('n-qtymode').value, qty: nEl('n-qty').value, perHead: nEl('n-perhead').value, extra: nEl('n-extra').value, price: nEl('n-price').value, status:'aprevoir'};
+  const kit = draftParts.length > 0;
+  const tmp = {qtyMode:nEl('n-qtymode').value, qty:nEl('n-qty').value, perHead:nEl('n-perhead').value, extra:nEl('n-extra').value,
+    price:nEl('n-price').value, unit:nEl('n-unit').value, status:'aprevoir', parts:draftParts};
   const pi = nPeopleInfo();
-  nEl('n-pers-info').innerHTML = `👥 ${pi.n} ${pi.src} × ${nNum(tmp.perHead)||1}${nNum(tmp.extra)?' + '+nNum(tmp.extra)+' de marge':''} = <b>${nFmtQ(nQty(tmp))}</b>. La quantité se mettra à jour toute seule quand les réponses arrivent.`;
-  nEl('n-total').textContent = nNum(tmp.price) ? nFmtQ(nQty(tmp)) + ' × ' + eur(nNum(tmp.price)) + ' = ' + eur(nTotal(tmp)) : '—';
+  nEl('n-pers-info').innerHTML = `👥 ${pi.n} ${pi.src} × ${nNum(tmp.perHead)||1}${nNum(tmp.extra)?' + '+nNum(tmp.extra)+' de marge':''} = <b>${nFmtQ(nQty(tmp))}</b>. La quantité se met à jour toute seule quand les réponses arrivent.`;
+  ['n-status-wrap','n-supplier-wrap'].forEach(i=>nEl(i).style.visibility = kit ? 'hidden' : 'visible');
+  nEl('n-paid-line').style.display = kit ? 'none' : 'flex';
+  const priceIn = nEl('n-price');
+  priceIn.disabled = kit;
+  nEl('n-price-lbl').textContent = kit ? `Prix d'un ${tmp.unit || 'lot'} (calculé)` : 'Prix unitaire (€)';
+  if(kit) priceIn.value = nUnit(tmp) || '';
+  const perTh = nEl('n-parts-per'); if(perTh) perTh.textContent = 'Qté / ' + (tmp.unit || 'lot');
+  const q = nQty(tmp), u = nUnit(tmp);
+  nEl('n-total').textContent = u ? nFmtQ(q) + ' × ' + eur(u) + ' = ' + eur(nTotal(tmp)) : '—';
 }
 function openNeedModal(id=null){
   if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
   editingNeedId = id;
-  const n = id ? data.evtNeeds.find(x=>x.id===id) : newNeed({catId: (nEl('needCatFilter').value!=='all' && nEl('needCatFilter').value!=='__none') ? nEl('needCatFilter').value : ''});
+  const cfv = nEl('needCatFilter').value;
+  const n = id ? data.evtNeeds.find(x=>x.id===id) : newNeed({catId: (cfv!=='all' && cfv!=='__none') ? cfv : ''});
   if(!n) return;
   nEl('n-cat').innerHTML = '<option value="">— Aucune —</option>' + data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
   const set = (i,v) => nEl(i).value = v ?? '';
-  nEl('needModalTitle').textContent = id ? 'Modifier le besoin' : 'Nouveau besoin';
+  nEl('needModalTitle').textContent = id ? (isKit(n) ? '🎁 Modifier le lot' : 'Modifier le besoin') : 'Nouveau besoin';
   set('n-name',n.name); set('n-cat',n.catId); set('n-status',n.status||'aprevoir');
   set('n-qtymode',n.qtyMode||'fixe'); set('n-unit',n.unit); set('n-qty',n.qty); set('n-perhead',n.perHead); set('n-extra',n.extra||'');
   set('n-price',n.price); set('n-supplier',n.supplier); set('n-due',n.dueDate); set('n-link',n.link); set('n-notes',n.notes);
   nEl('n-paid').checked = !!n.paid;
+  draftParts = nParts(n).map(p=>({...p}));
+  if(n.kit && !draftParts.length) draftParts.push(newPart());
   const linked = n.retroId && data.evtTasks.some(t=>t.id===n.retroId);
   nEl('n-retro').checked = false;
   nEl('n-retro-line').style.display = linked ? 'none' : 'flex';
   nEl('deleteNeedBtn').style.display = id ? 'inline-block' : 'none';
+  renderDraftParts();
   updateNeedForm();
   nEl('needOverlay').classList.add('open');
   nEl('n-name').focus();
@@ -7415,21 +7012,25 @@ function saveNeed(){
   if(!name){ toast('Il manque le nom du besoin 👀'); return; }
   const v = i => nEl(i).value;
   const old = editingNeedId ? data.evtNeeds.find(x=>x.id===editingNeedId) : null;
+  const parts = draftParts.filter(x=>(x.name||'').trim()).map(x=>({...x, name:x.name.trim(), supplier:(x.supplier||'').trim()}));
+  const kit = parts.length > 0;
   const n = Object.assign(old ? {...old} : newNeed(), {
     name, catId:v('n-cat'), status:v('n-status'), qtyMode:v('n-qtymode'), unit:v('n-unit').trim(),
-    qty:v('n-qty'), perHead:v('n-perhead') || 1, extra:v('n-extra'), price:v('n-price'),
-    supplier:v('n-supplier').trim(), dueDate:v('n-due'), paid:nEl('n-paid').checked, link:v('n-link').trim(), notes:v('n-notes')
+    qty:v('n-qty'), perHead:v('n-perhead') || 1, extra:v('n-extra'), price: kit ? '' : v('n-price'),
+    supplier: kit ? '' : v('n-supplier').trim(), dueDate:v('n-due'), paid: kit ? false : nEl('n-paid').checked,
+    link:v('n-link').trim(), notes:v('n-notes'), kit, parts
   });
   let addedRetro = false;
   if(nEl('n-retro').checked && !(n.retroId && data.evtTasks.some(t=>t.id===n.retroId))){
-    const t = {id:uid(), projectId:p.id, name:'Commander : ' + name + (n.supplier ? ' (' + n.supplier + ')' : ''), catId:n.catId, dueDate:n.dueDate, status:'afaire', priority:'', note:'Ajouté depuis Besoins & budget'};
+    const detail = kit ? ' (' + parts.map(x=>x.name).join(', ') + ')' : (n.supplier ? ' (' + n.supplier + ')' : '');
+    const t = {id:uid(), projectId:p.id, name:'Commander : ' + name + detail, catId:n.catId, dueDate:n.dueDate, status:'afaire', priority:'', note:'Ajouté depuis Besoins & budget'};
     data.evtTasks.push(t); n.retroId = t.id; addedRetro = true;
   }
   if(old) data.evtNeeds = data.evtNeeds.map(x=>x.id===old.id?n:x);
   else data.evtNeeds.push(n);
-  if(n.status==='recu' && (!old || old.status!=='recu')) confetti();
+  if(!kit && n.status==='recu' && (!old || old.status!=='recu')) confetti();
   persist(); closeOverlays(); renderEvtAll();
-  toast(addedRetro ? 'Enregistré + ajouté au rétroplanning 🗓️' : 'Besoin enregistré 🧮');
+  toast(addedRetro ? 'Enregistré + ajouté au rétroplanning 🗓️' : (kit ? '🎁 Lot enregistré' : 'Besoin enregistré 🧮'));
 }
 function deleteNeed(){
   const n = data.evtNeeds.find(x=>x.id===editingNeedId); if(!n) return;
@@ -7441,38 +7042,62 @@ function copyNeedsFromEvent(){
   const from = nEl('needCopyFrom').value; if(!from) return;
   const p = getEvtProject(); if(!p) return;
   const src = data.evtNeeds.filter(n=>n.projectId===from);
-  src.forEach(o=>data.evtNeeds.push(Object.assign({}, o, {id:uid(), projectId:p.id, status:'aprevoir', paid:false, dueDate:'', retroId:''})));
-  persist(); renderNeeds(); renderEvtProjectBar(); toast('♻️ ' + src.length + ' ligne(s) reprise(s)');
+  src.forEach(o=>data.evtNeeds.push(Object.assign({}, o, {id:uid(), projectId:p.id, status:'aprevoir', paid:false, dueDate:'', retroId:'',
+    parts: nParts(o).map(x=>({...x, id:uid(), status:'aprevoir', paid:false}))})));
+  nRefresh(); toast('♻️ ' + src.length + ' ligne(s) reprise(s)');
 }
- 
-/* ---------- 5. Exports ---------- */
+
+/* ---------- 6. Exports ---------- */
 function exportNeedsPDF(){
   const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
   const ns = filteredNeeds();
   if(!ns.length){ toast('Rien à exporter ici 🌱'); return; }
-  const all = needsOfProject(), total = nSum(all), budget = nBudget(p), pi = nPeopleInfo();
-  const body = nGroups(ns).map(gr=>`
-    <h2>${gr.cat?esc(gr.cat.name):'Sans catégorie'} — ${eur(nSum(gr.items))}</h2>
-    <table><tr><th>✓</th><th>Besoin</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Total</th><th>Statut</th><th>Fournisseur</th><th>Payé</th></tr>
-    ${gr.items.map(n=>`<tr><td>${n.status==='recu'||n.status==='stock'?'☑':'☐'}</td>
+  const all = needsOfProject(), total = nSumCost(all), budget = nBudget(p), pi = nPeopleInfo();
+  const ck = s => (s==='recu'||s==='stock') ? '☑' : '☐';
+  const simple = n => `<tr><td>${ck(n.status)}</td>
       <td><strong>${esc(n.name)}</strong>${n.notes?`<br><span style="color:#888;font-size:11px">${esc(n.notes)}</span>`:''}</td>
       <td class="r">${nFmtQ(nQty(n))} ${esc(n.unit||'')}${n.qtyMode==='pers'?'<br><span style="color:#888;font-size:10px">par pers.</span>':''}</td>
       <td class="r">${nNum(n.price)?eur(nNum(n.price)):'—'}</td>
       <td class="r">${n.status==='stock'?'en stock':eur(nTotal(n))}</td>
       <td>${(NST[n.status]||NST.aprevoir).t}${n.dueDate?'<br><span style="color:#888;font-size:11px">avant le '+fmtDate(n.dueDate)+'</span>':''}</td>
-      <td>${esc(n.supplier)||'—'}</td><td>${n.paid?'☑':'☐'}</td></tr>`).join('')}
-    </table>`).join('');
+      <td>${esc(n.supplier)||'—'}</td><td>${n.paid?'☑':'☐'}</td></tr>`;
+  const kit = n => `<tr style="background:#F3EDFF"><td></td>
+      <td><strong>🎁 ${esc(n.name)}</strong> <span style="color:#888;font-size:11px">— ${nParts(n).length} élément(s) par ${nPer(n)}</span>${n.notes?`<br><span style="color:#888;font-size:11px">${esc(n.notes)}</span>`:''}</td>
+      <td class="r"><strong>${nFmtQ(nQty(n))} ${nPer(n)}</strong>${n.qtyMode==='pers'?'<br><span style="color:#888;font-size:10px">par pers.</span>':''}</td>
+      <td class="r"><strong>${eur(nUnit(n))}</strong><br><span style="color:#888;font-size:10px">/ ${nPer(n)}</span></td>
+      <td class="r"><strong>${eur(nCost(n))}</strong></td>
+      <td>${(NST[nStatus(n)]||NST.aprevoir).t}${n.dueDate?'<br><span style="color:#888;font-size:11px">avant le '+fmtDate(n.dueDate)+'</span>':''}</td><td></td><td></td></tr>`
+    + nParts(n).map(x=>`<tr><td>${ck(x.status)}</td>
+      <td style="padding-left:22px">↳ ${esc(x.name)}</td>
+      <td class="r">${nFmtQ(pBuy(n,x))}<br><span style="color:#888;font-size:10px">${nFmtQ(pPer(x))} / ${nPer(n)}</span></td>
+      <td class="r">${nNum(x.price)?eur(nNum(x.price)):'—'}</td>
+      <td class="r">${x.status==='stock'?'en stock':eur(pTotal(n,x))}</td>
+      <td>${(NST[x.status]||NST.aprevoir).t}</td><td>${esc(x.supplier)||'—'}</td><td>${x.paid?'☑':'☐'}</td></tr>`).join('');
+  const body = nGroups(ns).map(gr=>`
+    <h2>${gr.cat?esc(gr.cat.name):'Sans catégorie'} — ${eur(nSumCost(gr.items))}</h2>
+    <table><tr><th>✓</th><th>Besoin</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Total</th><th>Statut</th><th>Fournisseur</th><th>Payé</th></tr>
+    ${gr.items.map(n=>isKit(n) ? kit(n) : simple(n)).join('')}</table>`).join('');
+  /* liste de courses par fournisseur */
+  const buys = nBuyItems(ns).filter(b=>b.status!=='stock' && b.status!=='recu');
+  const bySup = {};
+  const NOSUP = 'Fournisseur à trouver';
+  buys.forEach(b=>{ const k = b.supplier.trim() || NOSUP; (bySup[k] = bySup[k] || []).push(b); });
+  const shop = Object.keys(bySup).sort((a,b)=>(a===NOSUP)-(b===NOSUP) || a.localeCompare(b,'fr')).map(k=>`
+    <h3>🛒 ${esc(k)} — ${eur(r2(bySup[k].reduce((s,b)=>s+b.total,0)))}</h3>
+    <table><tr><th>✓</th><th>À acheter</th><th class="r">Quantité</th><th class="r">Total</th><th>Statut</th></tr>
+    ${bySup[k].map(b=>`<tr><td>☐</td><td>${esc(b.name)}${b.kit?` <span style="color:#888;font-size:11px">(pour ${esc(b.kit)})</span>`:''}</td><td class="r">${nFmtQ(b.qty)} ${esc(b.unit)}</td><td class="r">${eur(b.total)}</td><td>${(NST[b.status]||NST.aprevoir).t}</td></tr>`).join('')}</table>`).join('');
   document.getElementById('printArea').innerHTML = `
     <h1>Besoins & budget — ${esc(p.name)}</h1>
     <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}${p.date?' · Jour J : '+fmtDate(p.date):''}${p.location?' · '+esc(p.location):''}</p>
     <div class="pstats">
       <div><b>${eur(total)}</b>total estimé</div>
       ${budget?`<div><b>${eur(budget)}</b>budget</div><div><b>${eur(budget-total)}</b>reste</div>`:''}
-      <div><b>${eur(nSum(all.filter(n=>n.paid)))}</b>déjà payé</div>
+      <div><b>${eur(nSumPaid(all))}</b>déjà payé</div>
       ${pi.n?`<div><b>${eur(r2(total/pi.n))}</b>par personne (${pi.n})</div>`:''}
     </div>
     ${body}
-    <table style="margin-top:14px"><tr class="tot"><td>Total ${ns.length!==all.length?'de la sélection':'général'}</td><td class="r">${eur(nSum(ns))}</td></tr></table>`;
+    <table style="margin-top:14px"><tr class="tot"><td>Total ${ns.length!==all.length?'de la sélection':'général'}</td><td class="r">${eur(nSumCost(ns))}</td></tr></table>
+    ${buys.length?`<h2>Liste de courses par fournisseur (reste à acheter)</h2>${shop}`:''}`;
   window.print();
 }
 function exportNeedsCSV(){
@@ -7481,15 +7106,26 @@ function exportNeedsCSV(){
   if(!ns.length){ toast('Rien à exporter ici 🌱'); return; }
   const num = n => String(r2(n)).replace('.',',');
   const txt = v => '"' + String(v ?? '').replace(/"/g,'""').replace(/\r?\n/g,' ') + '"';
-  const lines = [['Catégorie','Besoin','Quantité','Unité','Calcul','Prix unitaire','Total','Statut','Payé','Fournisseur','À commander avant le','Lien','Notes'].map(txt).join(';')];
-  nGroups(ns).forEach(gr=>gr.items.forEach(n=>lines.push([
-    txt(gr.cat?gr.cat.name:'Sans catégorie'), txt(n.name), num(nQty(n)), txt(n.unit),
-    txt(n.qtyMode==='pers' ? (nNum(n.perHead)||1)+' par personne'+(nNum(n.extra)?' + '+nNum(n.extra):'') : 'fixe'),
-    num(nNum(n.price)), n.status==='stock' ? '0' : num(nTotal(n)), txt((NST[n.status]||NST.aprevoir).t),
-    txt(n.paid?'Oui':'Non'), txt(n.supplier), txt(n.dueDate?fmtDate(n.dueDate):''), txt(n.link), txt(n.notes)
-  ].join(';'))));
+  const head = ['Catégorie','Lot','Élément','Quantité à acheter','Unité','Qté par lot','Calcul de la quantité','Prix unitaire','Total','Statut','Payé','Fournisseur','À commander avant le','Lien','Notes'];
+  const lines = [head.map(txt).join(';')];
+  const calc = n => n.qtyMode==='pers' ? (nNum(n.perHead)||1)+' par personne'+(nNum(n.extra)?' + '+nNum(n.extra)+' de marge':'') : 'fixe';
+  nGroups(ns).forEach(gr=>gr.items.forEach(n=>{
+    const cat = txt(gr.cat?gr.cat.name:'Sans catégorie');
+    if(isKit(n)){
+      const ps = nParts(n);
+      lines.push([cat, txt('🎁 '+n.name), txt('= TOTAL DU LOT ('+ps.length+' éléments)'), num(nQty(n)), txt(n.unit||'lot'), '', txt(calc(n)),
+        num(nUnit(n)), num(nCost(n)), txt((NST[nStatus(n)]||NST.aprevoir).t), txt(ps.filter(x=>x.paid).length+'/'+ps.length),
+        '', txt(n.dueDate?fmtDate(n.dueDate):''), txt(n.link), txt(n.notes)].join(';'));
+      ps.forEach(x=>lines.push([cat, txt(n.name), txt('   ↳ '+x.name), num(pBuy(n,x)), '', num(pPer(x)), txt('par '+(n.unit||'lot')),
+        num(nNum(x.price)), x.status==='stock' ? '0' : num(pTotal(n,x)), txt((NST[x.status]||NST.aprevoir).t), txt(x.paid?'Oui':'Non'),
+        txt(x.supplier), '', '', txt(x.notes)].join(';')));
+    } else {
+      lines.push([cat, '', txt(n.name), num(nQty(n)), txt(n.unit), '', txt(calc(n)), num(nNum(n.price)), n.status==='stock' ? '0' : num(nTotal(n)),
+        txt((NST[n.status]||NST.aprevoir).t), txt(n.paid?'Oui':'Non'), txt(n.supplier), txt(n.dueDate?fmtDate(n.dueDate):''), txt(n.link), txt(n.notes)].join(';'));
+    }
+  }));
   lines.push('');
-  lines.push([txt('TOTAL'),'','','','','',num(nSum(ns))].join(';'));
+  lines.push([txt('TOTAL GÉNÉRAL (les lignes « ↳ » détaillent les lots, elles sont déjà comptées dans le total du lot)'),'','','','','','','',num(nSumCost(ns))].join(';'));
   const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -7498,22 +7134,22 @@ function exportNeedsCSV(){
   setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
   toast('Fichier Excel téléchargé 📊');
 }
- 
-/* ---------- 6. Branchements ---------- */
+
+/* ---------- 7. Branchements sur le reste de l'appli ---------- */
 const _nRenderEvtAll = renderEvtAll;
 renderEvtAll = function(){ _nRenderEvtAll(); try{ renderNeeds(); }catch(e){ console.warn('Erreur de rendu (besoins) :', e); } };
- 
+
 const _nRenderBar = renderEvtProjectBar;
 renderEvtProjectBar = function(){
   _nRenderBar();
   const p = getEvtProject(); if(!p) return;
   const ns = data.evtNeeds.filter(n=>n.projectId===p.id);
   if(!ns.length) return;
-  const total = nSum(ns), budget = nBudget(p);
+  const total = nSumCost(ns), budget = nBudget(p);
   const btn = document.querySelector('#evtProjectBar button[onclick^="openEvtProjectModal(\'"]');
   if(btn) btn.insertAdjacentHTML('beforebegin', `<span class="pill" style="background:${budget && total>budget?'var(--rose)':'var(--peach)'};cursor:pointer" onclick="switchPage('evenement','besoins')">🧮 ${eur(total)}${budget?' / '+eur(budget)+' de budget':' prévus'}</span>`);
 };
- 
+
 const _nDeleteEvtProject = deleteEvtProject;
 deleteEvtProject = function(){
   const pid = editingEvtProjId;
@@ -7526,14 +7162,22 @@ deleteEvtProject = function(){
     persist(); renderEvtAll();
   }
 };
- 
+
 const _nRestoreTrash = restoreTrash;
 restoreTrash = function(i){
   const x = data.trash[i]; if(!x) return;
   if(x.kind==='need'){
     if(!data.evtNeeds.some(n=>n.id===x.item.id)) data.evtNeeds.push(x.item);
-    data.trash.splice(i,1);
-    persist(); renderAll(); toast('Restauré ✨');
+    data.trash.splice(i,1); persist(); renderAll(); toast('Restauré ✨');
+    return;
+  }
+  if(x.kind==='needpart'){
+    const n = data.evtNeeds.find(o=>o.id===x.item.needId);
+    if(!n){ toast('Le lot de cet élément n’existe plus — restaure d’abord le lot 🎁'); return; }
+    if(!Array.isArray(n.parts)) n.parts = [];
+    if(!n.parts.some(o=>o.id===x.item.part.id)) n.parts.push(x.item.part);
+    n.kit = true;
+    data.trash.splice(i,1); persist(); renderAll(); toast('Restauré ✨');
     return;
   }
   const extra = (x.kind==='evtproject' && x.item && x.item.needs) ? x.item.needs : [];
@@ -7543,7 +7187,7 @@ restoreTrash = function(i){
     persist(); renderAll();
   }
 };
- 
+
 const _nMergeData = mergeData;
 mergeData = function(d){
   let c = _nMergeData(d);
@@ -7551,6 +7195,10 @@ mergeData = function(d){
   return c;
 };
 </script>
+<!-- ================== FIN DU MODULE BESOINS & BUDGET ================== -->
+
+</body>
+</html>
 
 
 </body>
