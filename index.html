@@ -6580,6 +6580,490 @@ exportGuestsPDF = function(mode){
 };
 const _plCSV = exportGuestsCSV;
 exportGuestsCSV = function(){ withPlusInNotes(_plCSV); };
+
+
+.btable input.nin{width:84px;padding:6px 8px;font-size:13px;border-radius:10px;text-align:right;box-shadow:var(--clay-soft);background:var(--surface)}
+.btable select.nsel{width:auto;padding:6px 10px;font-size:12px;border-radius:10px;box-shadow:var(--clay-soft);font-family:'Nunito',sans-serif;font-weight:800}
+.btable tr.ngroup td{background:transparent!important;text-align:left;padding:16px 4px 4px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px}
+.btable tr.ngroup td span.sub{font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:800;color:var(--muted);margin-left:8px}
+.btable tr.nstock td{opacity:.6}
+</style>
+ 
+<script>
+/* ---------- 1. Données ---------- */
+DEFAULTS.evtNeeds = [];
+if(!ARRAY_KEYS.includes('evtNeeds')) ARRAY_KEYS.push('evtNeeds');
+if(!Array.isArray(data.evtNeeds)) data.evtNeeds = [];
+KIND_LABEL.need = '🧮 Besoin';
+PAGES.evenement.subs.push(['besoins','Besoins & budget 🧮']);
+SUB_SECTION.besoins = 'view-evtbesoins';
+ 
+const NST = {
+  aprevoir: {l:'📝 À prévoir',          t:'À prévoir',          bg:'#EFEAF9'},
+  devis:    {l:'📨 Devis demandé',      t:'Devis demandé',      bg:'var(--butter)'},
+  commande: {l:'🛒 Commandé / réservé', t:'Commandé / réservé', bg:'var(--sky)'},
+  recu:     {l:'✅ Reçu / acheté',      t:'Reçu / acheté',      bg:'var(--mint)'},
+  stock:    {l:'📦 Déjà en stock',      t:'Déjà en stock',      bg:'#E6F8EE'}
+};
+const NFILT = [['all','Tout'],['aprevoir','📝 À prévoir'],['devis','📨 Devis demandé'],['commande','🛒 Commandé'],['recu','✅ Reçu'],['stock','📦 En stock'],['apayer','💳 À payer']];
+let needFilter = 'all', editingNeedId = null;
+const nEl = id => document.getElementById(id);
+const nNum = v => { const n = parseFloat(String(v ?? '').replace(/\s/g,'').replace(',','.')); return isNaN(n) ? 0 : n; };
+const nFmtQ = q => (Math.round(q*100)/100).toLocaleString('fr-FR');
+ 
+function needsOfProject(){
+  if(!Array.isArray(data.evtNeeds)) data.evtNeeds = [];
+  const p = getEvtProject();
+  return p ? data.evtNeeds.filter(n=>n.projectId===p.id) : [];
+}
+function newNeed(f){
+  return Object.assign({id:uid(), projectId:(getEvtProject()||{}).id, name:'', catId:'', status:'aprevoir',
+    qtyMode:'fixe', qty:1, perHead:1, extra:0, unit:'', price:'', supplier:'', paid:false,
+    dueDate:'', link:'', notes:'', retroId:''}, f||{});
+}
+/* Nombre de personnes utilisé pour les lignes « par personne » */
+function nPeopleInfo(){
+  if(typeof guestsOfProject==='function' && typeof gSum==='function'){
+    const yes = guestsOfProject().filter(g=>g.status==='oui');
+    if(yes.length) return {n:gSum(yes), src:'personnes qui viennent (liste d\'invités)'};
+    const cap = parseInt(gSet().capacity)||0;
+    if(cap) return {n:cap, src:'places max (personne n\'a encore confirmé)'};
+  }
+  return {n:0, src:'aucun invité confirmé pour l\'instant'};
+}
+function nQty(n){
+  if(n.qtyMode==='pers') return Math.max(0, nPeopleInfo().n * (nNum(n.perHead) || 1) + nNum(n.extra));
+  return nNum(n.qty);
+}
+const nCounted = n => n.status!=='stock';
+const nTotal = n => r2(nQty(n) * nNum(n.price));
+const nSum = arr => r2(arr.filter(nCounted).reduce((s,n)=>s+nTotal(n),0));
+function nBudget(p){ const v = parseFloat(String((p||{}).budget||'').replace(/\s/g,'').replace(',','.').replace(/[^\d.]/g,'')); return isNaN(v) ? 0 : v; }
+const nCat = id => data.retroCats.find(c=>c.id===id);
+function nGroups(list){
+  const map = {};
+  list.forEach(n=>{ const c = nCat(n.catId); const k = c ? c.id : '__none'; (map[k] = map[k] || {cat:c, items:[]}).items.push(n); });
+  const order = [...data.retroCats.map(c=>c.id), '__none'];
+  return order.filter(k=>map[k]).map(k=>map[k]);
+}
+ 
+/* ---------- 2. Écran ---------- */
+nEl('view-evtprestataires').insertAdjacentHTML('afterend', `
+<section id="view-evtbesoins" class="view">
+  <datalist id="needSupplierList"></datalist>
+  <div id="needNoProj"></div>
+  <div id="needWrap">
+    <div class="card">
+      <h2>🧮 Besoins & budget
+        <span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sky small" onclick="exportNeedsPDF()">🖨️ Export PDF</button>
+          <button class="btn small" onclick="exportNeedsCSV()">📊 Export Excel</button>
+          <button class="btn primary small" onclick="openNeedModal()">+ Nouveau besoin</button>
+        </span>
+      </h2>
+      <p class="section-hint">Tout ce qu'il faut prévoir (matériel, déco, boissons, impressions, location…) avec quantités et prix. Les lignes « par personne » se recalculent toutes seules avec le nombre d'invités qui viennent. Les catégories sont celles du rétroplanning.</p>
+      <div class="stat-grid" id="needStats"></div>
+      <div id="needProgress"></div>
+      <div class="composer" style="margin-top:16px">
+        <input type="text" id="nq-name" placeholder="ex: Nappes blanches, Champagne, Kakémono…" onkeydown="if(event.key==='Enter')quickAddNeed()">
+        <input type="number" id="nq-qty" class="g-num" min="0" step="any" value="1" title="Quantité" aria-label="Quantité" onkeydown="if(event.key==='Enter')quickAddNeed()">
+        <input type="number" id="nq-price" class="g-num" style="width:120px" min="0" step="0.01" placeholder="Prix unit. €" aria-label="Prix unitaire" onkeydown="if(event.key==='Enter')quickAddNeed()">
+        <select id="nq-cat" class="fselect" aria-label="Catégorie"></select>
+        <label class="check-line" style="width:auto;padding:10px 12px;flex:none"><input type="checkbox" id="nq-pers"><span>× par personne</span></label>
+        <button class="btn primary" onclick="quickAddNeed()">+ Ajouter</button>
+      </div>
+      <p class="section-hint" style="margin:8px 0 0">Coche « × par personne » pour que la quantité suive les invités : avec 2 et 40 personnes qui viennent, ça fera 80. Clique sur un nom dans le tableau pour tous les détails (fournisseur, date limite, marge de sécurité…).</p>
+      <div class="filters" id="needFilterChips" style="margin-top:18px;margin-bottom:8px"></div>
+      <div class="filters">
+        <select id="needCatFilter" class="fselect" onchange="renderNeeds()" aria-label="Catégorie"></select>
+        <input type="text" id="needSearch" class="g-search" placeholder="🔍 Chercher…" oninput="renderNeedTable()">
+      </div>
+      <div style="overflow-x:auto"><table class="btable" id="needTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>📊 Par catégorie</h2>
+      <div style="overflow-x:auto"><table class="btable" id="needCatTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>♻️ Reprendre la liste d'un autre événement</h2>
+      <p class="section-hint">Pratique pour un événement qui revient : tout est copié (quantités, prix, fournisseurs), les statuts repartent à « À prévoir ».</p>
+      <div class="composer"><select id="needCopyFrom" class="fselect" style="flex:1"></select><button class="btn primary" onclick="copyNeedsFromEvent()">♻️ Reprendre cette liste</button></div>
+    </div>
+  </div>
+</section>`);
+ 
+document.body.insertAdjacentHTML('beforeend', `
+<div class="overlay" id="needOverlay">
+  <div class="modal" style="max-width:600px">
+    <h3 id="needModalTitle">Nouveau besoin</h3>
+    <label>Quoi ?</label>
+    <input type="text" id="n-name" placeholder="ex: Location de mange-debout">
+    <div class="grid-2">
+      <div><label>Catégorie</label><select id="n-cat"></select></div>
+      <div><label>Statut</label><select id="n-status">${Object.entries(NST).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')}</select></div>
+    </div>
+ 
+    <div class="modal-sec">🔢 Quantité & prix</div>
+    <div class="grid-2">
+      <div><label>Calcul de la quantité</label>
+        <select id="n-qtymode" onchange="updateNeedForm()">
+          <option value="fixe">Quantité fixe</option>
+          <option value="pers">Par personne (suit les invités)</option>
+        </select></div>
+      <div><label>Unité</label><input type="text" id="n-unit" placeholder="pièces, bouteilles, lots…"></div>
+    </div>
+    <div id="n-fixe-wrap"><label>Quantité</label><input type="number" id="n-qty" min="0" step="any" oninput="updateNeedForm()"></div>
+    <div id="n-pers-wrap">
+      <div class="grid-2">
+        <div><label>Quantité par personne</label><input type="number" id="n-perhead" min="0" step="any" placeholder="1" oninput="updateNeedForm()"></div>
+        <div><label>+ Marge de sécurité</label><input type="number" id="n-extra" min="0" step="any" placeholder="0" oninput="updateNeedForm()"></div>
+      </div>
+      <div class="g-help" id="n-pers-info"></div>
+    </div>
+    <div class="grid-2">
+      <div><label>Prix unitaire (€)</label><input type="number" id="n-price" min="0" step="0.01" placeholder="ex: 4.50" oninput="updateNeedForm()"></div>
+      <div><label>Total</label><div class="ttc-box" id="n-total">—</div></div>
+    </div>
+ 
+    <div class="modal-sec">🛒 Commande</div>
+    <div class="grid-2">
+      <div><label>Fournisseur / où l'acheter</label><input type="text" id="n-supplier" list="needSupplierList" placeholder="ex: Metro, un prestataire…"></div>
+      <div><label>À commander avant le</label><input type="date" id="n-due"></div>
+    </div>
+    <div class="check-grid" style="grid-template-columns:1fr 1fr">
+      <label class="check-line"><input type="checkbox" id="n-paid"><span>💳 Payé</span></label>
+      <label class="check-line" id="n-retro-line"><input type="checkbox" id="n-retro"><span>🗓️ Ajouter au rétroplanning</span></label>
+    </div>
+    <label>Lien</label>
+    <input type="url" id="n-link" placeholder="https://…">
+    <label>Notes</label>
+    <textarea id="n-notes" placeholder="Couleur, référence, taille, qui va le chercher…"></textarea>
+    <div class="modal-actions">
+      <button class="btn danger" id="deleteNeedBtn" style="display:none" onclick="deleteNeed()">🗑️ Corbeille</button>
+      <button class="btn" onclick="closeOverlays()">Annuler</button>
+      <button class="btn primary" onclick="saveNeed()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>`);
+nEl('needOverlay').addEventListener('click', e=>{ if(e.target.id==='needOverlay') closeOverlays(); });
+ 
+/* ---------- 3. Affichage ---------- */
+function renderNeeds(){
+  const p = getEvtProject();
+  nEl('needWrap').style.display = p ? 'block' : 'none';
+  nEl('needNoProj').innerHTML = p ? '' : `<div class="card"><p class="empty-msg">Crée d'abord un événement en haut de page pour lister ses besoins 🎉</p></div>`;
+  if(!p) return;
+  const catOpts = data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const qc = nEl('nq-cat'), qcv = qc.value;
+  qc.innerHTML = '<option value="">— Catégorie —</option>' + catOpts;
+  if([...qc.options].some(o=>o.value===qcv)) qc.value = qcv;
+  const cf = nEl('needCatFilter'), cfv = cf.value || 'all';
+  cf.innerHTML = '<option value="all">🏷️ Toutes les catégories</option>' + catOpts + '<option value="__none">Sans catégorie</option>';
+  cf.value = [...cf.options].some(o=>o.value===cfv) ? cfv : 'all';
+  const sups = [...new Set([...data.vendors.filter(v=>v.projectId===p.id).map(v=>v.name), ...data.evtNeeds.map(n=>(n.supplier||'').trim())].filter(Boolean))];
+  nEl('needSupplierList').innerHTML = sups.map(s=>`<option value="${escAttr(s)}">`).join('');
+  renderNeedStats();
+  renderNeedChips();
+  renderNeedTable();
+  renderNeedCatTable();
+  const others = data.evtProjects.filter(x=>x.id!==p.id).map(x=>({x, n:data.evtNeeds.filter(n=>n.projectId===x.id).length})).filter(o=>o.n);
+  nEl('needCopyFrom').innerHTML = others.length
+    ? others.map(o=>`<option value="${o.x.id}">${esc(o.x.name)} — ${o.n} ligne${o.n>1?'s':''}</option>`).join('')
+    : '<option value="">Aucun autre événement avec une liste</option>';
+}
+function renderNeedStats(){
+  const p = getEvtProject(), all = needsOfProject();
+  const total = nSum(all);
+  const engaged = nSum(all.filter(n=>n.status==='commande' || n.status==='recu'));
+  const paid = nSum(all.filter(n=>n.paid));
+  const budget = nBudget(p);
+  const pi = nPeopleInfo();
+  const todo = all.filter(n=>n.status==='aprevoir' || n.status==='devis').length;
+  const tiles = [
+    {lbl:'Total estimé', big:eur(total), sub:all.length+' ligne'+(all.length>1?'s':'')+' (hors stock)', bg:'var(--lilac)'},
+    budget
+      ? {lbl:'Reste dans le budget', big:eur(budget-total), sub: budget-total<0 ? '⚠️ budget dépassé' : 'sur '+eur(budget)+' prévus', bg: budget-total<0 ? 'var(--rose)' : 'var(--mint)'}
+      : {lbl:'Budget de l’événement', big:'À définir', sub:'« ✏️ Modifier l’événement » en haut', bg:'#EFEAF9'},
+    {lbl:'Commandé / acheté', big:eur(engaged), sub:'déjà engagé', bg:'var(--sky)'},
+    {lbl:'Déjà payé', big:eur(paid), sub:'reste '+eur(r2(total-paid))+' à payer', bg:'var(--peach)'},
+    {lbl:'Coût par personne', big: pi.n ? eur(r2(total/pi.n)) : '—', sub: pi.n ? 'pour '+pi.n+' '+pi.src : pi.src, bg:'var(--butter)'},
+    {lbl:'Encore à commander', big:todo, sub:'lignes à prévoir ou en devis', bg:'var(--rose)'}
+  ];
+  nEl('needStats').innerHTML = tiles.map(t=>
+    `<div class="stat" style="background:linear-gradient(135deg,${t.bg},var(--surface-2))">
+      <div class="lbl" style="margin:0 0 4px">${t.lbl}</div><div class="big mid">${t.big}</div><div class="sub">${t.sub}</div></div>`).join('');
+  const pr = nEl('needProgress');
+  if(!total && !budget){ pr.innerHTML = ''; return; }
+  const base = Math.max(budget, total, 1);
+  pr.innerHTML = `<div class="bar-track" style="height:22px;margin-top:14px;display:flex">
+      <span class="bar-fill" style="width:${paid/base*100}%;border-radius:0;background:linear-gradient(90deg,var(--mint),#7FD9BD)"></span>
+      <span class="bar-fill" style="width:${(total-paid)/base*100}%;border-radius:0"></span>
+    </div>
+    <p class="section-hint" style="margin:8px 0 0">${budget ? `${eur(total)} prévus sur un budget de ${eur(budget)} (${Math.round(total/budget*100)} %).` : `${eur(total)} prévus.`} <span style="white-space:nowrap">🟩 payé · 🟪 pas encore payé${budget?' · vide = reste du budget':''}</span></p>`;
+}
+function matchNeedFilter(n){
+  if(needFilter==='all') return true;
+  if(needFilter==='apayer') return nCounted(n) && !n.paid && nTotal(n)>0;
+  return n.status===needFilter;
+}
+function renderNeedChips(){
+  const all = needsOfProject();
+  nEl('needFilterChips').innerHTML = NFILT.map(([id,l])=>{
+    const save = needFilter; needFilter = id;
+    const c = all.filter(matchNeedFilter).length;
+    needFilter = save;
+    return `<button class="fchip a ${needFilter===id?'active':''}" onclick="needFilter='${id}';renderNeeds()">${l} (${c})</button>`;
+  }).join('');
+}
+function filteredNeeds(){
+  let ns = needsOfProject().filter(matchNeedFilter);
+  const cf = nEl('needCatFilter').value;
+  if(cf==='__none') ns = ns.filter(n=>!nCat(n.catId)); else if(cf && cf!=='all') ns = ns.filter(n=>n.catId===cf);
+  const q = (nEl('needSearch').value||'').toLowerCase().trim();
+  if(q) ns = ns.filter(n=>[n.name,n.supplier,n.notes,n.unit].some(v=>(v||'').toLowerCase().includes(q)));
+  return ns.sort((a,b)=>(a.name||'').localeCompare(b.name||'','fr'));
+}
+function needRow(n){
+  const st = NST[n.status] || NST.aprevoir;
+  const unit = n.unit ? ` <small style="color:var(--muted)">${esc(n.unit)}</small>` : '';
+  const qty = n.qtyMode==='pers'
+    ? `<span title="${escAttr(nPeopleInfo().n+' pers. × '+(nNum(n.perHead)||1)+(nNum(n.extra)?' + '+nNum(n.extra)+' de marge':''))}">${nFmtQ(nQty(n))}${unit} <small style="color:var(--muted)">👥 auto</small></span>`
+    : `<input class="nin" type="number" min="0" step="any" value="${escAttr(String(n.qty ?? ''))}" onchange="setNeedField('${n.id}','qty',this.value)" aria-label="Quantité">${unit}`;
+  const due = n.dueDate && !['recu','stock'].includes(n.status) ? countdownChip(n.dueDate, false) : '';
+  const sub = [n.supplier ? '🛒 '+esc(n.supplier) : '', n.notes ? esc(n.notes.slice(0,60))+(n.notes.length>60?'…':'') : ''].filter(Boolean).join(' · ');
+  return `<tr class="${n.status==='stock'?'nstock':''}">
+    <td style="cursor:pointer;white-space:normal;min-width:190px" onclick="openNeedModal('${n.id}')"><b>${esc(n.name)}</b>${n.retroId?' 🗓️':''} ${due}${sub?`<br><span class="qsub">${sub}</span>`:''}</td>
+    <td>${qty}</td>
+    <td><input class="nin" type="number" min="0" step="0.01" value="${escAttr(String(n.price ?? ''))}" onchange="setNeedField('${n.id}','price',this.value)" aria-label="Prix unitaire"> €</td>
+    <td><b>${n.status==='stock' ? '<span class="z">en stock</span>' : eur(nTotal(n))}</b></td>
+    <td><select class="nsel" style="background:${st.bg}" onchange="setNeedField('${n.id}','status',this.value)" aria-label="Statut">${Object.entries(NST).map(([k,v])=>`<option value="${k}" ${n.status===k?'selected':''}>${v.l}</option>`).join('')}</select></td>
+    <td><button class="qtoggle pay ${n.paid?'on':''}" role="checkbox" aria-checked="${n.paid?'true':'false'}" onclick="toggleNeedPaid('${n.id}')">${n.paid?'☑':'☐'} Payé</button></td>
+  </tr>`;
+}
+function renderNeedTable(){
+  const el = nEl('needTable');
+  if(!el || !getEvtProject()) return;
+  const ns = filteredNeeds();
+  if(!ns.length){
+    el.innerHTML = `<tr><td style="text-align:center;border-radius:14px" class="z">${needsOfProject().length ? 'Rien ne correspond à ces filtres.' : 'Aucun besoin noté pour l’instant — ajoute le premier juste au-dessus 🧮'}</td></tr>`;
+    return;
+  }
+  el.innerHTML = `<tr><th>Besoin</th><th>Quantité</th><th>Prix unit.</th><th>Total</th><th>Statut</th><th>Payé</th></tr>`
+    + nGroups(ns).map(gr=>`<tr class="ngroup"><td colspan="6"><span class="ndot" style="background:${gr.cat?gr.cat.color:'#DDD6EC'}"></span>${gr.cat?esc(gr.cat.name):'Sans catégorie'}<span class="sub">${gr.items.length} ligne${gr.items.length>1?'s':''} · ${eur(nSum(gr.items))}</span></td></tr>`
+      + gr.items.map(needRow).join('')).join('')
+    + `<tr class="tot"><td>Total affiché</td><td></td><td></td><td>${eur(nSum(ns))}</td><td>payé : ${eur(nSum(ns.filter(n=>n.paid)))}</td><td></td></tr>`;
+}
+function renderNeedCatTable(){
+  const all = needsOfProject(), el = nEl('needCatTable');
+  if(!all.length){ el.innerHTML = '<tr><td style="text-align:center;border-radius:14px" class="z">Aucun besoin pour l’instant</td></tr>'; return; }
+  const total = nSum(all);
+  const rows = nGroups(all).map(gr=>({name:gr.cat?gr.cat.name:'Sans catégorie', color:gr.cat?gr.cat.color:'#DDD6EC', it:gr.items, t:nSum(gr.items)})).sort((a,b)=>b.t-a.t);
+  el.innerHTML = `<tr><th>Catégorie</th><th>Lignes</th><th>Total</th><th>Commandé / reçu</th><th>Payé</th><th>Part</th></tr>`
+    + rows.map(r=>{
+      const pct = total ? Math.round(r.t/total*100) : 0;
+      return `<tr><td><span class="ndot" style="background:${r.color}"></span>${esc(r.name)}</td><td>${r.it.length}</td><td><b>${eur(r.t)}</b></td>
+        <td>${eur(nSum(r.it.filter(n=>n.status==='commande'||n.status==='recu')))}</td><td>${eur(nSum(r.it.filter(n=>n.paid)))}</td>
+        <td><span style="display:inline-flex;align-items:center;gap:8px"><span class="bar-track" style="width:90px;height:12px;display:inline-block"><span class="bar-fill" style="display:block;width:${pct}%"></span></span>${pct} %</span></td></tr>`;
+    }).join('')
+    + `<tr class="tot"><td>Total</td><td>${all.length}</td><td>${eur(total)}</td><td>${eur(nSum(all.filter(n=>n.status==='commande'||n.status==='recu')))}</td><td>${eur(nSum(all.filter(n=>n.paid)))}</td><td></td></tr>`;
+}
+ 
+/* ---------- 4. Actions ---------- */
+function setNeedField(id, f, v){
+  const n = data.evtNeeds.find(x=>x.id===id); if(!n) return;
+  const was = n.status;
+  n[f] = v;
+  if(f==='status' && v==='recu' && was!=='recu') confetti();
+  persist(); renderNeeds(); renderEvtProjectBar();
+}
+function toggleNeedPaid(id){
+  const n = data.evtNeeds.find(x=>x.id===id); if(!n) return;
+  n.paid = !n.paid;
+  if(n.paid) confetti();
+  persist(); renderNeeds(); renderEvtProjectBar();
+}
+function quickAddNeed(){
+  if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
+  const name = nEl('nq-name').value.trim();
+  if(!name){ toast('Écris ce dont tu as besoin 🧮'); nEl('nq-name').focus(); return; }
+  const pers = nEl('nq-pers').checked, q = nEl('nq-qty').value || 1;
+  data.evtNeeds.push(newNeed({name, catId:nEl('nq-cat').value, price:nEl('nq-price').value,
+    qtyMode: pers ? 'pers' : 'fixe', qty: pers ? 1 : q, perHead: pers ? q : 1}));
+  nEl('nq-name').value = ''; nEl('nq-price').value = ''; nEl('nq-qty').value = 1; nEl('nq-pers').checked = false;
+  nEl('nq-name').focus();
+  persist(); renderNeeds(); renderEvtProjectBar(); toast(name + ' ajouté 🧮');
+}
+function updateNeedForm(){
+  const pers = nEl('n-qtymode').value==='pers';
+  nEl('n-fixe-wrap').style.display = pers ? 'none' : 'block';
+  nEl('n-pers-wrap').style.display = pers ? 'block' : 'none';
+  const tmp = {qtyMode: nEl('n-qtymode').value, qty: nEl('n-qty').value, perHead: nEl('n-perhead').value, extra: nEl('n-extra').value, price: nEl('n-price').value, status:'aprevoir'};
+  const pi = nPeopleInfo();
+  nEl('n-pers-info').innerHTML = `👥 ${pi.n} ${pi.src} × ${nNum(tmp.perHead)||1}${nNum(tmp.extra)?' + '+nNum(tmp.extra)+' de marge':''} = <b>${nFmtQ(nQty(tmp))}</b>. La quantité se mettra à jour toute seule quand les réponses arrivent.`;
+  nEl('n-total').textContent = nNum(tmp.price) ? nFmtQ(nQty(tmp)) + ' × ' + eur(nNum(tmp.price)) + ' = ' + eur(nTotal(tmp)) : '—';
+}
+function openNeedModal(id=null){
+  if(!getEvtProject()){ toast("Crée d'abord un événement 🎉"); return; }
+  editingNeedId = id;
+  const n = id ? data.evtNeeds.find(x=>x.id===id) : newNeed({catId: (nEl('needCatFilter').value!=='all' && nEl('needCatFilter').value!=='__none') ? nEl('needCatFilter').value : ''});
+  if(!n) return;
+  nEl('n-cat').innerHTML = '<option value="">— Aucune —</option>' + data.retroCats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const set = (i,v) => nEl(i).value = v ?? '';
+  nEl('needModalTitle').textContent = id ? 'Modifier le besoin' : 'Nouveau besoin';
+  set('n-name',n.name); set('n-cat',n.catId); set('n-status',n.status||'aprevoir');
+  set('n-qtymode',n.qtyMode||'fixe'); set('n-unit',n.unit); set('n-qty',n.qty); set('n-perhead',n.perHead); set('n-extra',n.extra||'');
+  set('n-price',n.price); set('n-supplier',n.supplier); set('n-due',n.dueDate); set('n-link',n.link); set('n-notes',n.notes);
+  nEl('n-paid').checked = !!n.paid;
+  const linked = n.retroId && data.evtTasks.some(t=>t.id===n.retroId);
+  nEl('n-retro').checked = false;
+  nEl('n-retro-line').style.display = linked ? 'none' : 'flex';
+  nEl('deleteNeedBtn').style.display = id ? 'inline-block' : 'none';
+  updateNeedForm();
+  nEl('needOverlay').classList.add('open');
+  nEl('n-name').focus();
+}
+function saveNeed(){
+  const p = getEvtProject(); if(!p) return;
+  const name = nEl('n-name').value.trim();
+  if(!name){ toast('Il manque le nom du besoin 👀'); return; }
+  const v = i => nEl(i).value;
+  const old = editingNeedId ? data.evtNeeds.find(x=>x.id===editingNeedId) : null;
+  const n = Object.assign(old ? {...old} : newNeed(), {
+    name, catId:v('n-cat'), status:v('n-status'), qtyMode:v('n-qtymode'), unit:v('n-unit').trim(),
+    qty:v('n-qty'), perHead:v('n-perhead') || 1, extra:v('n-extra'), price:v('n-price'),
+    supplier:v('n-supplier').trim(), dueDate:v('n-due'), paid:nEl('n-paid').checked, link:v('n-link').trim(), notes:v('n-notes')
+  });
+  let addedRetro = false;
+  if(nEl('n-retro').checked && !(n.retroId && data.evtTasks.some(t=>t.id===n.retroId))){
+    const t = {id:uid(), projectId:p.id, name:'Commander : ' + name + (n.supplier ? ' (' + n.supplier + ')' : ''), catId:n.catId, dueDate:n.dueDate, status:'afaire', priority:'', note:'Ajouté depuis Besoins & budget'};
+    data.evtTasks.push(t); n.retroId = t.id; addedRetro = true;
+  }
+  if(old) data.evtNeeds = data.evtNeeds.map(x=>x.id===old.id?n:x);
+  else data.evtNeeds.push(n);
+  if(n.status==='recu' && (!old || old.status!=='recu')) confetti();
+  persist(); closeOverlays(); renderEvtAll();
+  toast(addedRetro ? 'Enregistré + ajouté au rétroplanning 🗓️' : 'Besoin enregistré 🧮');
+}
+function deleteNeed(){
+  const n = data.evtNeeds.find(x=>x.id===editingNeedId); if(!n) return;
+  data.trash.unshift({kind:'need', label:n.name, deletedAt:new Date().toISOString(), item:n});
+  data.evtNeeds = data.evtNeeds.filter(x=>x.id!==n.id);
+  persist(); closeOverlays(); renderNeeds(); renderEvtProjectBar(); toast('Envoyé à la corbeille 🛡️');
+}
+function copyNeedsFromEvent(){
+  const from = nEl('needCopyFrom').value; if(!from) return;
+  const p = getEvtProject(); if(!p) return;
+  const src = data.evtNeeds.filter(n=>n.projectId===from);
+  src.forEach(o=>data.evtNeeds.push(Object.assign({}, o, {id:uid(), projectId:p.id, status:'aprevoir', paid:false, dueDate:'', retroId:''})));
+  persist(); renderNeeds(); renderEvtProjectBar(); toast('♻️ ' + src.length + ' ligne(s) reprise(s)');
+}
+ 
+/* ---------- 5. Exports ---------- */
+function exportNeedsPDF(){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const ns = filteredNeeds();
+  if(!ns.length){ toast('Rien à exporter ici 🌱'); return; }
+  const all = needsOfProject(), total = nSum(all), budget = nBudget(p), pi = nPeopleInfo();
+  const body = nGroups(ns).map(gr=>`
+    <h2>${gr.cat?esc(gr.cat.name):'Sans catégorie'} — ${eur(nSum(gr.items))}</h2>
+    <table><tr><th>✓</th><th>Besoin</th><th class="r">Qté</th><th class="r">Prix unit.</th><th class="r">Total</th><th>Statut</th><th>Fournisseur</th><th>Payé</th></tr>
+    ${gr.items.map(n=>`<tr><td>${n.status==='recu'||n.status==='stock'?'☑':'☐'}</td>
+      <td><strong>${esc(n.name)}</strong>${n.notes?`<br><span style="color:#888;font-size:11px">${esc(n.notes)}</span>`:''}</td>
+      <td class="r">${nFmtQ(nQty(n))} ${esc(n.unit||'')}${n.qtyMode==='pers'?'<br><span style="color:#888;font-size:10px">par pers.</span>':''}</td>
+      <td class="r">${nNum(n.price)?eur(nNum(n.price)):'—'}</td>
+      <td class="r">${n.status==='stock'?'en stock':eur(nTotal(n))}</td>
+      <td>${(NST[n.status]||NST.aprevoir).t}${n.dueDate?'<br><span style="color:#888;font-size:11px">avant le '+fmtDate(n.dueDate)+'</span>':''}</td>
+      <td>${esc(n.supplier)||'—'}</td><td>${n.paid?'☑':'☐'}</td></tr>`).join('')}
+    </table>`).join('');
+  document.getElementById('printArea').innerHTML = `
+    <h1>Besoins & budget — ${esc(p.name)}</h1>
+    <p style="color:#888">Aeconomia · généré le ${new Date().toLocaleDateString('fr-FR')}${p.date?' · Jour J : '+fmtDate(p.date):''}${p.location?' · '+esc(p.location):''}</p>
+    <div class="pstats">
+      <div><b>${eur(total)}</b>total estimé</div>
+      ${budget?`<div><b>${eur(budget)}</b>budget</div><div><b>${eur(budget-total)}</b>reste</div>`:''}
+      <div><b>${eur(nSum(all.filter(n=>n.paid)))}</b>déjà payé</div>
+      ${pi.n?`<div><b>${eur(r2(total/pi.n))}</b>par personne (${pi.n})</div>`:''}
+    </div>
+    ${body}
+    <table style="margin-top:14px"><tr class="tot"><td>Total ${ns.length!==all.length?'de la sélection':'général'}</td><td class="r">${eur(nSum(ns))}</td></tr></table>`;
+  window.print();
+}
+function exportNeedsCSV(){
+  const p = getEvtProject(); if(!p){ toast("Crée d'abord un événement 🎉"); return; }
+  const ns = filteredNeeds();
+  if(!ns.length){ toast('Rien à exporter ici 🌱'); return; }
+  const num = n => String(r2(n)).replace('.',',');
+  const txt = v => '"' + String(v ?? '').replace(/"/g,'""').replace(/\r?\n/g,' ') + '"';
+  const lines = [['Catégorie','Besoin','Quantité','Unité','Calcul','Prix unitaire','Total','Statut','Payé','Fournisseur','À commander avant le','Lien','Notes'].map(txt).join(';')];
+  nGroups(ns).forEach(gr=>gr.items.forEach(n=>lines.push([
+    txt(gr.cat?gr.cat.name:'Sans catégorie'), txt(n.name), num(nQty(n)), txt(n.unit),
+    txt(n.qtyMode==='pers' ? (nNum(n.perHead)||1)+' par personne'+(nNum(n.extra)?' + '+nNum(n.extra):'') : 'fixe'),
+    num(nNum(n.price)), n.status==='stock' ? '0' : num(nTotal(n)), txt((NST[n.status]||NST.aprevoir).t),
+    txt(n.paid?'Oui':'Non'), txt(n.supplier), txt(n.dueDate?fmtDate(n.dueDate):''), txt(n.link), txt(n.notes)
+  ].join(';'))));
+  lines.push('');
+  lines.push([txt('TOTAL'),'','','','','',num(nSum(ns))].join(';'));
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'besoins-' + (p.name||'evenement').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-') + '.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  toast('Fichier Excel téléchargé 📊');
+}
+ 
+/* ---------- 6. Branchements ---------- */
+const _nRenderEvtAll = renderEvtAll;
+renderEvtAll = function(){ _nRenderEvtAll(); try{ renderNeeds(); }catch(e){ console.warn('Erreur de rendu (besoins) :', e); } };
+ 
+const _nRenderBar = renderEvtProjectBar;
+renderEvtProjectBar = function(){
+  _nRenderBar();
+  const p = getEvtProject(); if(!p) return;
+  const ns = data.evtNeeds.filter(n=>n.projectId===p.id);
+  if(!ns.length) return;
+  const total = nSum(ns), budget = nBudget(p);
+  const btn = document.querySelector('#evtProjectBar button[onclick^="openEvtProjectModal(\'"]');
+  if(btn) btn.insertAdjacentHTML('beforebegin', `<span class="pill" style="background:${budget && total>budget?'var(--rose)':'var(--peach)'};cursor:pointer" onclick="switchPage('evenement','besoins')">🧮 ${eur(total)}${budget?' / '+eur(budget)+' de budget':' prévus'}</span>`);
+};
+ 
+const _nDeleteEvtProject = deleteEvtProject;
+deleteEvtProject = function(){
+  const pid = editingEvtProjId;
+  const ns = data.evtNeeds.filter(n=>n.projectId===pid);
+  _nDeleteEvtProject();
+  if(!data.evtProjects.some(p=>p.id===pid)){
+    const t = data.trash.find(x=>x.kind==='evtproject' && x.item && x.item.project && x.item.project.id===pid);
+    if(t) t.item.needs = ns;
+    data.evtNeeds = data.evtNeeds.filter(n=>n.projectId!==pid);
+    persist(); renderEvtAll();
+  }
+};
+ 
+const _nRestoreTrash = restoreTrash;
+restoreTrash = function(i){
+  const x = data.trash[i]; if(!x) return;
+  if(x.kind==='need'){
+    if(!data.evtNeeds.some(n=>n.id===x.item.id)) data.evtNeeds.push(x.item);
+    data.trash.splice(i,1);
+    persist(); renderAll(); toast('Restauré ✨');
+    return;
+  }
+  const extra = (x.kind==='evtproject' && x.item && x.item.needs) ? x.item.needs : [];
+  _nRestoreTrash(i);
+  if(extra.length){
+    extra.forEach(n=>{ if(!data.evtNeeds.some(o=>o.id===n.id)) data.evtNeeds.push(n); });
+    persist(); renderAll();
+  }
+};
+ 
+const _nMergeData = mergeData;
+mergeData = function(d){
+  let c = _nMergeData(d);
+  (d.evtNeeds||[]).forEach(n=>{ if(!data.evtNeeds.some(x=>x.id===n.id)){ data.evtNeeds.push(n); c++; } });
+  return c;
+};
+
   
 </script>
 <!-- ===================== FIN DU MODULE INVITÉS ===================== -->
