@@ -547,7 +547,7 @@ footer a{ color:var(--ink-soft); }
 /* Enquête de satisfaction — soirée aeconomia du 5 novembre */
 
 /* ▼▼▼ COLLEZ ICI L’ADRESSE GOOGLE APPS SCRIPT (elle se termine par /exec), entre les guillemets ▼▼▼ */
-var ENDPOINT = "";
+var ENDPOINT = "https://script.google.com/macros/s/AKfycbyQYyKxmQ1hsP_yM6TED6dzfSsrsLYvU79u6aWtnDYPDrSogea59Th-MwQRM1Yvnop2/exec";
 /* ▲▲▲ Tant qu’elle est vide, la page fonctionne mais n’enregistre aucune réponse. ▲▲▲ */
 
 var STORAGE_KEY = "aeconomia-enquete-5nov";
