@@ -5,31 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Votre avis sur la soirée du 5 novembre · aeconomia</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#1A1816">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
 <style>
-/* Enquête de satisfaction — soirée aeconomia du 5 novembre
-   L’identité de la soirée (fond encre, tickets papier) reste la même en mode clair et sombre. */
-
+/* =========================================================
+   Enquête de satisfaction · soirée aeconomia du 5 novembre
+   Identité de la soirée : fond encre, tickets papier, vert acide.
+   ========================================================= */
 :root{
-  --ink:#1A1816;
-  --ink-2:#24211E;
-  --paper:#F5F5F5;
-  --text:#1A1816;
-  --soft:#4D4943;
-  --rule:#CFCAC2;
-  --green:#ADE83C;
-  --on-ink:#FFFFFF;
-  --ink-soft:#BCB6AC;
-  --ink-faint:#948E84;
-  --ink-rule:#3D3934;
-  --error:#9B2C1F;
+  --ink:#1A1816; --paper:#F5F5F5; --white:#FFFFFF; --text:#1A1816; --soft:#4D4943;
+  --rule:#D9D4CC; --rule-strong:#B9B3A9; --green:#ADE83C;
+  --on-ink:#FFFFFF; --ink-soft:#BCB6AC; --ink-faint:#948E84; --ink-rule:#3D3934;
   --serif:'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --bar-h:76px;
   color-scheme:dark;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top, 0px);
-  padding-bottom:env(safe-area-inset-bottom, 0px);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){ --ink:#1A1816; --paper:#F5F5F5; --text:#1A1816; }
@@ -37,187 +28,267 @@
 :root[data-theme="dark"]{ --ink:#1A1816; --paper:#F5F5F5; --text:#1A1816; }
 
 *,*::before,*::after{ box-sizing:border-box; }
-html{ background:var(--ink); scroll-padding-top:env(safe-area-inset-top, 0px); }
+html{ background:var(--ink); -webkit-text-size-adjust:100%; }
 body{
   margin:0; background:var(--ink); color:var(--on-ink);
-  font-family:var(--serif); font-variant-numeric:lining-nums;
-  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  font-family:var(--serif); font-size:18px; line-height:1.35;
+  font-variant-numeric:lining-nums; -webkit-font-smoothing:antialiased;
 }
 [hidden]{ display:none !important; }
-.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+button,input,textarea{ font:inherit; color:inherit; }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
-.page{ max-width:620px; margin:0 auto; padding:40px 20px 56px; }
+.page{
+  max-width:640px; margin:0 auto;
+  padding:calc(28px + env(safe-area-inset-top, 0px)) 16px calc(var(--bar-h) + 40px + env(safe-area-inset-bottom, 0px));
+}
+.page.is-done{ padding-bottom:calc(40px + env(safe-area-inset-bottom, 0px)); }
 
 /* ---------- En-tête ---------- */
-.brand{ margin:0; text-align:center; font-size:24px; font-style:italic; font-weight:500; letter-spacing:.3px; }
-.hero{ text-align:center; margin-top:34px; }
-.hero h1{ margin:0; font-size:clamp(44px, 12vw, 64px); line-height:1; font-style:italic; font-weight:500; }
-.lead{ margin:18px auto 0; max-width:420px; font-size:20px; line-height:1.4; color:var(--ink-soft); }
-.meta{ margin:18px 0 0; font-size:16px; font-style:italic; color:var(--green); }
+.brand{ margin:0; text-align:center; font-size:22px; font-style:italic; font-weight:500; }
+.hero{ text-align:center; margin-top:28px; }
+.hero h1{ margin:0; font-size:clamp(40px, 11vw, 60px); line-height:1.02; font-style:italic; font-weight:500; }
+.hero .lead{ margin:14px auto 0; max-width:440px; font-size:19px; line-height:1.4; color:var(--ink-soft); }
+.notice{
+  margin:22px auto 0; max-width:440px; padding:14px 18px;
+  border:1px solid var(--green); border-radius:14px; text-align:left;
+}
+.notice strong{ display:block; font-size:18px; font-weight:600; color:var(--green); }
+.notice span{ display:block; margin-top:2px; font-size:16px; line-height:1.4; color:var(--on-ink); }
 .page:not([data-step="1"]) .hero{ display:none; }
 
 /* ---------- Progression ---------- */
-.progress{ margin:34px 0 0; }
-.page:not([data-step="1"]) .progress{ margin-top:24px; }
-.progress ol{ display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin:0; padding:0; list-style:none; }
-.progress li{
-  position:relative; padding-top:12px; font-size:15px; font-style:italic; color:var(--ink-faint);
-  transition:color .25s;
-}
-.progress li::before{
-  content:""; position:absolute; top:0; left:0; right:0; height:3px; border-radius:3px;
-  background:var(--ink-rule); transition:background .25s;
-}
+.progress{ margin-top:26px; }
+.page:not([data-step="1"]) .progress{ margin-top:18px; }
+.progress ol{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin:0; padding:0; list-style:none; }
+.progress li{ position:relative; padding-top:10px; font-size:14px; font-style:italic; color:var(--ink-faint); line-height:1.2; }
+.progress li::before,.progress li::after{ content:""; position:absolute; inset:0 0 auto 0; height:3px; border-radius:3px; }
+.progress li::before{ background:var(--ink-rule); }
+.progress li::after{ background:var(--ink-soft); transform:scaleX(0); transform-origin:left; transition:transform .5s cubic-bezier(.2,.8,.2,1), background .3s; }
+.progress li{ transition:color .3s; }
 .progress li.is-done{ color:var(--ink-soft); }
-.progress li.is-done::before{ background:var(--ink-soft); }
+.progress li.is-done::after{ transform:scaleX(1); }
 .progress li.is-current{ color:var(--on-ink); }
-.progress li.is-current::before{ background:var(--green); }
+.progress li.is-current::after{ transform:scaleX(1); background:var(--green); }
 
 /* ---------- Ticket ---------- */
-.step,.thanks{ margin-top:22px; }
+.step,.thanks{ margin-top:18px; }
 .ticket{ background:var(--paper); color:var(--text); border-radius:20px; overflow:hidden; }
-.step.is-entering .ticket{ animation:enter .35s ease-out both; }
-@keyframes enter{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
+.step.is-forward .ticket{ animation:in-right .45s cubic-bezier(.2,.8,.2,1) both; }
+.step.is-back .ticket{ animation:in-left .45s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes in-right{ from{ opacity:0; transform:translateX(28px) rotate(.6deg); } to{ opacity:1; transform:none; } }
+@keyframes in-left{ from{ opacity:0; transform:translateX(-28px) rotate(-.6deg); } to{ opacity:1; transform:none; } }
 
-.stub{ display:flex; align-items:center; gap:20px; padding:28px 32px 24px; }
+/* Arrivée sur la page : une seule entrée orchestrée */
+.intro > *{ animation:rise .7s cubic-bezier(.2,.8,.2,1) both; }
+.intro > :nth-child(1){ animation-delay:.05s; }
+.intro > :nth-child(2){ animation-delay:.18s; }
+.intro > :nth-child(3){ animation-delay:.32s; }
+.intro-step .ticket{ animation:rise .8s .45s cubic-bezier(.2,.8,.2,1) both; }
+.intro-progress{ animation:rise .7s .4s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes rise{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+
+/* Réponse à un choix : petit rebond */
+.list input:checked + span,.seg input:checked + span,.nps input:checked + span,.na input:checked + span{ animation:pop .28s ease-out; }
+@keyframes pop{ 0%{ transform:scale(.96); } 60%{ transform:scale(1.025); } 100%{ transform:scale(1); } }
+
+/* Mot d’accueil sous la note globale */
+.react{ min-height:24px; margin:10px 0 0; font-size:17px; font-style:italic; color:var(--soft); }
+.react.show{ animation:rise .4s ease-out both; }
+
+/* Bandeau d’alerte si l’adresse Google n’est pas renseignée */
+.testmode{ margin:14px auto 0; max-width:440px; padding:10px 14px; border:1px dashed var(--ink-soft); border-radius:12px; font-size:15px; line-height:1.35; color:var(--ink-soft); text-align:center; }
+
+.stub{ display:flex; align-items:center; gap:16px; padding:22px 20px 18px; }
 .num{
-  flex:none; width:64px; text-align:center; font-size:60px; line-height:.9;
-  font-style:italic; font-weight:500; color:var(--text);
-  border-right:1px solid var(--rule); padding-right:18px;
+  flex:none; padding-right:16px; border-right:1px solid var(--rule-strong);
+  font-size:50px; line-height:.9; font-style:italic; font-weight:500;
 }
+.stub h2{ margin:0; font-size:30px; line-height:1.05; font-style:italic; font-weight:500; }
 .stub h2:focus{ outline:none; }
-.stub h2{ margin:0; font-size:34px; line-height:1.05; font-style:italic; font-weight:500; }
-.stub p{ margin:4px 0 0; font-size:17px; line-height:1.35; font-style:italic; color:var(--soft); }
+.stub p{ margin:3px 0 0; font-size:16px; line-height:1.35; font-style:italic; color:var(--soft); }
 
-.perf{ display:flex; align-items:center; height:28px; }
-.perf::before,.perf::after{ content:""; flex:none; width:14px; height:28px; background:var(--ink); }
-.perf::before{ border-radius:0 14px 14px 0; }
-.perf::after{ border-radius:14px 0 0 14px; }
-.perf span{ flex:1; margin:0 12px; border-top:2px dashed var(--rule); }
+.perf{ display:flex; align-items:center; height:26px; }
+.perf::before,.perf::after{ content:""; flex:none; width:13px; height:26px; background:var(--ink); }
+.perf::before{ border-radius:0 13px 13px 0; }
+.perf::after{ border-radius:13px 0 0 13px; }
+.perf span{ flex:1; margin:0 10px; border-top:2px dashed var(--rule-strong); }
 
-.body{ padding:6px 32px 30px; }
-.body.center{ text-align:center; padding:42px 32px 44px; }
+.body{ padding:0 20px 8px; }
 
 /* ---------- Questions ---------- */
 fieldset{ border:0; margin:0; padding:0; min-width:0; }
-.q{ margin-top:26px; }
-.q legend,.q .label{ display:block; padding:0; font-size:20px; line-height:1.3; font-weight:600; color:var(--text); }
-.hint{ margin:3px 0 0; font-size:16px; font-style:italic; color:var(--soft); }
-.opt{ font-weight:400; font-style:italic; font-size:16px; color:var(--soft); white-space:nowrap; }
+.q{ padding:22px 0; border-top:1px solid var(--rule); }
+.q:first-child{ border-top:0; padding-top:14px; }
+.q > legend{ float:left; }
+.q > legend + *{ clear:both; }
+.q > legend,.q > .label{ display:block; width:100%; padding:0; margin:0 0 12px; font-size:20px; line-height:1.25; font-weight:600; color:var(--text); }
+.q > legend .hint{ margin:4px 0 0; }
+.hint{ display:block; margin:-8px 0 12px; padding:0; font-weight:400; font-size:15.5px; line-height:1.35; font-style:italic; color:var(--soft); }
 
-input[type=radio],input[type=checkbox]{ position:absolute; opacity:0; width:1px; height:1px; margin:0; }
+input[type=radio],input[type=checkbox]{ position:absolute; opacity:0; width:1px; height:1px; margin:0; pointer-events:none; }
 
-/* Cartes de choix (étape 1) */
-.cards{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-.card span{
-  display:block; height:100%; padding:16px 18px; border:1px solid var(--rule); border-radius:14px;
-  cursor:pointer; background:#FFFFFF; transition:border-color .15s, background .15s, color .15s;
-}
-.card strong{ display:block; font-size:20px; font-weight:600; }
-.card em{ display:block; margin-top:3px; font-size:15px; line-height:1.3; color:var(--soft); }
-.card input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
-.card input:checked + span em{ color:var(--ink-soft); }
-
-/* Échelle 1 à 5 */
-.scale{ display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin-top:12px; }
-.scale span{
-  display:flex; align-items:center; justify-content:center; height:50px;
-  border:1px solid var(--text); border-radius:99px; font-size:22px; font-weight:500; cursor:pointer;
-  transition:background .15s, color .15s;
-}
-.scale input:checked + span{ background:var(--ink); color:var(--on-ink); }
-
-/* Recommandation 0 à 10 */
-.nps{ display:grid; grid-template-columns:repeat(11, 1fr); gap:4px; margin-top:12px; }
-.nps span{
-  display:flex; align-items:center; justify-content:center; height:42px;
-  border:1px solid var(--rule); border-radius:10px; background:#FFFFFF; font-size:18px; cursor:pointer;
+/* Choix en liste : lisible et facile à toucher sur mobile */
+.list{ display:grid; grid-template-columns:1fr; gap:8px; margin:0; }
+.list label{ display:block; }
+.list label > span{
+  display:flex; align-items:center; gap:12px; min-height:52px; height:100%; padding:12px 14px;
+  border:1px solid var(--rule); border-radius:12px; background:var(--white);
+  font-size:18px; font-weight:500; line-height:1.25; cursor:pointer;
   transition:background .15s, color .15s, border-color .15s;
 }
-.nps input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.list label > span::before{
+  content:""; flex:none; width:20px; height:20px; border:1.5px solid var(--rule-strong); background:var(--white);
+  background-position:center; background-repeat:no-repeat; background-size:14px 14px;
+}
+.list input[type=radio] + span::before{ border-radius:50%; }
+.list input[type=checkbox] + span::before{ border-radius:6px; }
+.list input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.list input:checked + span::before{ border-color:var(--green); background-color:var(--green); }
+.list input[type=radio]:checked + span::before{ box-shadow:inset 0 0 0 4px var(--ink); }
+.list input[type=checkbox]:checked + span::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7.2l3 3 6-6.4' fill='none' stroke='%231A1816' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.list input:disabled + span{ opacity:.4; cursor:default; }
+
+/* Choix côte à côte, largeurs égales */
+.seg{ display:grid; gap:6px; margin:0; }
+.seg.c3{ grid-template-columns:repeat(3, 1fr); }
+.seg.c4{ grid-template-columns:repeat(4, 1fr); }
+.seg.c5{ grid-template-columns:repeat(5, 1fr); }
+.seg label{ display:block; min-width:0; }
+.seg span{
+  display:flex; align-items:center; justify-content:center; height:100%; min-height:50px; padding:6px 4px;
+  border:1px solid var(--rule-strong); border-radius:12px; background:var(--white);
+  text-align:center; font-size:17px; font-weight:500; line-height:1.15; cursor:pointer;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.seg.big span{ font-size:22px; }
+.seg input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
 
 .ends{ display:flex; justify-content:space-between; margin-top:6px; font-size:15px; font-style:italic; color:var(--soft); }
 
-/* Notes par moment */
-.moments{ margin-top:12px; border-top:1px solid var(--rule); }
-.moment{ display:grid; grid-template-columns:1fr auto; gap:10px 14px; align-items:center; padding:13px 0; border-bottom:1px solid var(--rule); }
-.moment .name{ font-size:19px; line-height:1.25; }
-.moment small{ display:block; font-size:15px; font-style:italic; color:var(--soft); }
-.mini{ display:flex; gap:5px; flex-wrap:wrap; }
-.mini span{
-  display:flex; align-items:center; justify-content:center; min-width:36px; height:36px; padding:0 2px;
-  border:1px solid var(--rule); border-radius:99px; background:#FFFFFF; font-size:17px; cursor:pointer;
-  transition:background .15s, color .15s, border-color .15s;
+/* Recommandation 0 à 10 */
+.nps{ display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:0; }
+.nps label{ flex:0 0 calc((100% - 5 * 6px) / 6); }
+.nps span{
+  display:flex; align-items:center; justify-content:center; height:46px;
+  border:1px solid var(--rule-strong); border-radius:12px; background:var(--white);
+  font-size:20px; font-weight:500; cursor:pointer; transition:background .15s, color .15s;
 }
-.mini .na span{ padding:0 12px; font-size:14px; font-style:italic; }
-.mini input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.nps input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
 
-/* Pastilles */
-.chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-.chips span{
-  display:inline-block; padding:10px 16px; border:1px solid var(--text); border-radius:99px;
-  font-size:17px; line-height:1.15; cursor:pointer; transition:background .15s, color .15s, opacity .15s;
+/* Notes par moment */
+.moment{ margin-top:16px; }
+.moment:first-child{ margin-top:0; }
+.m-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.m-name{ font-size:18px; font-weight:600; }
+.m-name small{ display:block; font-size:15px; font-weight:400; font-style:italic; color:var(--soft); }
+.na span{
+  display:inline-block; padding:6px 11px; border:1px solid var(--rule-strong); border-radius:99px;
+  font-size:14.5px; font-style:italic; white-space:nowrap; cursor:pointer; background:var(--white);
 }
-.chips input:checked + span{ background:var(--ink); color:var(--on-ink); }
-.chips input:disabled + span{ opacity:.35; cursor:default; }
+.na input:checked + span{ background:var(--ink); border-color:var(--ink); color:var(--on-ink); }
+.moment .seg{ margin-top:8px; }
+.moment .seg span{ min-height:44px; font-size:19px; }
 
 /* Champs texte */
 input[type=text],textarea{
-  display:block; width:100%; margin-top:10px; padding:12px 14px;
-  border:1px solid var(--rule); border-radius:12px; background:#FFFFFF; color:var(--text);
-  font-family:var(--serif); font-size:18px; line-height:1.4;
+  display:block; width:100%; margin:0; padding:12px 14px;
+  border:1px solid var(--rule-strong); border-radius:12px; background:var(--white); color:var(--text);
+  font-size:18px; line-height:1.4;
 }
-textarea{ min-height:100px; resize:vertical; }
-.reveal{ margin-top:4px; }
-.is-invalid input[type=text],.is-invalid .scale span,.is-invalid .card span{ border-color:var(--error); }
+input[type=text]::placeholder,textarea::placeholder{ color:#8A847B; font-style:italic; }
+textarea{ min-height:110px; resize:vertical; }
+.other{ margin-top:8px; }
+.field{ margin-top:14px; }
+.field .flabel{ display:block; margin-bottom:6px; font-size:17px; font-weight:600; }
 
 /* Focus clavier */
 input:focus-visible + span,
 input[type=text]:focus-visible,textarea:focus-visible,
 button:focus-visible,a:focus-visible{ outline:2px solid var(--green); outline-offset:2px; box-shadow:0 0 0 4px var(--ink); }
 
-/* ---------- Navigation ---------- */
-.actions{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 32px 6px; }
+/* ---------- Barre de navigation fixe ---------- */
+.bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:20;
+  background:rgba(26,24,22,.96); border-top:1px solid var(--ink-rule);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
+.bar-in{ max-width:640px; margin:0 auto; display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; }
+.bar .count{ font-size:15px; font-style:italic; color:var(--ink-soft); text-align:center; white-space:nowrap; }
+.bar .prev{ justify-self:start; }
+.bar .next{ justify-self:end; }
 .btn{
-  border:0; border-radius:99px; background:var(--ink); color:var(--on-ink);
-  font-family:var(--serif); font-size:20px; font-weight:600; padding:14px 32px; cursor:pointer;
+  border:0; border-radius:99px; background:var(--green); color:var(--ink);
+  font-size:19px; font-weight:700; padding:13px 24px; cursor:pointer; white-space:nowrap;
 }
 .btn[disabled]{ opacity:.6; cursor:default; }
 .link{
-  border:0; background:none; padding:10px 4px; color:var(--soft); cursor:pointer;
-  font-family:var(--serif); font-size:18px; font-style:italic;
-  text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--rule);
+  border:0; background:none; padding:12px 4px; color:var(--ink-soft); cursor:pointer;
+  font-size:18px; font-style:italic; text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--ink-rule);
 }
-.err{ min-height:24px; margin:0; padding:2px 32px 22px; text-align:right; font-size:16px; font-style:italic; color:var(--error); }
+.link[aria-hidden="true"]{ visibility:hidden; }
+.msg{ max-width:640px; margin:0 auto 8px; font-size:15.5px; font-style:italic; color:var(--green); text-align:center; }
+.msg:empty{ display:none; }
 
 /* ---------- Merci ---------- */
-.sparkle{ margin:0; font-family:Georgia, serif; font-size:20px; color:var(--soft); }
-.thanks h2{ margin:10px 0 0; font-size:52px; line-height:1; font-style:italic; font-weight:500; }
-.thanks p{ margin:16px auto 0; max-width:380px; font-size:19px; line-height:1.45; color:#2E2B27; }
-.thanks .sig{ font-style:italic; color:var(--soft); }
+.thanks{ position:relative; }
+.thanks .ticket{ animation:drop .9s cubic-bezier(.2,.9,.25,1.15) both; }
+@keyframes drop{ 0%{ opacity:0; transform:translateY(-30px) rotate(-2.5deg) scale(.97); } 100%{ opacity:1; transform:none; } }
+.thanks .top{ text-align:center; padding:38px 24px 26px; }
+.thanks .glass{ display:block; width:64px; height:64px; margin:0 auto; }
+.thanks .glass .liquid{ transform-origin:50% 100%; animation:fill 1.4s .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes fill{ from{ transform:scaleY(0); } to{ transform:scaleY(1); } }
+.thanks .glass .olive{ animation:bob 2.6s 1.6s ease-in-out infinite; transform-origin:center; }
+@keyframes bob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+.thanks h2{ margin:14px 0 0; font-size:clamp(42px, 12vw, 56px); line-height:1; font-style:italic; font-weight:500; animation:rise .7s .35s cubic-bezier(.2,.8,.2,1) both; }
+.thanks .lead2{ margin:12px auto 0; max-width:400px; font-size:20px; line-height:1.4; font-style:italic; color:var(--soft); animation:rise .7s .5s both; }
+.thanks .bottom{ padding:22px 24px 36px; text-align:center; }
+.thanks .bottom p{ margin:0 auto; max-width:420px; font-size:19px; line-height:1.5; color:#2E2B27; animation:rise .7s .7s both; }
+.thanks .bottom p + p{ margin-top:12px; animation-delay:.82s; }
+.thanks .soon{ display:block; margin:26px 0 0; font-size:clamp(36px, 10vw, 46px); line-height:1; font-style:italic; font-weight:500; color:var(--text); animation:rise .7s 1s both; }
+.thanks .sig{ margin-top:12px !important; font-style:italic; color:var(--soft) !important; animation:rise .7s 1.1s both !important; }
+.follow{ margin-top:22px; text-align:center; animation:rise .7s 1.3s both; }
+.follow p{ margin:0 0 12px; font-size:17px; font-style:italic; color:var(--ink-soft); }
+.follow .links{ display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+.follow a{ display:inline-block; padding:11px 20px; border:1px solid var(--ink-rule); border-radius:99px; color:var(--on-ink); font-size:17px; font-weight:600; text-decoration:none; transition:border-color .2s, color .2s; }
+.follow a:hover{ border-color:var(--green); color:var(--green); }
 
-/* ---------- Pied de page ---------- */
-footer{ margin-top:48px; text-align:center; font-size:14px; line-height:1.6; color:var(--ink-faint); }
-footer .a{ display:block; margin-bottom:12px; font-size:30px; font-style:italic; font-weight:500; color:var(--on-ink); }
-footer a{ color:var(--ink-soft); }
-
-/* ---------- Mobile ---------- */
-@media (max-width:480px){
-  .page{ padding:32px 14px 48px; }
-  .stub{ padding:24px 20px 20px; gap:16px; }
-  .num{ width:50px; font-size:50px; padding-right:14px; }
-  .stub h2:focus{ outline:none; }
-.stub h2{ font-size:30px; }
-  .body{ padding:4px 20px 26px; }
-  .actions{ padding:12px 20px 4px; }
-  .err{ padding:2px 20px 20px; }
-  .cards{ grid-template-columns:1fr; }
-  .moment{ grid-template-columns:1fr; }
-  .mini span{ min-width:40px; height:40px; }
-  .nps{ grid-template-columns:repeat(6, 1fr); gap:6px; }
-  .progress li{ font-size:14px; }
+/* Étincelles de fin */
+.burst{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:30; }
+.burst i{
+  position:absolute; top:-24px; font-style:normal; font-family:Georgia, serif; line-height:1;
+  animation:fall linear forwards; will-change:transform, opacity;
+}
+@keyframes fall{
+  0%{ transform:translate3d(0,0,0) rotate(0deg); opacity:0; }
+  10%{ opacity:1; }
+  100%{ transform:translate3d(var(--dx), 105vh, 0) rotate(var(--rot)); opacity:0; }
 }
 
+footer{ margin-top:40px; text-align:center; font-size:14px; line-height:1.6; color:var(--ink-faint); }
+footer .a{ display:block; margin-bottom:10px; font-size:28px; font-style:italic; font-weight:500; color:var(--on-ink); }
+footer a{ color:var(--ink-soft); }
+
+/* ---------- Écrans plus larges ---------- */
+@media (min-width:560px){
+  .page{ padding-left:24px; padding-right:24px; }
+  .stub{ padding:28px 32px 22px; gap:20px; }
+  .num{ font-size:60px; }
+  .stub h2{ font-size:34px; }
+  .body{ padding:0 32px 12px; }
+  .list.two{ grid-template-columns:1fr 1fr; }
+  .nps{ flex-wrap:nowrap; gap:5px; }
+  .nps label{ flex:1 1 0; }
+  .nps span{ height:48px; }
+}
+@media (max-width:360px){
+  .seg.c4 span,.seg.c3 span{ font-size:15.5px; }
+  .btn{ padding:12px 18px; font-size:18px; }
+  .bar .count{ font-size:14px; }
+}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{ transition:none !important; animation:none !important; }
 }
@@ -226,102 +297,91 @@ footer a{ color:var(--ink-soft); }
 <body>
 <div class="page" id="app" data-step="1">
 
-  <header class="top">
+  <header>
     <p class="brand">/aeconomia.</p>
-    <div class="hero">
+    <div class="hero intro">
       <h1>Merci d’être venus.</h1>
       <p class="lead">Quelques réponses rapides pour que la prochaine soirée vous ressemble encore plus.</p>
-      <p class="meta">Environ deux minutes, en quatre étapes</p>
+      <p class="notice">
+        <strong>Tout est facultatif.</strong>
+        <span>Répondez seulement aux questions qui vous parlent et passez les autres. Environ deux minutes.</span>
+      </p>
+      <p class="testmode" id="testmode" hidden>Mode test : l’adresse Google n’est pas encore renseignée, les réponses ne sont pas enregistrées.</p>
     </div>
   </header>
 
-  <nav class="progress" aria-label="Progression">
+  <nav class="progress intro-progress" aria-label="Progression">
     <ol>
       <li data-i="1">Vous</li>
       <li data-i="2">La soirée</li>
       <li data-i="3">La prochaine</li>
-      <li data-i="4">La suite</li>
+      <li data-i="4">Pour finir</li>
     </ol>
   </nav>
 
   <form id="survey" novalidate>
 
-    <!-- ÉTAPE 1 : VOUS -->
-    <section class="step" data-step="1" aria-labelledby="t1">
+    <!-- ========== ÉTAPE 1 · VOUS ========== -->
+    <section class="step intro-step" data-step="1" aria-labelledby="t1">
       <div class="ticket">
         <div class="stub">
           <span class="num" aria-hidden="true">1</span>
-          <div>
-            <h2 id="t1">Vous</h2>
-            <p>Avec votre nom ou en toute discrétion, c’est vous qui choisissez.</p>
-          </div>
+          <div><h2 id="t1">Vous</h2><p>Avec votre nom ou en toute discrétion.</p></div>
         </div>
         <div class="perf" aria-hidden="true"><span></span></div>
         <div class="body">
 
-          <fieldset class="q" id="q-mode">
+          <fieldset class="q">
             <legend>Comment souhaitez-vous répondre&#8239;?</legend>
-            <div class="cards">
-              <label class="card">
-                <input type="radio" name="mode" value="Nominatif">
-                <span><strong>Avec mon nom</strong><em>Pour que l’on puisse revenir vers vous</em></span>
-              </label>
-              <label class="card">
-                <input type="radio" name="mode" value="Anonyme">
-                <span><strong>Anonymement</strong><em>Seules vos réponses nous parviennent</em></span>
-              </label>
+            <div class="list two">
+              <label><input type="radio" name="mode" value="Nominatif"><span>Avec mon nom</span></label>
+              <label><input type="radio" name="mode" value="Anonyme"><span>Anonymement</span></label>
+            </div>
+            <div id="ident" hidden>
+              <div class="field">
+                <label class="flabel" for="nom">Prénom et nom</label>
+                <input type="text" id="nom" name="nom" maxlength="120" autocomplete="name">
+              </div>
+              <div class="field">
+                <label class="flabel" for="structure">Agence ou cabinet</label>
+                <input type="text" id="structure" name="structure" maxlength="120" autocomplete="organization">
+              </div>
             </div>
           </fieldset>
-
-          <div class="reveal" id="ident" hidden>
-            <div class="q">
-              <label class="label" for="nom">Prénom et nom</label>
-              <input type="text" id="nom" name="nom" maxlength="120" autocomplete="name">
-            </div>
-            <div class="q">
-              <label class="label" for="structure">Agence ou cabinet <span class="opt">facultatif</span></label>
-              <input type="text" id="structure" name="structure" maxlength="120" autocomplete="organization">
-            </div>
-          </div>
 
           <fieldset class="q">
-            <legend>Votre activité <span class="opt">facultatif</span></legend>
-            <div class="chips">
+            <legend>Votre activité</legend>
+            <div class="list two">
               <label><input type="radio" name="activite" value="Agent immobilier"><span>Agent immobilier</span></label>
               <label><input type="radio" name="activite" value="Notaire"><span>Notaire</span></label>
-              <label><input type="radio" name="activite" value="CGP"><span>Conseiller en patrimoine</span></label>
-              <label><input type="radio" name="activite" value="Promoteur / constructeur"><span>Promoteur ou constructeur</span></label>
+              <label><input type="radio" name="activite" value="Conseiller en patrimoine"><span>Conseiller en patrimoine</span></label>
+              <label><input type="radio" name="activite" value="Promoteur ou constructeur"><span>Promoteur ou constructeur</span></label>
               <label><input type="radio" name="activite" value="Expert-comptable"><span>Expert-comptable</span></label>
-              <label><input type="radio" name="activite" value="Autre"><span>Autre</span></label>
+              <label><input type="radio" name="activite" value="Autre" data-other="activite_autre"><span>Autre</span></label>
+            </div>
+            <div class="other" hidden>
+              <label class="sr" for="activite_autre">Votre activité</label>
+              <input type="text" id="activite_autre" name="activite_autre" maxlength="120" placeholder="Votre activité">
             </div>
           </fieldset>
 
         </div>
-        <div class="perf" aria-hidden="true"><span></span></div>
-        <div class="actions">
-          <span></span>
-          <button type="button" class="btn" data-next>Continuer</button>
-        </div>
-        <p class="err" role="alert"></p>
       </div>
     </section>
 
-    <!-- ÉTAPE 2 : LA SOIRÉE -->
+    <!-- ========== ÉTAPE 2 · LA SOIRÉE ========== -->
     <section class="step" data-step="2" aria-labelledby="t2" hidden>
       <div class="ticket">
         <div class="stub">
           <span class="num" aria-hidden="true">2</span>
-          <div>
-            <h2 id="t2">La soirée</h2>
-            <p>Jeudi 5&nbsp;novembre, Empreinte Hôtel.</p>
-          </div>
+          <div><h2 id="t2">La soirée</h2><p>Jeudi 5&nbsp;novembre, Empreinte Hôtel.</p></div>
         </div>
         <div class="perf" aria-hidden="true"><span></span></div>
         <div class="body">
 
-          <fieldset class="q" id="q-globale">
-            <legend>Dans l’ensemble, comment avez-vous trouvé la soirée&#8239;?</legend>
-            <div class="scale">
+          <fieldset class="q">
+            <legend>Dans l’ensemble, la soirée était…</legend>
+            <div class="seg c5 big">
               <label><input type="radio" name="note_globale" value="1"><span>1</span></label>
               <label><input type="radio" name="note_globale" value="2"><span>2</span></label>
               <label><input type="radio" name="note_globale" value="3"><span>3</span></label>
@@ -329,38 +389,18 @@ footer a{ color:var(--ink-soft); }
               <label><input type="radio" name="note_globale" value="5"><span>5</span></label>
             </div>
             <div class="ends" aria-hidden="true"><span>Décevante</span><span>Excellente</span></div>
+            <p class="react" id="react" aria-live="polite"></p>
           </fieldset>
 
           <div class="q">
             <span class="label">Et dans le détail&#8239;?</span>
-            <p class="hint">De 1 à 5. Passez ce que vous n’avez pas vécu.</p>
-            <div class="moments">
-              <div class="moment" role="radiogroup" aria-label="L’accueil">
-                <div class="name">L’accueil<small>arrivée, informations pratiques</small></div>
-                <div class="mini" data-name="note_accueil"></div>
-              </div>
-              <div class="moment" role="radiogroup" aria-label="L’atelier mixologie">
-                <div class="name">L’atelier mixologie</div>
-                <div class="mini" data-name="note_atelier" data-na="Pas participé"></div>
-              </div>
-              <div class="moment" role="radiogroup" aria-label="Le buffet">
-                <div class="name">Le buffet</div>
-                <div class="mini" data-name="note_buffet"></div>
-              </div>
-              <div class="moment" role="radiogroup" aria-label="Le lieu et l’ambiance">
-                <div class="name">Le lieu et l’ambiance</div>
-                <div class="mini" data-name="note_lieu"></div>
-              </div>
-              <div class="moment" role="radiogroup" aria-label="Les rencontres">
-                <div class="name">Les rencontres<small>avec l’équipe et les autres invités</small></div>
-                <div class="mini" data-name="note_rencontres"></div>
-              </div>
-            </div>
+            <span class="hint">1 = décevant, 5 = excellent.</span>
+            <div id="moments"></div>
           </div>
 
           <fieldset class="q">
             <legend>La durée, de 19h à 23h, était…</legend>
-            <div class="chips">
+            <div class="seg c3">
               <label><input type="radio" name="duree" value="Trop courte"><span>Trop courte</span></label>
               <label><input type="radio" name="duree" value="Juste bien"><span>Juste bien</span></label>
               <label><input type="radio" name="duree" value="Trop longue"><span>Trop longue</span></label>
@@ -368,49 +408,40 @@ footer a{ color:var(--ink-soft); }
           </fieldset>
 
         </div>
-        <div class="perf" aria-hidden="true"><span></span></div>
-        <div class="actions">
-          <button type="button" class="link" data-prev>Retour</button>
-          <button type="button" class="btn" data-next>Continuer</button>
-        </div>
-        <p class="err" role="alert"></p>
       </div>
     </section>
 
-    <!-- ÉTAPE 3 : LA PROCHAINE -->
+    <!-- ========== ÉTAPE 3 · LA PROCHAINE ========== -->
     <section class="step" data-step="3" aria-labelledby="t3" hidden>
       <div class="ticket">
         <div class="stub">
           <span class="num" aria-hidden="true">3</span>
-          <div>
-            <h2 id="t3">La prochaine</h2>
-            <p>Aidez-nous à choisir le bon moment et le bon format.</p>
-          </div>
+          <div><h2 id="t3">La prochaine</h2><p>Le bon rythme, le bon moment, le bon format.</p></div>
         </div>
         <div class="perf" aria-hidden="true"><span></span></div>
         <div class="body">
 
           <fieldset class="q">
             <legend>À quel rythme aimeriez-vous nous retrouver&#8239;?</legend>
-            <div class="chips">
-              <label><input type="radio" name="frequence" value="1 fois par an"><span>Une fois par an</span></label>
-              <label><input type="radio" name="frequence" value="2 fois par an"><span>Deux fois par an</span></label>
+            <div class="seg c3">
+              <label><input type="radio" name="frequence" value="1 fois par an"><span>1 fois par an</span></label>
+              <label><input type="radio" name="frequence" value="2 fois par an"><span>2 fois par an</span></label>
               <label><input type="radio" name="frequence" value="Chaque trimestre"><span>Chaque trimestre</span></label>
             </div>
           </fieldset>
 
           <fieldset class="q">
             <legend>Le moment idéal pour vous</legend>
-            <div class="chips">
-              <label><input type="radio" name="moment" value="Déjeuner"><span>Un déjeuner</span></label>
-              <label><input type="radio" name="moment" value="Afterwork 18h-20h"><span>Un afterwork, 18h–20h</span></label>
-              <label><input type="radio" name="moment" value="Soirée 19h-23h"><span>Une soirée, 19h–23h</span></label>
+            <div class="seg c3">
+              <label><input type="radio" name="moment" value="Déjeuner"><span>Déjeuner</span></label>
+              <label><input type="radio" name="moment" value="Afterwork 18h-20h"><span>Afterwork<br>18h–20h</span></label>
+              <label><input type="radio" name="moment" value="Soirée 19h-23h"><span>Soirée<br>19h–23h</span></label>
             </div>
           </fieldset>
 
           <fieldset class="q">
-            <legend>Les jours qui vous arrangent <span class="opt">plusieurs choix</span></legend>
-            <div class="chips">
+            <legend>Les jours qui vous arrangent<span class="hint">Plusieurs choix possibles.</span></legend>
+            <div class="seg c4">
               <label><input type="checkbox" name="jours" value="Mardi"><span>Mardi</span></label>
               <label><input type="checkbox" name="jours" value="Mercredi"><span>Mercredi</span></label>
               <label><input type="checkbox" name="jours" value="Jeudi"><span>Jeudi</span></label>
@@ -419,57 +450,67 @@ footer a{ color:var(--ink-soft); }
           </fieldset>
 
           <fieldset class="q">
-            <legend>Les formats qui vous tenteraient <span class="opt">plusieurs choix</span></legend>
-            <div class="chips">
+            <legend>Les formats qui vous tenteraient<span class="hint">Plusieurs choix possibles.</span></legend>
+            <div class="list two">
               <label><input type="checkbox" name="format" value="Soirée cocktail"><span>Une soirée comme celle-ci</span></label>
-              <label><input type="checkbox" name="format" value="Dégustation"><span>Une dégustation, vin ou chocolat</span></label>
-              <label><input type="checkbox" name="format" value="Activité sportive"><span>Golf, padel…</span></label>
+              <label><input type="checkbox" name="format" value="Dégustation"><span>Une dégustation</span></label>
+              <label><input type="checkbox" name="format" value="Activité sportive"><span>Une activité sportive</span></label>
               <label><input type="checkbox" name="format" value="Atelier culinaire"><span>Un atelier culinaire</span></label>
-              <label><input type="checkbox" name="format" value="Conférence + cocktail"><span>Une conférence suivie d’un cocktail</span></label>
+              <label><input type="checkbox" name="format" value="Conférence + cocktail"><span>Une conférence et un cocktail</span></label>
+              <label><input type="checkbox" name="format" value="Autre" data-other="format_autre"><span>Une autre idée</span></label>
             </div>
-          </fieldset>
-
-          <fieldset class="q">
-            <legend>Le cadeau avec lequel vous aimeriez repartir <span class="opt">deux choix maximum</span></legend>
-            <div class="chips" data-max="2" id="goodies">
-              <label><input type="checkbox" name="goodies" value="Carnet et stylo"><span>Un beau carnet et son stylo</span></label>
-              <label><input type="checkbox" name="goodies" value="Gourde ou mug isotherme"><span>Une gourde ou un mug isotherme</span></label>
-              <label><input type="checkbox" name="goodies" value="Batterie nomade"><span>Une batterie nomade</span></label>
-              <label><input type="checkbox" name="goodies" value="Tote bag"><span>Un tote bag</span></label>
-              <label><input type="checkbox" name="goodies" value="Coffret gourmand"><span>Un coffret gourmand</span></label>
-              <label><input type="checkbox" name="goodies" value="Bouteille de vin"><span>Une bouteille de vin</span></label>
-              <label><input type="checkbox" name="goodies" value="Bougie ou plante"><span>Une bougie ou une plante</span></label>
-              <label><input type="checkbox" name="goodies" value="Autre" data-other><span>Autre idée</span></label>
-              <label><input type="checkbox" name="goodies" value="Aucun" data-none><span>Pas de cadeau, merci</span></label>
-            </div>
-            <div class="reveal" id="goodies-other" hidden>
-              <label class="sr" for="goodies_autre">Votre idée de cadeau</label>
-              <input type="text" id="goodies_autre" name="goodies_autre" maxlength="120" placeholder="Votre idée">
+            <div class="other" hidden>
+              <label class="sr" for="format_autre">Votre idée de format</label>
+              <input type="text" id="format_autre" name="format_autre" maxlength="200" placeholder="Votre idée">
             </div>
           </fieldset>
 
         </div>
-        <div class="perf" aria-hidden="true"><span></span></div>
-        <div class="actions">
-          <button type="button" class="link" data-prev>Retour</button>
-          <button type="button" class="btn" data-next>Continuer</button>
-        </div>
-        <p class="err" role="alert"></p>
       </div>
     </section>
 
-    <!-- ÉTAPE 4 : LA SUITE -->
+    <!-- ========== ÉTAPE 4 · POUR FINIR ========== -->
     <section class="step" data-step="4" aria-labelledby="t4" hidden>
       <div class="ticket">
         <div class="stub">
           <span class="num" aria-hidden="true">4</span>
-          <div>
-            <h2 id="t4">La suite</h2>
-            <p>Ce qui compte pour notre collaboration.</p>
-          </div>
+          <div><h2 id="t4">Pour finir</h2><p>Ce qui vous ferait plaisir, et votre mot de la fin.</p></div>
         </div>
         <div class="perf" aria-hidden="true"><span></span></div>
         <div class="body">
+
+          <fieldset class="q">
+            <legend>Un cadeau qui vous ferait plaisir<span class="hint">Gourmandises et petites attentions. Deux choix maximum.</span></legend>
+            <div class="list two" data-max="2">
+              <label><input type="checkbox" name="cadeau" value="Chocolats"><span>Des chocolats</span></label>
+              <label><input type="checkbox" name="cadeau" value="Douceurs sucrées"><span>Des douceurs sucrées</span></label>
+              <label><input type="checkbox" name="cadeau" value="Vin ou champagne"><span>Une bouteille de vin ou de champagne</span></label>
+              <label><input type="checkbox" name="cadeau" value="Épicerie fine"><span>Un coffret d’épicerie fine</span></label>
+              <label><input type="checkbox" name="cadeau" value="Bougie ou plante"><span>Une bougie ou une plante</span></label>
+              <label><input type="checkbox" name="cadeau" value="Autre" data-other="cadeau_autre"><span>Une autre idée</span></label>
+            </div>
+            <div class="other" hidden>
+              <label class="sr" for="cadeau_autre">Votre idée de cadeau</label>
+              <input type="text" id="cadeau_autre" name="cadeau_autre" maxlength="200" placeholder="Votre idée de cadeau">
+            </div>
+          </fieldset>
+
+          <fieldset class="q">
+            <legend>Et côté goodies aux couleurs d’aeconomia&#8239;?<span class="hint">Objets du quotidien. Deux choix maximum.</span></legend>
+            <div class="list two" data-max="2">
+              <label><input type="checkbox" name="goodies" value="Carnet et stylo"><span>Un carnet et son stylo</span></label>
+              <label><input type="checkbox" name="goodies" value="Gourde ou mug isotherme"><span>Une gourde ou un mug isotherme</span></label>
+              <label><input type="checkbox" name="goodies" value="Tote bag"><span>Un tote bag</span></label>
+              <label><input type="checkbox" name="goodies" value="Batterie nomade"><span>Une batterie nomade</span></label>
+              <label><input type="checkbox" name="goodies" value="Parapluie"><span>Un parapluie</span></label>
+              <label><input type="checkbox" name="goodies" value="Autre" data-other="goodies_autre"><span>Une autre idée</span></label>
+              <label><input type="checkbox" name="goodies" value="Pas de goodies" data-none><span>Pas de goodies, merci</span></label>
+            </div>
+            <div class="other" hidden>
+              <label class="sr" for="goodies_autre">Votre idée de goodies</label>
+              <input type="text" id="goodies_autre" name="goodies_autre" maxlength="200" placeholder="Votre idée de goodies">
+            </div>
+          </fieldset>
 
           <fieldset class="q">
             <legend>Recommanderiez-vous nos soirées à un confrère&#8239;?</legend>
@@ -486,53 +527,55 @@ footer a{ color:var(--ink-soft); }
               <label><input type="radio" name="recommandation" value="9"><span>9</span></label>
               <label><input type="radio" name="recommandation" value="10"><span>10</span></label>
             </div>
-            <div class="ends" aria-hidden="true"><span>Pas du tout</span><span>Sans hésiter</span></div>
+            <div class="ends" aria-hidden="true"><span>0 = pas du tout</span><span>10 = sans hésiter</span></div>
           </fieldset>
 
           <fieldset class="q">
-            <legend>Après cette soirée, vous sentez-vous plus proche de l’équipe aeconomia&#8239;?</legend>
-            <div class="chips">
+            <legend>Vous sentez-vous plus proche de l’équipe aeconomia&#8239;?</legend>
+            <div class="seg c3">
               <label><input type="radio" name="proximite" value="Oui, vraiment"><span>Oui, vraiment</span></label>
               <label><input type="radio" name="proximite" value="Un peu"><span>Un peu</span></label>
               <label><input type="radio" name="proximite" value="Pas vraiment"><span>Pas vraiment</span></label>
             </div>
           </fieldset>
 
-          <fieldset class="q">
-            <legend>Les sujets qu’on pourrait aborder en quelques minutes la prochaine fois <span class="opt">plusieurs choix</span></legend>
-            <div class="chips">
-              <label><input type="checkbox" name="sujets" value="Taux et marché"><span>Les taux et le marché</span></label>
-              <label><input type="checkbox" name="sujets" value="Critères des banques"><span>Ce que les banques financent aujourd’hui</span></label>
-              <label><input type="checkbox" name="sujets" value="Suivi des dossiers"><span>Le suivi des dossiers que vous nous confiez</span></label>
-              <label><input type="checkbox" name="sujets" value="Rémunération apporteurs"><span>La rémunération des apporteurs</span></label>
-              <label><input type="checkbox" name="sujets" value="Réglementation"><span>Les nouveautés réglementaires</span></label>
-              <label><input type="checkbox" name="sujets" value="Aucun sujet"><span>Rien, juste un bon moment</span></label>
-            </div>
-          </fieldset>
-
           <div class="q">
-            <label class="label" for="commentaire">Un mot, une idée, une remarque&#8239;? <span class="opt">facultatif</span></label>
+            <label class="label" for="commentaire">Un mot, une idée, une remarque&#8239;?</label>
             <textarea id="commentaire" name="commentaire" maxlength="1500" placeholder="Ce qui vous a plu, ce que l’on peut améliorer…"></textarea>
           </div>
 
         </div>
-        <div class="perf" aria-hidden="true"><span></span></div>
-        <div class="actions">
-          <button type="button" class="link" data-prev>Retour</button>
-          <button type="submit" class="btn" id="submit">Envoyer mon avis</button>
-        </div>
-        <p class="err" role="alert"></p>
       </div>
     </section>
   </form>
 
   <section class="thanks" id="thanks" hidden aria-live="polite">
     <div class="ticket">
-      <div class="body center">
-        <p class="sparkle" aria-hidden="true">&#10022;</p>
+      <div class="top">
+        <svg class="glass" viewBox="0 0 64 64" aria-hidden="true">
+          <defs><clipPath id="cup"><path d="M12 14h40L32 36z"/></clipPath></defs>
+          <g clip-path="url(#cup)"><rect class="liquid" x="10" y="14" width="44" height="24" fill="#ADE83C"/></g>
+          <path d="M12 14h40L32 36z" fill="none" stroke="#1A1816" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M32 36v16M22 54h20" fill="none" stroke="#1A1816" stroke-width="2.2" stroke-linecap="round"/>
+          <g class="olive"><circle cx="40" cy="18" r="3.6" fill="#1A1816"/><path d="M40 18l9-12" stroke="#1A1816" stroke-width="1.6" stroke-linecap="round"/></g>
+        </svg>
         <h2 id="thanks-title">Merci&#8239;!</h2>
-        <p>Votre avis nous est bien parvenu. Nous le lirons avec attention en préparant la prochaine soirée.</p>
-        <p class="sig">L’équipe aeconomia</p>
+        <p class="lead2">Du fond du cœur, merci.</p>
+      </div>
+      <div class="perf" aria-hidden="true"><span></span></div>
+      <div class="bottom">
+        <p>Merci d’avoir pris le temps de nous répondre, et surtout merci d’être venus jeudi soir. Votre présence a fait de cette première soirée un vrai moment de partage.</p>
+        <p>Chacune de vos réponses va nous aider à imaginer la prochaine, encore plus à votre image.</p>
+        <span class="soon">À très vite&#8239;!</span>
+        <p class="sig">Valentine et toute l’équipe aeconomia</p>
+      </div>
+    </div>
+    <div class="follow">
+      <p>En attendant la prochaine, restons en contact</p>
+      <div class="links">
+        <a href="https://www.instagram.com/aeconomia.courtage" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.linkedin.com/company/aeconomia" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="https://aeconomia.fr/" target="_blank" rel="noopener">aeconomia.fr</a>
       </div>
     </div>
   </section>
@@ -543,194 +586,258 @@ footer a{ color:var(--ink-soft); }
     Une question&#8239;: <a href="mailto:valentine@aeconomia.fr">valentine@aeconomia.fr</a>
   </footer>
 </div>
-<script>
-/* Enquête de satisfaction — soirée aeconomia du 5 novembre */
 
+<div class="bar" id="bar">
+  <p class="msg" id="msg" role="status"></p>
+  <div class="bar-in">
+    <button type="button" class="link prev" id="prev" aria-hidden="true" tabindex="-1">Retour</button>
+    <span class="count" id="count">Étape 1 sur 4</span>
+    <button type="button" class="btn next" id="next">Continuer</button>
+  </div>
+</div>
+
+<script>
 /* ▼▼▼ COLLEZ ICI L’ADRESSE GOOGLE APPS SCRIPT (elle se termine par /exec), entre les guillemets ▼▼▼ */
-var ENDPOINT = "https://script.google.com/macros/s/AKfycbyQYyKxmQ1hsP_yM6TED6dzfSsrsLYvU79u6aWtnDYPDrSogea59Th-MwQRM1Yvnop2/exec";
+var ENDPOINT = "";
 /* ▲▲▲ Tant qu’elle est vide, la page fonctionne mais n’enregistre aucune réponse. ▲▲▲ */
 
-var STORAGE_KEY = "aeconomia-enquete-5nov";
-var TOTAL = 4;
+(function () {
+  var STORAGE_KEY = "aeconomia-enquete-5nov-v2";
+  var TOTAL = 4;
+  var app = document.getElementById("app");
+  var form = document.getElementById("survey");
+  var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
+  var prevBtn = document.getElementById("prev");
+  var nextBtn = document.getElementById("next");
+  var count = document.getElementById("count");
+  var msg = document.getElementById("msg");
+  var current = 1;
 
-var app = document.getElementById("app");
-var form = document.getElementById("survey");
-var steps = Array.prototype.slice.call(document.querySelectorAll(".step"));
-var current = 1;
+  if (!ENDPOINT) document.getElementById("testmode").hidden = false;
 
-/* ----- Notes par moment : boutons 1 à 5 générés ----- */
-document.querySelectorAll(".mini").forEach(function (box) {
-  var name = box.getAttribute("data-name");
-  for (var i = 1; i <= 5; i++) box.appendChild(option(name, String(i), String(i), i + " sur 5"));
-  var na = box.getAttribute("data-na");
-  if (na) {
-    var l = option(name, na, na.toLowerCase(), na);
-    l.className = "na";
-    box.appendChild(l);
-  }
-});
-function option(name, value, text, aria) {
-  var label = document.createElement("label");
-  var input = document.createElement("input");
-  input.type = "radio"; input.name = name; input.value = value;
-  input.setAttribute("aria-label", aria);
-  var span = document.createElement("span");
-  span.textContent = text;
-  label.appendChild(input); label.appendChild(span);
-  return label;
-}
-
-/* ----- Nom ou anonyme ----- */
-var ident = document.getElementById("ident");
-form.querySelectorAll('input[name="mode"]').forEach(function (r) {
-  r.addEventListener("change", function () {
-    var named = r.value === "Nominatif" && r.checked;
-    ident.hidden = !named;
-    if (named) document.getElementById("nom").focus();
-    clearError(1);
-  });
-});
-
-/* ----- Goodies : deux choix maximum, « Pas de cadeau » exclusif, « Autre » ouvre un champ ----- */
-var goodies = document.getElementById("goodies");
-var goodiesOther = document.getElementById("goodies-other");
-goodies.addEventListener("change", function (e) {
-  var boxes = goodies.querySelectorAll("input");
-  var none = goodies.querySelector("[data-none]");
-  if (e.target === none && none.checked) {
-    boxes.forEach(function (b) { if (b !== none) b.checked = false; });
-  } else if (e.target !== none && e.target.checked) {
-    none.checked = false;
-  }
-  var max = parseInt(goodies.getAttribute("data-max"), 10);
-  var count = goodies.querySelectorAll("input:checked:not([data-none])").length;
-  boxes.forEach(function (b) {
-    if (b.hasAttribute("data-none")) return;
-    b.disabled = !b.checked && count >= max;
-  });
-  var other = goodies.querySelector("[data-other]");
-  goodiesOther.hidden = !other.checked;
-  if (other.checked && e.target === other) document.getElementById("goodies_autre").focus();
-});
-
-/* ----- Navigation entre les étapes ----- */
-form.addEventListener("click", function (e) {
-  if (e.target.hasAttribute("data-next")) {
-    if (validate(current)) show(current + 1);
-  } else if (e.target.hasAttribute("data-prev")) {
-    show(current - 1);
-  }
-});
-
-function show(n, initial) {
-  current = Math.max(1, Math.min(TOTAL, n));
-  steps.forEach(function (s) {
-    var on = Number(s.getAttribute("data-step")) === current;
-    s.hidden = !on;
-    s.classList.toggle("is-entering", on);
-  });
-  app.setAttribute("data-step", String(current));
-  document.querySelectorAll(".progress li").forEach(function (li) {
-    var i = Number(li.getAttribute("data-i"));
-    li.classList.toggle("is-done", i < current);
-    li.classList.toggle("is-current", i === current);
-    if (i === current) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
-  });
-  if (initial) return;
-  window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" });
-  var title = steps[current - 1].querySelector("h2");
-  if (title) { title.setAttribute("tabindex", "-1"); title.focus({ preventScroll: true }); }
-}
-
-/* ----- Vérifications ----- */
-function validate(n) {
-  clearError(n);
-  if (n === 1) {
-    var mode = form.querySelector('input[name="mode"]:checked');
-    if (!mode) return fail(1, "Choisissez de répondre avec votre nom ou anonymement.", "q-mode");
-    if (mode.value === "Nominatif" && !document.getElementById("nom").value.trim()) {
-      return fail(1, "Indiquez votre prénom et votre nom, ou choisissez de répondre anonymement.", "ident");
-    }
-  }
-  if (n === 2 && !form.querySelector('input[name="note_globale"]:checked')) {
-    return fail(2, "Donnez une note globale à la soirée pour continuer.", "q-globale");
-  }
-  return true;
-}
-function fail(n, message, id) {
-  var step = steps[n - 1];
-  step.querySelector(".err").textContent = message;
-  var el = document.getElementById(id);
-  if (el) {
-    el.classList.add("is-invalid");
-    el.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
-  }
-  return false;
-}
-function clearError(n) {
-  var step = steps[n - 1];
-  step.querySelector(".err").textContent = "";
-  step.querySelectorAll(".is-invalid").forEach(function (el) { el.classList.remove("is-invalid"); });
-}
-form.addEventListener("change", function () { clearError(current); });
-
-/* ----- Envoi ----- */
-form.addEventListener("submit", function (e) {
-  e.preventDefault();
-  if (!validate(1)) return show(1);
-  if (!validate(2)) return show(2);
-
-  var data = { date: new Date().toISOString() };
-  new FormData(form).forEach(function (value, key) {
-    value = String(value).trim();
-    if (!value) return;
-    data[key] = data[key] ? data[key] + ", " + value : value;
-  });
-  if (data.mode === "Anonyme") { delete data.nom; delete data.structure; }
-  if (!/Autre/.test(data.goodies || "")) delete data.goodies_autre;
-
-  var btn = document.getElementById("submit");
-  var err = steps[TOTAL - 1].querySelector(".err");
-
-  if (!ENDPOINT) { finish(data); return; }
-
-  btn.disabled = true;
-  btn.textContent = "Envoi en cours…";
-  fetch(ENDPOINT, { method: "POST", mode: "no-cors", body: new URLSearchParams(data) })
-    .then(function () { finish(data); })
-    .catch(function () {
-      btn.disabled = false;
-      btn.textContent = "Envoyer mon avis";
-      err.textContent = "L’envoi n’a pas abouti. Vérifiez votre connexion puis réessayez.";
+  /* ----- Petit mot selon la note globale ----- */
+  var REACT = {
+    "1": "Merci pour votre franchise. Dites-nous ce qui a manqué, juste après.",
+    "2": "Merci, on prend note. Vos remarques nous aideront à faire mieux.",
+    "3": "Merci ! Dites-nous ce qui ferait passer la prochaine à 5.",
+    "4": "Ravis que la soirée vous ait plu !",
+    "5": "Ça nous touche beaucoup, merci !"
+  };
+  var react = document.getElementById("react");
+  form.querySelectorAll('input[name="note_globale"]').forEach(function (r) {
+    r.addEventListener("change", function () {
+      react.textContent = REACT[r.value] || "";
+      react.classList.remove("show"); void react.offsetWidth; react.classList.add("show");
     });
-});
+  });
 
-function finish(data) {
-  var first = data.nom ? data.nom.split(/\s+/)[0] : "";
-  try { localStorage.setItem(STORAGE_KEY, first || "1"); } catch (e) {}
-  showThanks(first);
-}
-function showThanks(first) {
-  form.hidden = true;
-  document.querySelector(".progress").hidden = true;
-  app.setAttribute("data-step", "done");
-  document.getElementById("thanks-title").textContent = first ? "Merci " + first + "\u202F!" : "Merci\u202F!";
-  document.getElementById("thanks").hidden = false;
-  window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" });
-}
+  /* ----- Notes par moment ----- */
+  var MOMENTS = [
+    ["note_accueil", "L’accueil", "arrivée, informations pratiques", false],
+    ["note_atelier", "L’atelier mixologie", "", true],
+    ["note_buffet", "Le buffet", "", false],
+    ["note_lieu", "Le lieu et l’ambiance", "", false],
+    ["note_rencontres", "Les rencontres", "avec l’équipe et les autres invités", false]
+  ];
+  var box = document.getElementById("moments");
+  MOMENTS.forEach(function (m) {
+    var wrap = document.createElement("div");
+    wrap.className = "moment";
+    wrap.setAttribute("role", "radiogroup");
+    wrap.setAttribute("aria-label", m[1]);
+    var head = document.createElement("div");
+    head.className = "m-head";
+    var name = document.createElement("span");
+    name.className = "m-name";
+    name.textContent = m[1];
+    if (m[2]) { var s = document.createElement("small"); s.textContent = m[2]; name.appendChild(s); }
+    head.appendChild(name);
+    if (m[3]) {
+      var na = radio(m[0], "Pas participé", "Pas participé", "Je n’y ai pas participé");
+      na.className = "na";
+      head.appendChild(na);
+    }
+    var seg = document.createElement("div");
+    seg.className = "seg c5";
+    for (var i = 1; i <= 5; i++) seg.appendChild(radio(m[0], String(i), String(i), i + " sur 5"));
+    wrap.appendChild(head);
+    wrap.appendChild(seg);
+    box.appendChild(wrap);
+  });
+  function radio(name, value, text, aria) {
+    var label = document.createElement("label");
+    var input = document.createElement("input");
+    input.type = "radio"; input.name = name; input.value = value;
+    input.setAttribute("aria-label", aria);
+    var span = document.createElement("span");
+    span.textContent = text;
+    label.appendChild(input); label.appendChild(span);
+    return label;
+  }
 
-function reducedMotion() {
-  return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+  /* ----- Nom ou anonyme ----- */
+  var ident = document.getElementById("ident");
+  form.querySelectorAll('input[name="mode"]').forEach(function (r) {
+    r.addEventListener("change", function () {
+      ident.hidden = form.querySelector('input[name="mode"]:checked').value !== "Nominatif";
+      if (!ident.hidden) document.getElementById("nom").focus();
+    });
+  });
 
-show(1, true);
+  /* ----- « Autre » ouvre un champ libre, maximum de choix, « Pas de goodies » exclusif ----- */
+  form.addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.type !== "radio" && t.type !== "checkbox") return;
+    var q = t.closest(".q");
+    if (!q) return;
 
-/* ----- Déjà répondu sur cet appareil ----- */
-try {
-  var saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) showThanks(saved === "1" ? "" : saved);
-} catch (e) {}
+    var none = q.querySelector("[data-none]");
+    if (none) {
+      if (t === none && none.checked) {
+        q.querySelectorAll("input[type=checkbox]").forEach(function (b) { if (b !== none) b.checked = false; });
+      } else if (t !== none && t.checked) {
+        none.checked = false;
+      }
+    }
 
+    var group = q.querySelector("[data-max]");
+    if (group) {
+      var max = parseInt(group.getAttribute("data-max"), 10);
+      var n = group.querySelectorAll("input:checked:not([data-none])").length;
+      group.querySelectorAll("input").forEach(function (b) {
+        if (!b.hasAttribute("data-none")) b.disabled = !b.checked && n >= max;
+      });
+    }
+
+    var otherInput = q.querySelector("[data-other]");
+    var otherBox = q.querySelector(".other");
+    if (otherInput && otherBox) {
+      otherBox.hidden = !otherInput.checked;
+      if (otherInput.checked && t === otherInput) document.getElementById(otherInput.getAttribute("data-other")).focus();
+    }
+    msg.textContent = "";
+  });
+
+  /* ----- Navigation ----- */
+  prevBtn.addEventListener("click", function () { show(current - 1); });
+  nextBtn.addEventListener("click", function () {
+    if (current < TOTAL) show(current + 1); else send();
+  });
+
+  function show(n, initial) {
+    var dir = n >= current ? "is-forward" : "is-back";
+    current = Math.max(1, Math.min(TOTAL, n));
+    steps.forEach(function (s) {
+      var on = Number(s.getAttribute("data-step")) === current;
+      s.hidden = !on;
+      s.classList.remove("is-forward", "is-back");
+      if (!initial) s.classList.remove("intro-step");
+      if (on && !initial) { void s.offsetWidth; s.classList.add(dir); }
+    });
+    app.setAttribute("data-step", String(current));
+    document.querySelectorAll(".progress li").forEach(function (li) {
+      var i = Number(li.getAttribute("data-i"));
+      li.classList.toggle("is-done", i < current);
+      li.classList.toggle("is-current", i === current);
+      if (i === current) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+    });
+    count.textContent = "Étape " + current + " sur " + TOTAL;
+    nextBtn.textContent = current === TOTAL ? "Envoyer" : "Continuer";
+    var first = current === 1;
+    prevBtn.setAttribute("aria-hidden", first ? "true" : "false");
+    prevBtn.tabIndex = first ? -1 : 0;
+    msg.textContent = "";
+    if (initial) return;
+    window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" });
+    var title = steps[current - 1].querySelector("h2");
+    if (title) { title.setAttribute("tabindex", "-1"); title.focus({ preventScroll: true }); }
+  }
+
+  form.addEventListener("submit", function (e) { e.preventDefault(); });
+
+  /* ----- Envoi ----- */
+  function send() {
+    var data = {};
+    new FormData(form).forEach(function (value, key) {
+      value = String(value).trim();
+      if (!value) return;
+      data[key] = data[key] ? data[key] + ", " + value : value;
+    });
+    if (data.mode !== "Nominatif") { delete data.nom; delete data.structure; }
+    ["activite", "format", "cadeau", "goodies"].forEach(function (k) {
+      if (!/(^|, )Autre($|, )/.test(data[k] || "")) delete data[k + "_autre"];
+    });
+    var answered = Object.keys(data).filter(function (k) { return k !== "mode"; }).length;
+    if (!answered) {
+      msg.textContent = "Vous n’avez encore répondu à aucune question. Choisissez au moins une réponse pour envoyer votre avis.";
+      return;
+    }
+    if (!data.mode) data.mode = "Anonyme";
+    data.date = new Date().toISOString();
+
+    if (!ENDPOINT) { finish(data); return; }
+    nextBtn.disabled = true;
+    nextBtn.textContent = "Envoi…";
+    fetch(ENDPOINT, { method: "POST", mode: "no-cors", body: new URLSearchParams(data) })
+      .then(function () { finish(data); })
+      .catch(function () {
+        nextBtn.disabled = false;
+        nextBtn.textContent = "Envoyer";
+        msg.textContent = "L’envoi n’a pas abouti. Vérifiez votre connexion puis réessayez.";
+      });
+  }
+
+  function finish(data) {
+    var first = data.nom ? data.nom.split(/\s+/)[0] : "";
+    try { localStorage.setItem(STORAGE_KEY, first || "1"); } catch (e) {}
+    showThanks(first);
+    sparkles();
+  }
+
+  /* ----- Étincelles de fin, une seule fois ----- */
+  function sparkles() {
+    if (reducedMotion()) return;
+    var layer = document.createElement("div");
+    layer.className = "burst";
+    layer.setAttribute("aria-hidden", "true");
+    var colors = ["#ADE83C", "#FFFFFF", "#BCB6AC", "#ADE83C"];
+    var glyphs = ["\u2726", "\u2727", "\u2726", "\u00B7"];
+    for (var i = 0; i < 46; i++) {
+      var el = document.createElement("i");
+      el.textContent = glyphs[i % glyphs.length];
+      el.style.left = (Math.random() * 100) + "vw";
+      el.style.color = colors[i % colors.length];
+      el.style.fontSize = (12 + Math.random() * 18) + "px";
+      el.style.setProperty("--dx", ((Math.random() - .5) * 120) + "px");
+      el.style.setProperty("--rot", ((Math.random() - .5) * 540) + "deg");
+      el.style.animationDuration = (2.6 + Math.random() * 2.2) + "s";
+      el.style.animationDelay = (Math.random() * .9) + "s";
+      layer.appendChild(el);
+    }
+    document.body.appendChild(layer);
+    setTimeout(function () { layer.remove(); }, 6500);
+  }
+  function showThanks(first) {
+    form.hidden = true;
+    document.querySelector(".progress").hidden = true;
+    document.getElementById("bar").hidden = true;
+    app.classList.add("is-done");
+    app.setAttribute("data-step", "done");
+    document.getElementById("thanks-title").textContent = first ? "Merci " + first + "\u202F!" : "Merci\u202F!";
+    document.getElementById("testmode").hidden = true;
+    document.getElementById("thanks").hidden = false;
+    window.scrollTo({ top: 0, behavior: reducedMotion() ? "auto" : "smooth" });
+  }
+  function reducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  show(1, true);
+  try {
+    var saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) showThanks(saved === "1" ? "" : saved);
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
